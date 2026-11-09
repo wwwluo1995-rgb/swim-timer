@@ -328,6 +328,21 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
 .names{display:grid;gap:4px;flex-basis:100%;font-size:12px;color:var(--muted)}
 .names input{width:100%;background:var(--surface)}
 @media (max-width:759px){.spbtns{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))}.spbtns button span{font-size:20px}}
+ .lineup h2{align-items:center}
+.tg.mini{padding:0}.tg.mini .sw{width:40px;height:24px}.tg.mini .sw::after{width:18px;height:18px}.tg.mini input:checked+.sw::after{transform:translateX(16px)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.luoff{margin:0;color:var(--muted);font-size:13px}
+#luBody{display:grid;gap:10px}
+.lusteps{display:grid;grid-template-columns:1fr;gap:6px}
+.lus{display:grid;grid-template-columns:44px 44px minmax(0,1fr) 44px;align-items:center;gap:4px;background:var(--sunk);border:1px solid var(--line2);border-radius:12px;padding:6px 8px}
+.lus span{font-size:12px;color:var(--muted);margin-right:2px}
+.lus button{padding:4px 0;font-size:18px;font-weight:700;border-radius:8px;background:var(--surface)}
+.lus output{white-space:nowrap;text-align:center;font-family:var(--f-num);font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.luslots{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.luslots li{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:8px}
+.luslots b{font-family:var(--f-num);font-size:18px;color:var(--accent)}
+.luslots select{width:100%;font-weight:600}
+#rosterText{width:100%;min-height:220px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--sunk);font-size:16px;line-height:1.7;resize:vertical}
 #voiceHint.warn{color:var(--danger);font-size:13px;line-height:1.6}
 #cVoice{max-width:100%}
 .sheet footer{display:flex;justify-content:space-between;gap:8px;padding:0 20px 20px}
@@ -352,6 +367,14 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
 </head>
 <body>
 <div class="toast" id="toast" role="status" hidden></div>
+<dialog class="sheet" id="rosterDlg" aria-labelledby="rosterTitle">
+  <header>
+    <div><h2 id="rosterTitle">学员名单</h2><p>一行一个名字。保存后在「间隔出发」卡片的下拉框里直接选。</p></div>
+    <button type="button" class="x" id="rosterClose" aria-label="关闭">✕</button>
+  </header>
+  <div class="cfgbody"><textarea id="rosterText" rows="10" placeholder="小明&#10;小红&#10;小刚"></textarea></div>
+  <footer><span class="spnote" id="rosterCount"></span><button type="button" class="primary" id="rosterSave">保存名单</button></footer>
+</dialog>
 <dialog class="sheet wide" id="spDlg" aria-labelledby="spTitle">
   <header>
     <div><h2 id="spTitle">到边成绩</h2><p id="spSub"></p></div>
@@ -490,6 +513,18 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
       </main>
 
       <div class="side">
+        <section class="scard lineup" aria-label="间隔出发">
+          <h2>间隔出发 <label class="tg mini" title="打开 / 关闭间隔出发"><input type="checkbox" id="luOn"><span class="sw" aria-hidden="true"></span><span class="vh">间隔出发开关</span></label></h2>
+          <p class="luoff" id="luOff">打开后，同一道的学生按顺序间隔出发，每人有自己的「到边」按钮，自动算出个人成绩。</p>
+          <div id="luBody">
+            <div class="lusteps">
+              <div class="lus"><span>间隔</span><button type="button" id="luGapM" aria-label="间隔减 1 秒">−</button><output id="luGap"></output><button type="button" id="luGapP" aria-label="间隔加 1 秒">+</button></div>
+              <div class="lus"><span>每道</span><button type="button" id="luNM" aria-label="人数减 1">−</button><output id="luN"></output><button type="button" id="luNP" aria-label="人数加 1">+</button></div>
+            </div>
+            <ol class="luslots" id="luSlots"></ol>
+            <div class="row"><button type="button" class="ghost" id="luRoster">管理学员名单</button><button type="button" class="ghost" id="luFill">按名单顺序填入</button></div>
+          </div>
+        </section>
         <section class="scard" aria-label="间歇秒表">
           <h2>间歇秒表 <small id="ivmode">倒计时 25"</small></h2>
           <div class="iv">
@@ -548,7 +583,7 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
           <label class="tg"><input type="checkbox" id="m-stagger"><span class="sw" aria-hidden="true"></span><span><b>间隔出发</b><small>同一道的学生按顺序依次出发</small></span></label>
           <div class="opt" id="opt-stagger">每隔 <input type="number" id="sGap" min="1" max="60" inputmode="numeric"> 秒出发一人，每道 <input type="number" id="sN" min="2" max="10" inputmode="numeric"> 人
             <small>每趟开始时 1 号随出发哨出发，之后每隔设定秒数报「2 号出发」「3 号出发」……</small>
-            <label class="names">学生名字（可选，按出发顺序，用空格或逗号隔开）<input type="text" id="sNames" placeholder="例：小明 小红 小刚"></label>
+            <small>每个位置排谁、学员名单，在训练计时页右边的「间隔出发」卡片里用下拉框选。</small>
             <small>训练计时页会出现每个学生的「到边」按钮：学生到边时点他的名字，自动扣掉他晚出发的秒数，记下他自己的成绩。电脑上也可以按数字键 1–9、0（第 10 人）。</small></div>
         </div>
         <div class="grp">
@@ -714,8 +749,9 @@ function whistle(t,dur,base){
 }
 /* Settings + voice */
 const CKEY='swim-cue-v1';
-const cfg=Object.assign({count:true,stagger:false,names:'',every:5,from:30,gapSec:5,swimmers:3,sound:'both',src:'pack'},(()=>{try{return JSON.parse(localStorage.getItem(CKEY))||{}}catch(e){return{}}})());
+const cfg=Object.assign({count:true,stagger:false,roster:[],lineup:[],every:5,from:30,gapSec:5,swimmers:3,sound:'both',src:'pack'},(()=>{try{return JSON.parse(localStorage.getItem(CKEY))||{}}catch(e){return{}}})());
 if(!(cfg.v>=5)){if(!(cfg.v>=2))cfg.sound='both';if(!(cfg.v>=3))delete cfg.voice;cfg.src='pack';cfg.count=cfg.mode!=='stagger'&&cfg.mode!=='off';cfg.stagger=cfg.mode==='stagger';delete cfg.mode;cfg.v=5;try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
+if(typeof cfg.names==='string'){const n=cfg.names.split(/[\s,，、;；]+/).filter(Boolean);if(!cfg.roster.length)cfg.roster=n;if(!cfg.lineup.length)cfg.lineup=n.slice();delete cfg.names;try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
 if(cfg.from>60){cfg.from=60;try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
 function saveCfg(){try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
 const secText=s=>s>=60?(s%60?Math.floor(s/60)+'分'+(s%60)+'秒':s/60+'分钟'):s+'秒';
@@ -1131,7 +1167,7 @@ $('saveName').onkeydown=e=>{if(e.key==='Enter')$('saveOk').click()};
 
 /* ---------- Arrival (到边) timing for staggered starts ---------- */
 let lastSwimMs=0,splitsData={},spLast=null,lastSpKey='';
-function swimmerNames(){const raw=(cfg.names||'').split(/[\s,，、;；]+/).filter(Boolean);return Array.from({length:cfg.swimmers},(_,k)=>raw[k]||((k+1)+' 号'))}
+function swimmerNames(){return Array.from({length:cfg.swimmers},(_,k)=>(cfg.lineup&&cfg.lineup[k])||((k+1)+' 号'))}
 // which rep the coach is timing right now, and ms since that rep's first swimmer left
 function repContext(){
   const st=steps[si];if(!st||st.i<0)return null;
@@ -1203,6 +1239,43 @@ $('spTable').onclick=()=>openSpTable();
 const closeSp=()=>{const d=$('spDlg');try{d.close()}catch(e){d.removeAttribute('open')}};
 $('spClose').onclick=closeSp;$('spDone').onclick=closeSp;$('spDlg').addEventListener('click',e=>{if(e.target===$('spDlg'))closeSp()});
 $('spUndo').onclick=()=>{if(!spLast)return;const a=splitsData[spLast.key];if(a){if(spLast.prev==null)delete a[spLast.n-1];else a[spLast.n-1]=spLast.prev}spLast=null;if(curRec)saveLib();renderSplits(true);toast('已撤销')};
+
+/* ---------- Lineup card: staggered order + roster ---------- */
+function renderLineup(){
+  $('luOn').checked=cfg.stagger;$('luBody').hidden=!cfg.stagger;$('luOff').hidden=cfg.stagger;
+  $('luGap').textContent=cfg.gapSec+'"';$('luN').textContent=cfg.swimmers+' 人';
+  $('luGapM').disabled=cfg.gapSec<=1;$('luGapP').disabled=cfg.gapSec>=60;$('luNM').disabled=cfg.swimmers<=2;$('luNP').disabled=cfg.swimmers>=10;
+  const ol=$('luSlots');ol.innerHTML='';
+  for(let k=0;k<cfg.swimmers;k++){
+    const li=document.createElement('li');const b=document.createElement('b');b.textContent=(k+1)+' 号';
+    const cur=(cfg.lineup||[])[k]||'';
+    const s=document.createElement('select');s.id='lu'+k;s.setAttribute('aria-label',(k+1)+' 号出发的学生');
+    const opts=['',...cfg.roster];if(cur&&!cfg.roster.includes(cur))opts.push(cur);
+    opts.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n||'（不指定，显示「'+(k+1)+' 号」）';if(n===cur)o.selected=true;s.appendChild(o)});
+    if(!cfg.roster.length){const o=document.createElement('option');o.disabled=true;o.textContent='先点「管理学员名单」添加名字';s.appendChild(o)}
+    s.onchange=()=>{
+      const v=s.value;cfg.lineup=cfg.lineup||[];
+      const other=v?cfg.lineup.findIndex((n,j)=>n===v&&j!==k):-1;
+      if(other>=0&&other<cfg.swimmers)cfg.lineup[other]=cfg.lineup[k]||''; // same name picked twice: swap the two positions
+      cfg.lineup[k]=v;lineupChanged();
+    };
+    li.append(b,s);ol.appendChild(li);
+  }
+}
+function lineupChanged(){saveCfg();lastSpKey='';cfgSummary();renderSplits(true)}
+$('luOn').onchange=()=>{cfg.stagger=$('luOn').checked;lineupChanged()};
+$('luGapM').onclick=()=>{cfg.gapSec=Math.max(1,cfg.gapSec-1);lineupChanged()};
+$('luGapP').onclick=()=>{cfg.gapSec=Math.min(60,cfg.gapSec+1);lineupChanged()};
+$('luNM').onclick=()=>{cfg.swimmers=Math.max(2,cfg.swimmers-1);lineupChanged()};
+$('luNP').onclick=()=>{cfg.swimmers=Math.min(10,cfg.swimmers+1);lineupChanged()};
+$('luFill').onclick=()=>{if(!cfg.roster.length){toast('名单是空的，先点「管理学员名单」');return}cfg.lineup=cfg.roster.slice(0,10);lineupChanged();toast('已按名单顺序填入')};
+const rosterCount=()=>{const n=$('rosterText').value.split(/\n/).map(x=>x.trim()).filter(Boolean).length;$('rosterCount').textContent='共 '+n+' 人'};
+$('luRoster').onclick=()=>{$('rosterText').value=cfg.roster.join('\n');rosterCount();const d=$('rosterDlg');try{d.showModal()}catch(e){d.setAttribute('open','')}};
+$('rosterText').oninput=rosterCount;
+const closeRoster=()=>{const d=$('rosterDlg');try{d.close()}catch(e){d.removeAttribute('open')}};
+$('rosterClose').onclick=closeRoster;$('rosterDlg').addEventListener('click',e=>{if(e.target===$('rosterDlg'))closeRoster()});
+$('rosterSave').onclick=()=>{cfg.roster=[...new Set($('rosterText').value.split(/\n/).map(x=>x.trim()).filter(Boolean))].slice(0,60);closeRoster();lineupChanged();toast('名单已保存，共 '+cfg.roster.length+' 人')};
+renderLineup();
 
 /* ---------- Routing ---------- */
 (function(){
@@ -1291,7 +1364,14 @@ function toggle(){
 $('start').onclick=toggle;
 $('skip').onclick=()=>{audio();go(si+1)};
 $('prev').onclick=()=>{audio();go(si-1)};
-$('restart').onclick=()=>{acc=0;segStart=now();lastCue=null;render(true)};
+$('restart').onclick=()=>{
+  const st=steps[si];
+  acc=0;segStart=now();lastCue=null;stagDone=1;
+  // restarting a swim also wipes the arrival times already tapped for this rep
+  if(st&&(st.phase==='swim'||st.phase==='free')){delete splitsData[st.i+'-'+st.rep];spLast=null;if(curRec)saveLib()}
+  if(running&&st)cue(st.phase);
+  render(true);renderSplits(true);toast('本步已重新开始计时');
+};
 $('sound').onclick=e=>{soundOn=!soundOn;audio();e.currentTarget.setAttribute('aria-pressed',soundOn);$('soundLabel').textContent='提示音：'+(soundOn?'开':'关');if(soundOn)notify(()=>beep(880,300),'提示音已打开')};
 $('cfgbtn').onclick=()=>{const d=$('cfg');try{d.showModal()}catch(e){d.setAttribute('open','')}};
 const closeCfg=()=>{const d=$('cfg');try{d.close()}catch(e){d.removeAttribute('open')}};
@@ -1302,9 +1382,10 @@ function cfgSummary(){
   const snd={whistle:'哨声',voice:'语音播报',both:'哨声 + 语音'}[cfg.sound];
   $('cfgsum').textContent=m+' · '+snd;$('cfgbtnLabel').textContent='提醒：'+([cfg.count?'每 '+cfg.every+' 秒':'',cfg.stagger?'间隔出发':''].filter(Boolean).join('+')||'切换时')+' · '+snd;
   $('opt-count').hidden=!cfg.count;$('opt-stagger').hidden=!cfg.stagger;
+  $('m-stagger').checked=cfg.stagger;$('sGap').value=cfg.gapSec;$('sN').value=cfg.swimmers;
+  if(typeof renderLineup==='function')renderLineup();
 }
 function cfgInit(){
-  $('sNames').value=cfg.names||'';$('sNames').onchange=()=>{cfg.names=$('sNames').value.trim();saveCfg();lastSpKey=''};
   $('m-count').checked=cfg.count;$('m-stagger').checked=cfg.stagger;$('cEvery').value=cfg.every;$('cFrom').value=cfg.from;$('sGap').value=cfg.gapSec;$('sN').value=cfg.swimmers;$('cSound').value=cfg.sound;cfgSummary();
   ['count','stagger'].forEach(k=>{$('m-'+k).onchange=()=>{cfg[k]=$('m-'+k).checked;saveCfg();cfgSummary()}});
   [['cEvery','every',1,60],['cFrom','from',1,60],['sGap','gapSec',1,60],['sN','swimmers',2,10]].forEach(([id,k,lo,hi])=>{
@@ -1326,7 +1407,7 @@ $('addCustom').onclick=()=>{plan.push({custom:true,title:'',reps:1,dist:0,stroke
 $('addItem').onclick=()=>{const last=plan[plan.length-1];plan.push(last?{...clone(last),note:''}:{reps:4,dist:50,stroke:'自由泳',kind:'完整配合',target:45,rest:20,groupRest:0,note:''});changed();
   const items=document.querySelectorAll('#cards .item');items[items.length-1].scrollIntoView({behavior:'smooth',block:'center'})};
 document.addEventListener('keydown',e=>{
-  if(location.hash!=='#run'||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||$('qe').open||$('cfg').open||$('saveDlg').open||$('spDlg').open)return;
+  if(location.hash!=='#run'||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||$('qe').open||$('cfg').open||$('saveDlg').open||$('spDlg').open||$('rosterDlg').open)return;
   if(e.code==='Space'){e.preventDefault();toggle()}
   else if(e.key==='ArrowRight'){audio();go(si+1)}
   else if(e.key==='ArrowLeft'){audio();go(si-1)}
