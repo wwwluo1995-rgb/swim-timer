@@ -100,7 +100,7 @@ select{appearance:none;-webkit-appearance:none;padding-right:28px;background-ima
   .app{grid-template-columns:minmax(0,1fr)}
   .rail{position:fixed;inset:auto 0 0 0;top:auto;height:auto;z-index:30;flex-direction:row;padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));gap:0;background:var(--rail);box-shadow:0 -6px 20px rgba(0,0,0,.18)}
   .brand,.rail .sum,.railbtn{display:none}
-  .nav{grid-template-columns:1fr 1fr;width:100%;gap:6px}
+  .nav{grid-template-columns:1fr 1fr 1fr;width:100%;gap:6px}
   .nav a{justify-content:center;flex-direction:column;gap:2px;padding:7px 6px;font-size:13px}
   .nav a .step{display:none}
   .nav a[aria-current="page"]::before{left:30%;right:30%;top:-6px;bottom:auto;width:auto;height:3px;border-radius:0 0 3px 3px}
@@ -272,6 +272,33 @@ dialog.sheet::backdrop{background:rgba(4,16,24,.5);-webkit-backdrop-filter:blur(
 .tg input:checked+.sw::after{transform:translateX(18px)}
 .tg input:focus-visible+.sw{outline:3px solid var(--accent);outline-offset:2px}
 .tg b{display:block;font-size:15px}.tg small{display:block;color:var(--muted);font-size:12px}
+ .libbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.libtabs{grid-template-columns:repeat(2,minmax(0,1fr));min-width:260px}
+#libSearch{flex:1;min-width:200px;background:var(--surface)}
+.liblist{list-style:none;margin:0;padding:0;display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr))}
+.libitem{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:8px;box-shadow:var(--shadow);align-content:start}
+.libitem h3{margin:0;font-size:17px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.libitem .meta{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.libitem .badge{font-size:12px;font-weight:600;border-radius:999px;padding:1px 8px;background:var(--accent-soft);color:var(--accent)}
+.libitem .badge.ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.libitem details{font-size:14px}
+.libitem summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:13px}
+.libitem ol{margin:6px 0 0;padding-left:20px;display:grid;gap:2px;color:var(--fg)}
+.libitem ol small{color:var(--muted)}
+.libitem .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.libitem .acts button{padding:7px 12px;font-size:14px}
+.libitem .acts .del{color:var(--danger);background:transparent}
+.libitem input.rn{width:100%;font-size:16px;font-weight:600}
+.libnote{color:var(--muted);font-size:12px;margin-top:16px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tabh) + 84px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:600;box-shadow:var(--shadow);max-width:calc(100vw - 32px)}
+.mode{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;margin-right:2px}
+.mode button{border:0;border-radius:0;padding:3px 8px;font-size:12px;background:var(--sunk);color:var(--muted)}
+.mode button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.cline{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:6px;align-items:center}
+.cline .x{color:var(--muted);font-family:var(--f-num);font-size:20px}
+.cline label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.ctitle{width:100%;font-size:16px!important;font-weight:600}
+.item.custom::before{background:var(--p-rest)}
 #voiceHint.warn{color:var(--danger);font-size:13px;line-height:1.6}
 #cVoice{max-width:100%}
 .sheet footer{display:flex;justify-content:space-between;gap:8px;padding:0 20px 20px}
@@ -295,12 +322,23 @@ dialog.sheet::backdrop{background:rgba(4,16,24,.5);-webkit-backdrop-filter:blur(
 </style>
 </head>
 <body>
+<div class="toast" id="toast" role="status" hidden></div>
+    <dialog class="sheet" id="saveDlg" aria-labelledby="saveTitle">
+      <header>
+        <div><h2 id="saveTitle">保存到计划库</h2><p id="saveSub"></p></div>
+        <button type="button" class="x" id="saveClose" aria-label="关闭">✕</button>
+      </header>
+      <div class="cfgbody"><label class="grp"><span class="gl">计划名称</span><input type="text" id="saveName" maxlength="40"></label></div>
+      <footer><span></span><button type="button" class="primary" id="saveOk">保存</button></footer>
+    </dialog>
+
 <div class="app">
   <nav class="rail" aria-label="主导航">
     <div class="brand"><span class="mark" aria-hidden="true"></span><div><b>长训队计时台</b><small>泳池边教练工作台</small></div></div>
     <div class="nav">
       <a href="#plan" id="nav-plan" title="制定计划"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h10a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9"/><path d="M4 4l5 5M9 4v5H4"/><path d="M9 14h7M9 17h5"/></svg><span class="txt">制定计划</span><span class="step">01</span></a>
       <a href="#run" id="nav-run" title="训练计时"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M10 2h4"/></svg><span class="txt">训练计时</span><span class="step">02</span></a>
+      <a href="#lib" id="nav-lib" title="计划库"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h11l3 3v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 3v5h7V3M8 13h8M8 17h5"/></svg><span class="txt">计划库</span><span class="step">03</span></a>
     </div>
     <div class="sum" id="railsum"></div>
     <button type="button" class="railbtn" id="railToggle" aria-expanded="true" title="收起侧栏"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg><span class="txt">收起侧栏</span></button>
@@ -332,6 +370,7 @@ dialog.sheet::backdrop{background:rgba(4,16,24,.5);-webkit-backdrop-filter:blur(
           <h2 class="sh"><span class="n">2</span>检查每一组</h2>
           <div class="row">
             <button type="button" class="add" id="addItem">＋ 添加一组</button>
+            <button type="button" class="add" id="addCustom">＋ 自定义项</button>
             <button type="button" class="ghost" id="clearPlan">清空计划</button>
           </div>
         </div>
@@ -341,8 +380,26 @@ dialog.sheet::backdrop{background:rgba(4,16,24,.5);-webkit-backdrop-filter:blur(
 
     <div class="actionbar">
       <span class="meta" id="actionmeta"></span>
+      <button type="button" id="saveLibBtn" class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M7 3v5h8V3M7 21v-7h10v7"/></svg>保存到计划库</button>
       <a href="#run" class="primary go-run" role="button">开始训练 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
     </div>
+  </section>
+
+  <!-- LIBRARY VIEW -->
+  <section class="view" id="view-lib" aria-label="计划库" hidden>
+    <div class="phead">
+      <div><h1>计划库</h1><p>保存常用计划随时调出；每次开始训练会自动记一条训练记录。</p></div>
+      <div class="stats" id="libstats"></div>
+    </div>
+    <div class="libbar">
+      <div class="seg libtabs" role="tablist" aria-label="计划库分类">
+        <label><input type="radio" name="libtab" value="plans" id="tab-plans" checked><span id="tabPlansLbl">我的计划</span></label>
+        <label><input type="radio" name="libtab" value="records" id="tab-records"><span id="tabRecLbl">训练记录</span></label>
+      </div>
+      <input type="text" id="libSearch" placeholder="搜索名称、泳姿、备注…" aria-label="搜索计划库">
+    </div>
+    <ol class="liblist" id="liblist"></ol>
+    <p class="libnote">计划库保存在这台设备的浏览器里；清除浏览器数据会一起清掉，换设备不会同步。</p>
   </section>
 
   <!-- RUN VIEW -->
@@ -510,6 +567,8 @@ function parsePlan(text){
     let m=s.match(/^(\d+)\s*组\s*(\d+)\s*(?:[x×X*✕乘]|个)\s*(\d+)/);
     if(m){block={reps:+m[2],dist:+m[3],items:[]};return}
     const gm=s.match(new RegExp('组间\\s*(?:休息)?\\s*[:：]?\\s*'+TIME));
+    const cm=s.match(/^(?:自定义|\+)\s*[:：]?\s*(.+)$/);
+    if(cm){const it={custom:true,title:cm[1].trim(),reps:1,dist:0,stroke:'自由泳',kind:'完整配合',target:0,rest:0,groupRest:0,note:''};items.push(it);last=it;return}
     if(/^同上/.test(s)){
       if(!last){skipped.push(raw.trim());return}
       const it={...last,note:last.note};items.push(it);last=it;if(block){block.items.push(it);linkBlock(block)}return;
@@ -544,7 +603,7 @@ function parsePlan(text){
 const KEY='swim-plan-v3',TKEY='swim-plan-text-v3';
 const clone=o=>JSON.parse(JSON.stringify(o));
 const DEFAULT_PLAN=parsePlan(SAMPLE_TEXT).items;
-function loadPlan(){try{const p=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(p)&&p.every(x=>x&&x.reps&&x.dist))return p}catch(e){}return clone(DEFAULT_PLAN)}
+function loadPlan(){try{const p=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(p)&&p.every(x=>x&&x.reps>=1))return p}catch(e){}return clone(DEFAULT_PLAN)}
 function savePlan(){try{localStorage.setItem(KEY,JSON.stringify(plan))}catch(e){}}
 
 let plan=loadPlan(),steps=[],si=0,running=false,acc=0,segStart=0,lastCue=null,soundOn=true,stagDone=0,ctx=null,wake=null,hrEnd=0;
@@ -552,7 +611,8 @@ const $=id=>document.getElementById(id);
 const now=()=>performance.now();
 const fmt=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
 const fmtShort=s=>s<60?s+'"':(s%60?Math.floor(s/60)+"'"+(s%60)+'"':s/60+"'");
-const shortName=it=>it.reps+'×'+it.dist+' '+it.stroke+it.kind;
+const shortName=it=>it.custom?(((it.reps>1?it.reps+'×':'')+(it.dist?it.dist+' 米 ':''))+(it.title||'自定义项')).trim():it.reps+'×'+it.dist+' '+it.stroke+it.kind;
+const mtxt=it=>it.dist?it.reps*it.dist+' 米':'不计距离';
 const nameOf=(it,i)=>'第 '+(i+1)+' 组 · '+shortName(it);
 
 function build(){
@@ -734,7 +794,7 @@ function go(idx,{auto=false,overflow=0}={}){
   si=Math.max(0,Math.min(steps.length-1,idx));
   acc=auto?overflow:0;segStart=now();lastCue=null;stagDone=1;
   const st=steps[si];
-  if(st.phase==='done')running=false;
+  if(st.phase==='done'){running=false;finishRecord()}
   if(running||auto)cue(st.phase);
   if(st.phase!=='group')hrEnd=0;
   render(true);
@@ -855,6 +915,18 @@ function sel(opts,val,label,fmtOpt=x=>x){
   list.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=fmtOpt(o);if(String(o)===String(val))op.selected=true;s.appendChild(op)});
   return s;
 }
+/* custom (free-form) group: any title, any distance (0 = not counted) */
+function customFields(host,it,i,onChange){
+  const t=document.createElement('input');t.type='text';t.className='ctitle';t.id='ct'+i;t.placeholder='写什么都行，如：200 混合泳、出发练习、陆上拉伸';t.value=it.title||'';t.maxLength=40;t.setAttribute('aria-label','自定义项名称');
+  t.onchange=()=>{it.title=t.value.trim();onChange(true)};
+  const row=document.createElement('div');row.className='cline';
+  const r=sel(Array.from({length:20},(_,k)=>k+1),it.reps,'趟数',x=>x+' 趟');r.onchange=()=>{it.reps=+r.value;onChange()};
+  const x=document.createElement('span');x.className='x';x.textContent='×';
+  const dl=document.createElement('label');const d=document.createElement('input');d.type='number';d.min=0;d.max=5000;d.inputMode='numeric';d.id='cd'+i;d.value=it.dist||0;d.setAttribute('aria-label','每趟米数（0 = 不计距离）');d.title='0 = 不计距离';
+  d.onchange=()=>{const v=Math.round(+d.value);if(!(v>=0&&v<=5000)){d.value=it.dist;return}it.dist=v;onChange()};
+  dl.append(d,'米');row.append(r,x,dl);
+  host.append(t,row);
+}
 function renderCards(){
   const ol=$('cards');ol.innerHTML='';
   if(!plan.length){const li=document.createElement('li');li.className='empty';li.innerHTML='<div>还没有任何组。在上面的文本框里输入计划后点「识别并替换计划」，或点「＋ 添加一组」。</div>';ol.appendChild(li)}
@@ -862,8 +934,12 @@ function renderCards(){
     const li=document.createElement('li');li.className='item';
     const head=document.createElement('div');head.className='ihead';
     const nm=document.createElement('div');nm.className='nm';nm.innerHTML='<b></b><span></span><em></em>';
-    nm.querySelector('b').textContent='第 '+(i+1)+' 组';nm.querySelector('span').textContent=shortName(it);nm.querySelector('em').textContent=it.reps*it.dist+' 米';
-    head.appendChild(nm);
+    nm.querySelector('b').textContent='第 '+(i+1)+' 组';nm.querySelector('span').textContent=shortName(it);nm.querySelector('em').textContent=mtxt(it);
+    const md=document.createElement('div');md.className='mode';md.setAttribute('role','group');md.setAttribute('aria-label','这一组的格式');
+    [['模板',false],['自定义',true]].forEach(([t,c])=>{const mb=document.createElement('button');mb.type='button';mb.textContent=t;mb.setAttribute('aria-pressed',!!it.custom===c);
+      mb.onclick=()=>{if(!!it.custom===c)return;if(c){it.title=it.title||(it.stroke+it.kind);it.custom=true}else{it.custom=false;if(!DISTS.includes(it.dist))it.dist=it.dist>0?it.dist:50}changed()};md.appendChild(mb)});
+    head.append(nm,md);
+    if(it.custom)li.classList.add('custom');
     [['↑','上移',-1],['↓','下移',1]].forEach(([t,l,d])=>{
       const b=document.createElement('button');b.type='button';b.className='sm';b.textContent=t;b.setAttribute('aria-label',l);
       b.disabled=(i+d<0||i+d>=plan.length);
@@ -873,6 +949,8 @@ function renderCards(){
     del.onclick=()=>{if(del.dataset.armed){plan.splice(i,1);changed()}else{del.dataset.armed='1';del.textContent='确认删除';setTimeout(()=>{if(del.isConnected){delete del.dataset.armed;del.textContent='删除'}},3000)}};
     head.appendChild(del);li.appendChild(head);
 
+    if(it.custom)customFields(li,it,i,()=>changed());
+    else{
     const line=document.createElement('div');line.className='line';
     const sReps=sel(REPS,it.reps,'数量'),sDist=sel(DISTS,it.dist,'距离',x=>x+' 米'),sStroke=sel(STROKES,it.stroke,'泳姿'),sKind=sel(KINDS,it.kind,'类型');
     const x=document.createElement('span');x.className='x';x.textContent='×';
@@ -882,6 +960,7 @@ function renderCards(){
     sStroke.onchange=()=>{it.stroke=sStroke.value;changed()};
     sKind.onchange=()=>{it.kind=sKind.value;changed()};
     li.appendChild(line);
+    }
 
     const f=document.createElement('div');f.className='fields';
     [['target','目标秒（0=手动）'],['rest','每趟间歇秒'],['groupRest','组后休息秒']].forEach(([k,l])=>{
@@ -898,7 +977,7 @@ function renderCards(){
   });
 }
 function changed(soft,at=-1,delta=0){
-  savePlan();
+  savePlan();updateRecord();
   const cur=steps[si];build();
   // when a group is inserted/removed before the running one, keep pointing at the same group
   const ci=(at>=0&&cur.i>=at&&cur.i>=0)?Math.max(0,cur.i+delta):cur.i;
@@ -908,7 +987,7 @@ function changed(soft,at=-1,delta=0){
   const same=steps[idx].i===ci&&steps[idx].rep===cur.rep&&steps[idx].phase===cur.phase;
   si=idx;
   if(!same){acc=0;segStart=now();lastCue=null;if(steps[si].phase==='done')running=false}
-  if(!soft)renderCards();else{document.querySelectorAll('#cards .item').forEach((el,k)=>{const n=el.querySelector('.nm');if(n&&plan[k]){n.querySelector('span').textContent=shortName(plan[k]);n.querySelector('em').textContent=plan[k].reps*plan[k].dist+' 米'}})}
+  if(!soft)renderCards();else{document.querySelectorAll('#cards .item').forEach((el,k)=>{const n=el.querySelector('.nm');if(n&&plan[k]){n.querySelector('span').textContent=shortName(plan[k]);n.querySelector('em').textContent=mtxt(plan[k])}})}
   renderProg();renderMeta();render(true);
 }
 function doParse(append){
@@ -917,12 +996,81 @@ function doParse(append){
   const {items,skipped}=parsePlan(txt);
   const msg=$('parseMsg');
   if(!items.length){msg.className='msgline err';msg.textContent='没有识别出任何组。每行写出距离，例如「8×50 自由泳打腿 55标 25间歇」。';return}
-  if(append)plan.push(...items);else{plan=items;running=false;releaseWake()}
+  if(append)plan.push(...items);else{plan=items;running=false;releaseWake();curRec=null}
   build();if(!append){si=0;acc=0}
   changed();
   msg.className='msgline'+(skipped.length?' err':'');
   msg.textContent=(append?'已追加 ':'已识别 ')+items.length+' 组，下面的卡片可以继续微调。'+(skipped.length?' 这些行没认出来：'+skipped.join(' / '):'');
 }
+
+/* ---------- Plan library + training records (stored on this device) ---------- */
+const LKEY='swim-lib-v1';
+let lib=(()=>{try{const v=JSON.parse(localStorage.getItem(LKEY));if(v&&Array.isArray(v.plans)&&Array.isArray(v.records))return v}catch(e){}return{plans:[],records:[]}})();
+let curRec=null,libTab='plans';
+function saveLib(){try{localStorage.setItem(LKEY,JSON.stringify(lib))}catch(e){toast('保存失败：浏览器存储空间不足或被禁用')}}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const meters=p=>p.reduce((a,x)=>a+x.reps*(x.dist||0),0);
+const dstr=(t,withTime)=>{const d=new Date(t);return (d.getMonth()+1)+'月'+d.getDate()+'日'+(withTime?' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0'):'')};
+function defaultName(){return dstr(Date.now())+' 计划 · '+meters(plan)+' 米'}
+function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2600)}
+function startRecord(){
+  if(curRec||!plan.length)return;
+  const r={id:uid(),at:Date.now(),name:dstr(Date.now(),true)+' 训练',plan:clone(plan),done:false};
+  lib.records.unshift(r);lib.records=lib.records.slice(0,300);curRec=r.id;saveLib();
+}
+function updateRecord(){if(!curRec)return;const r=lib.records.find(x=>x.id===curRec);if(r){r.plan=clone(plan);saveLib()}}
+function finishRecord(){if(!curRec)return;const r=lib.records.find(x=>x.id===curRec);if(r&&!r.done){r.done=true;r.end=Date.now();saveLib()}}
+function loadIntoPlan(p,name){
+  plan=clone(p);running=false;releaseWake();curRec=null;build();si=0;acc=0;lastCue=null;
+  changed();location.hash='#plan';toast('已载入「'+name+'」');
+}
+function renderLib(){
+  const q=($('libSearch').value||'').trim().toLowerCase();
+  $('tabPlansLbl').textContent='我的计划 '+lib.plans.length;$('tabRecLbl').textContent='训练记录 '+lib.records.length;
+  const done=lib.records.filter(r=>r.done);
+  const monthStart=new Date();monthStart.setDate(1);monthStart.setHours(0,0,0,0);
+  const monthM=lib.records.filter(r=>r.at>=monthStart.getTime()).reduce((a,r)=>a+meters(r.plan),0);
+  $('libstats').innerHTML=[[lib.plans.length,'个计划'],[lib.records.filter(r=>r.at>=monthStart.getTime()).length,'本月训练'],[monthM,'本月米数']].map(([v,l])=>'<div class="stat"><b>'+v+'</b><span>'+l+'</span></div>').join('');
+  const list=libTab==='plans'?lib.plans:lib.records;
+  const ol=$('liblist');ol.innerHTML='';
+  const hay=e=>(e.name+' '+e.plan.map(x=>shortName(x)+' '+(x.note||'')).join(' ')).toLowerCase();
+  const rows=list.filter(e=>!q||hay(e).includes(q));
+  if(!rows.length){const li=document.createElement('li');li.className='empty';
+    li.textContent=q?'没有找到包含「'+q+'」的'+(libTab==='plans'?'计划':'记录')+'。':libTab==='plans'?'还没有保存的计划。在「制定计划」底部点「保存到计划库」。':'还没有训练记录。在「训练计时」点开始后会自动记录。';ol.appendChild(li);return}
+  rows.forEach(e=>{
+    const li=document.createElement('li');li.className='libitem';
+    const h=document.createElement('h3');const nm=document.createElement('span');nm.textContent=e.name;h.appendChild(nm);
+    if(libTab==='records'){const bd=document.createElement('span');bd.className='badge'+(e.done?' ok':'');bd.textContent=e.done?'已完成':'未完成';h.appendChild(bd)}
+    const meta=document.createElement('div');meta.className='meta';
+    meta.textContent=(libTab==='plans'?'保存于 '+dstr(e.created,true):'开始于 '+dstr(e.at,true))+' · '+e.plan.length+' 组 · '+meters(e.plan)+' 米';
+    const det=document.createElement('details');const sm=document.createElement('summary');sm.textContent='查看每一组';det.appendChild(sm);
+    const gl=document.createElement('ol');e.plan.forEach(x=>{const g=document.createElement('li');g.textContent=shortName(x)+' ';const sub=document.createElement('small');
+      sub.textContent=[x.target>0?'目标 '+fmtShort(x.target):'手动',x.rest>0?'间歇 '+fmtShort(x.rest):'',x.note].filter(Boolean).join(' · ');g.appendChild(sub);gl.appendChild(g)});
+    det.appendChild(gl);
+    const acts=document.createElement('div');acts.className='acts';
+    const btn=(t,cls,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=t;if(cls)b.className=cls;b.onclick=()=>fn(b);acts.appendChild(b);return b};
+    btn('载入到今日计划','primary',b=>{
+      if(plan.length&&JSON.stringify(plan)!==JSON.stringify(e.plan)&&!b.dataset.armed){b.dataset.armed='1';b.textContent='再点一次：替换当前计划';setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent='载入到今日计划'}},3000);return}
+      loadIntoPlan(e.plan,e.name)});
+    if(libTab==='records')btn('存为常用计划','',()=>{lib.plans.unshift({id:uid(),name:e.name.replace(/ 训练$/,' 计划'),plan:clone(e.plan),created:Date.now()});saveLib();toast('已存到「我的计划」');renderLib()});
+    else btn('重命名','',()=>{const inp=document.createElement('input');inp.type='text';inp.className='rn';inp.value=e.name;inp.maxLength=40;inp.setAttribute('aria-label','新名称');h.replaceWith(inp);inp.focus();inp.select();
+      const fin=()=>{const v=inp.value.trim();if(v)e.name=v;saveLib();renderLib()};inp.onblur=fin;inp.onkeydown=k=>{if(k.key==='Enter')inp.blur();if(k.key==='Escape'){inp.value=e.name;inp.blur()}}});
+    btn('删除','del',b=>{if(!b.dataset.armed){b.dataset.armed='1';b.textContent='再点一次确认删除';setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent='删除'}},3000);return}
+      const arr=libTab==='plans'?lib.plans:lib.records;arr.splice(arr.indexOf(e),1);if(e.id===curRec)curRec=null;saveLib();renderLib()});
+    li.append(h,meta,det,acts);ol.appendChild(li);
+  });
+}
+document.querySelectorAll('input[name=libtab]').forEach(r=>r.onchange=()=>{libTab=r.value;renderLib()});
+$('libSearch').oninput=renderLib;
+$('saveLibBtn').onclick=()=>{
+  if(!plan.length){toast('当前计划是空的');return}
+  $('saveName').value=defaultName();$('saveSub').textContent=plan.length+' 组 · '+meters(plan)+' 米';
+  const d=$('saveDlg');try{d.showModal()}catch(e){d.setAttribute('open','')}setTimeout(()=>{$('saveName').focus();$('saveName').select()},50);
+};
+const closeSave=()=>{const d=$('saveDlg');try{d.close()}catch(e){d.removeAttribute('open')}};
+$('saveClose').onclick=closeSave;$('saveDlg').addEventListener('click',e=>{if(e.target===$('saveDlg'))closeSave()});
+$('saveOk').onclick=()=>{const name=$('saveName').value.trim()||defaultName();lib.plans.unshift({id:uid(),name,plan:clone(plan),created:Date.now()});saveLib();closeSave();toast('已保存「'+name+'」到计划库')};
+$('saveName').onkeydown=e=>{if(e.key==='Enter')$('saveOk').click()};
 
 /* ---------- Routing ---------- */
 (function(){
@@ -948,8 +1096,9 @@ function renderQE(){
   const b=$('qeBody');b.innerHTML='';
   const line=document.createElement('div');line.className='qeline';
   const mk=(opts,key,label,f)=>{const s=sel(opts,it[key],label,f);s.onchange=()=>{it[key]=typeof it[key]==='number'?+s.value:s.value;applyQE()};return s};
-  line.append(mk(REPS,'reps','趟数',x=>x+' 趟'),mk(DISTS,'dist','距离',x=>x+' 米'),mk(STROKES,'stroke','泳姿'),mk(KINDS,'kind','类型'));
-  b.appendChild(line);
+  if(it.custom)customFields(b,it,'q'+qeI,soft=>applyQE(soft));
+  else{line.append(mk(REPS,'reps','趟数',x=>x+' 趟'),mk(DISTS,'dist','距离',x=>x+' 米'),mk(STROKES,'stroke','泳姿'),mk(KINDS,'kind','类型'));
+  b.appendChild(line);}
   [['target','目标时间','填 0 = 手动计时',[-5,-1,1,5]],['rest','每趟间歇','0 = 不休息直接下一趟',[-5,-1,1,5]],['groupRest','组后休息','含测心率提示',[-30,-10,10,30]]].forEach(([k,l,hint,ds])=>{
     if(k==='groupRest'&&qeI===plan.length-1)return;
     const row=document.createElement('div');row.className='stp';
@@ -985,9 +1134,9 @@ $('qeDel').onclick=e=>{const b=e.currentTarget;if(!b.dataset.armed){b.dataset.ar
   delete b.dataset.armed;b.textContent='删除这一组';const at=qeI,wasCur=steps[si].i===at;plan.splice(at,1);qeI=Math.min(qeI,plan.length-1);changed(false,wasCur?-1:at+1,-1);renderQE()};
 
 function route(){
-  const v=location.hash==='#run'?'run':'plan';
-  $('view-plan').hidden=v!=='plan';$('view-run').hidden=v!=='run';
-  $('nav-plan').toggleAttribute('aria-current',false);$('nav-run').toggleAttribute('aria-current',false);
+  const v=location.hash==='#run'?'run':location.hash==='#lib'?'lib':'plan';
+  ['plan','run','lib'].forEach(k=>{$('view-'+k).hidden=v!==k;$('nav-'+k).removeAttribute('aria-current')});
+  if(v==='lib')renderLib();
   $('nav-'+v).setAttribute('aria-current','page');
   window.scrollTo(0,0);
 }
@@ -1002,9 +1151,9 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 function toggle(){
   audio();
   const st=steps[si];
-  if(st.phase==='done'){if(!plan.length){location.hash='#plan';return}running=true;go(0);holdWake();return}
+  if(st.phase==='done'){if(!plan.length){location.hash='#plan';return}curRec=null;running=true;go(0);startRecord();holdWake();return}
   if(running){acc=elapsed();running=false;releaseWake()}
-  else{segStart=now();running=true;holdWake();if(acc===0)cue(st.phase);else notify(()=>beep(1100,300),'继续')}
+  else{segStart=now();running=true;holdWake();startRecord();if(acc===0)cue(st.phase);else notify(()=>beep(1100,300),'继续')}
   render(true);
 }
 $('start').onclick=toggle;
@@ -1039,10 +1188,12 @@ $('parseAppend').onclick=()=>doParse(true);
 $('fillSample').onclick=()=>{$('bulk').value=SAMPLE_TEXT;$('bulk').focus()};
 $('clearPlan').onclick=e=>{const b=e.currentTarget;if(!b.dataset.armed){b.dataset.armed='1';b.textContent='再点一次确认清空';setTimeout(()=>{delete b.dataset.armed;b.textContent='清空计划'},3000);return}
   delete b.dataset.armed;b.textContent='清空计划';plan=[];running=false;releaseWake();build();si=0;acc=0;changed()};
+$('addCustom').onclick=()=>{plan.push({custom:true,title:'',reps:1,dist:0,stroke:'自由泳',kind:'完整配合',target:0,rest:0,groupRest:0,note:''});changed();
+  const items=document.querySelectorAll('#cards .item');const last=items[items.length-1];last.scrollIntoView({behavior:'smooth',block:'center'});const t=last.querySelector('.ctitle');if(t)setTimeout(()=>t.focus(),300)};
 $('addItem').onclick=()=>{const last=plan[plan.length-1];plan.push(last?{...clone(last),note:''}:{reps:4,dist:50,stroke:'自由泳',kind:'完整配合',target:45,rest:20,groupRest:0,note:''});changed();
   const items=document.querySelectorAll('#cards .item');items[items.length-1].scrollIntoView({behavior:'smooth',block:'center'})};
 document.addEventListener('keydown',e=>{
-  if(location.hash!=='#run'||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||$('qe').open||$('cfg').open)return;
+  if(location.hash!=='#run'||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||$('qe').open||$('cfg').open||$('saveDlg').open)return;
   if(e.code==='Space'){e.preventDefault();toggle()}
   else if(e.key==='ArrowRight'){audio();go(si+1)}
   else if(e.key==='ArrowLeft'){audio();go(si-1)}
