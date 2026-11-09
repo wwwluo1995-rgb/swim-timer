@@ -299,6 +299,35 @@ dialog.sheet::backdrop{background:rgba(4,16,24,.5);-webkit-backdrop-filter:blur(
 .cline label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
 .ctitle{width:100%;font-size:16px!important;font-weight:600}
 .item.custom::before{background:var(--p-rest)}
+ .splits{display:grid;gap:8px;background:rgba(255,255,255,.04);border:1px solid var(--boardline);border-radius:14px;padding:10px}
+.sphead{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--boardmuted);font-size:13px;letter-spacing:.06em}
+.sphead small{color:var(--boardfg);font-family:var(--f-num);font-size:15px;letter-spacing:0;margin-left:6px}
+.spact{display:flex;gap:6px}
+.spact button{background:transparent;border:1px solid var(--boardline);color:var(--boardmuted);font-size:12px;padding:4px 10px;border-radius:999px}
+.spbtns{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
+.spbtns button{display:grid;gap:0;justify-items:center;padding:8px 6px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid var(--boardline);color:var(--boardfg);font-weight:600}
+.spbtns button b{font-size:14px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.spbtns button span{font-family:var(--f-num);font-size:24px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ph)}
+.spbtns button small{font-family:var(--f-num);font-size:13px;color:var(--boardmuted);font-variant-numeric:tabular-nums;min-height:1em}
+.spbtns button.got{background:color-mix(in srgb,var(--p-group) 14%,transparent);border-color:color-mix(in srgb,var(--p-group) 55%,transparent)}
+.spbtns button.got span{color:var(--p-group)}
+.spbtns button.wait{opacity:.45}
+.spbtns button:active{transform:scale(.97)}
+dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
+#spGroup{width:100%;font-weight:600}
+.sptable{overflow-x:auto}
+.sptable table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:14px}
+.sptable th,.sptable td{padding:7px 10px;border-bottom:1px solid var(--line2);text-align:right;white-space:nowrap}
+.sptable th:first-child,.sptable td:first-child{text-align:left;color:var(--muted)}
+.sptable thead th{font-size:12px;color:var(--muted);font-weight:600}
+.sptable td b{font-family:var(--f-num);font-size:18px}
+.sptable td small{color:var(--muted);margin-left:4px}
+.sptable td small.slow{color:var(--danger)}.sptable td small.fast{color:var(--ok)}
+.sptable tfoot td{font-weight:700;border-bottom:0;border-top:2px solid var(--line)}
+.spnote{color:var(--muted);font-size:12px;max-width:520px}
+.names{display:grid;gap:4px;flex-basis:100%;font-size:12px;color:var(--muted)}
+.names input{width:100%;background:var(--surface)}
+@media (max-width:759px){.spbtns{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))}.spbtns button span{font-size:20px}}
 #voiceHint.warn{color:var(--danger);font-size:13px;line-height:1.6}
 #cVoice{max-width:100%}
 .sheet footer{display:flex;justify-content:space-between;gap:8px;padding:0 20px 20px}
@@ -323,6 +352,14 @@ dialog.sheet::backdrop{background:rgba(4,16,24,.5);-webkit-backdrop-filter:blur(
 </head>
 <body>
 <div class="toast" id="toast" role="status" hidden></div>
+<dialog class="sheet wide" id="spDlg" aria-labelledby="spTitle">
+  <header>
+    <div><h2 id="spTitle">到边成绩</h2><p id="spSub"></p></div>
+    <button type="button" class="x" id="spClose" aria-label="关闭">✕</button>
+  </header>
+  <div class="cfgbody"><select id="spGroup" aria-label="选择组"></select><div class="sptable" id="spBody"></div></div>
+  <footer><span class="spnote">成绩 = 点「到边」的时刻 − 这个学生的出发时刻；括号里是和目标时间的差。</span><button type="button" class="primary" id="spDone">关闭</button></footer>
+</dialog>
     <dialog class="sheet" id="saveDlg" aria-labelledby="saveTitle">
       <header>
         <div><h2 id="saveTitle">保存到计划库</h2><p id="saveSub"></p></div>
@@ -423,6 +460,10 @@ dialog.sheet::backdrop{background:rgba(4,16,24,.5);-webkit-backdrop-filter:blur(
           <div class="clockwrap"><div class="clock" id="clock">0:00</div></div>
           <div class="bar"><span id="bar"></span></div>
           <div class="dots" id="dots"></div>
+          <div class="splits" id="splits" hidden>
+            <div class="sphead"><span>到边计时 <small id="spRep"></small></span><span class="spact"><button type="button" id="spUndo">撤销上一次</button><button type="button" id="spTable">成绩表</button></span></div>
+            <div class="spbtns" id="spBtns"></div>
+          </div>
           <div class="hr" id="hr" hidden>
             <div><strong>测心率</strong><div class="msg">10 秒脉搏需在 30 次以下才能出发</div></div>
             <div class="hrclock" id="hrclock">10</div>
@@ -506,7 +547,9 @@ dialog.sheet::backdrop{background:rgba(4,16,24,.5);-webkit-backdrop-filter:blur(
             <small>例：每 10 秒、从剩 30 秒开始 → 报「30 秒」「20 秒」「10 秒」，最后 5 秒报「五、四、三、二、一」。手动计时的组按已游秒数报。</small></div>
           <label class="tg"><input type="checkbox" id="m-stagger"><span class="sw" aria-hidden="true"></span><span><b>间隔出发</b><small>同一道的学生按顺序依次出发</small></span></label>
           <div class="opt" id="opt-stagger">每隔 <input type="number" id="sGap" min="1" max="60" inputmode="numeric"> 秒出发一人，每道 <input type="number" id="sN" min="2" max="10" inputmode="numeric"> 人
-            <small>每趟开始时 1 号随出发哨出发，之后每隔设定秒数报「2 号出发」「3 号出发」……</small></div>
+            <small>每趟开始时 1 号随出发哨出发，之后每隔设定秒数报「2 号出发」「3 号出发」……</small>
+            <label class="names">学生名字（可选，按出发顺序，用空格或逗号隔开）<input type="text" id="sNames" placeholder="例：小明 小红 小刚"></label>
+            <small>训练计时页会出现每个学生的「到边」按钮：学生到边时点他的名字，自动扣掉他晚出发的秒数，记下他自己的成绩。电脑上也可以按数字键 1–9、0（第 10 人）。</small></div>
         </div>
         <div class="grp">
           <span class="gl">声音</span>
@@ -671,7 +714,7 @@ function whistle(t,dur,base){
 }
 /* Settings + voice */
 const CKEY='swim-cue-v1';
-const cfg=Object.assign({count:true,stagger:false,every:5,from:30,gapSec:5,swimmers:3,sound:'both',src:'pack'},(()=>{try{return JSON.parse(localStorage.getItem(CKEY))||{}}catch(e){return{}}})());
+const cfg=Object.assign({count:true,stagger:false,names:'',every:5,from:30,gapSec:5,swimmers:3,sound:'both',src:'pack'},(()=>{try{return JSON.parse(localStorage.getItem(CKEY))||{}}catch(e){return{}}})());
 if(!(cfg.v>=5)){if(!(cfg.v>=2))cfg.sound='both';if(!(cfg.v>=3))delete cfg.voice;cfg.src='pack';cfg.count=cfg.mode!=='stagger'&&cfg.mode!=='off';cfg.stagger=cfg.mode==='stagger';delete cfg.mode;cfg.v=5;try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
 if(cfg.from>60){cfg.from=60;try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
 function saveCfg(){try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
@@ -791,6 +834,8 @@ function staggerCue(n){notify(()=>beep(1320,350),n+' 号出发')}
 
 /* ---------- Timer engine ---------- */
 function go(idx,{auto=false,overflow=0}={}){
+  const prev=steps[si];
+  if(prev&&(prev.phase==='swim'||prev.phase==='free'))lastSwimMs=auto&&prev.dur?prev.dur*1000:elapsed();
   si=Math.max(0,Math.min(steps.length-1,idx));
   acc=auto?overflow:0;segStart=now();lastCue=null;stagDone=1;
   const st=steps[si];
@@ -877,6 +922,7 @@ function render(force){
     $('runtot').textContent=(st.phase==='done'?plan.length:st.i+1)+' / '+plan.length+' 组 · '+doneM+' / '+totalDist()+' 米';
     $('runbar').style.width=Math.min(100,doneM/tot*100)+'%';
   }
+  renderSplits(force);
   const d=new Date();$('runclock').textContent=d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
   if(!$('hr').hidden&&hrEnd)$('hrclock').textContent=Math.max(0,Math.ceil((hrEnd-now())/1000));
 }
@@ -1015,7 +1061,9 @@ function defaultName(){return dstr(Date.now())+' 计划 · '+meters(plan)+' 米'
 function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2600)}
 function startRecord(){
   if(curRec||!plan.length)return;
-  const r={id:uid(),at:Date.now(),name:dstr(Date.now(),true)+' 训练',plan:clone(plan),done:false};
+  spLast=null;
+  const r={id:uid(),at:Date.now(),name:dstr(Date.now(),true)+' 训练',plan:clone(plan),done:false,splits:{},gap:cfg.gapSec,names:swimmerNames()};
+  splitsData=r.splits;
   lib.records.unshift(r);lib.records=lib.records.slice(0,300);curRec=r.id;saveLib();
 }
 function updateRecord(){if(!curRec)return;const r=lib.records.find(x=>x.id===curRec);if(r){r.plan=clone(plan);saveLib()}}
@@ -1057,7 +1105,16 @@ function renderLib(){
       const fin=()=>{const v=inp.value.trim();if(v)e.name=v;saveLib();renderLib()};inp.onblur=fin;inp.onkeydown=k=>{if(k.key==='Enter')inp.blur();if(k.key==='Escape'){inp.value=e.name;inp.blur()}}});
     btn('删除','del',b=>{if(!b.dataset.armed){b.dataset.armed='1';b.textContent='再点一次确认删除';setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent='删除'}},3000);return}
       const arr=libTab==='plans'?lib.plans:lib.records;arr.splice(arr.indexOf(e),1);if(e.id===curRec)curRec=null;saveLib();renderLib()});
-    li.append(h,meta,det,acts);ol.appendChild(li);
+    if(e.splits&&Object.keys(e.splits).length){
+      const d2=document.createElement('details');const s2=document.createElement('summary');s2.textContent='查看到边成绩';d2.appendChild(s2);
+      const box=document.createElement('div');box.className='sptable';
+      [...new Set(Object.keys(e.splits).map(k=>+k.split('-')[0]))].sort((a,b)=>a-b).forEach(gi=>{
+        const t=document.createElement('p');t.style.margin='10px 0 4px';t.style.fontWeight='600';t.textContent='第 '+(gi+1)+' 组 · '+(e.plan[gi]?shortName(e.plan[gi]):'');box.appendChild(t);
+        box.appendChild(splitTable(e.plan[gi],gi,e.splits,e.names||[]));
+      });
+      d2.appendChild(box);det.after(d2);li.append(h,meta,det,d2,acts);
+    }else li.append(h,meta,det,acts);
+    ol.appendChild(li);
   });
 }
 document.querySelectorAll('input[name=libtab]').forEach(r=>r.onchange=()=>{libTab=r.value;renderLib()});
@@ -1071,6 +1128,81 @@ const closeSave=()=>{const d=$('saveDlg');try{d.close()}catch(e){d.removeAttribu
 $('saveClose').onclick=closeSave;$('saveDlg').addEventListener('click',e=>{if(e.target===$('saveDlg'))closeSave()});
 $('saveOk').onclick=()=>{const name=$('saveName').value.trim()||defaultName();lib.plans.unshift({id:uid(),name,plan:clone(plan),created:Date.now()});saveLib();closeSave();toast('已保存「'+name+'」到计划库')};
 $('saveName').onkeydown=e=>{if(e.key==='Enter')$('saveOk').click()};
+
+/* ---------- Arrival (到边) timing for staggered starts ---------- */
+let lastSwimMs=0,splitsData={},spLast=null,lastSpKey='';
+function swimmerNames(){const raw=(cfg.names||'').split(/[\s,，、;；]+/).filter(Boolean);return Array.from({length:cfg.swimmers},(_,k)=>raw[k]||((k+1)+' 号'))}
+// which rep the coach is timing right now, and ms since that rep's first swimmer left
+function repContext(){
+  const st=steps[si];if(!st||st.i<0)return null;
+  if(st.phase==='swim'||st.phase==='free')return{i:st.i,rep:st.rep,ms:elapsed()};
+  if(st.phase==='rest'||st.phase==='group')return{i:st.i,rep:st.rep,ms:lastSwimMs+elapsed()};
+  return null;
+}
+const fmtSplit=t=>t<60?t.toFixed(1)+'"':Math.floor(t/60)+"'"+(t%60).toFixed(1).padStart(4,'0')+'"';
+function tapSplit(n){
+  if(!cfg.stagger||n<1||n>cfg.swimmers)return;
+  const c=repContext();if(!c)return;
+  const t=Math.round((c.ms/1000-(n-1)*cfg.gapSec)*10)/10;
+  if(t<=0){toast(swimmerNames()[n-1]+' 还没出发');return}
+  const key=c.i+'-'+c.rep;const arr=splitsData[key]||(splitsData[key]=[]);
+  spLast={key,n,prev:arr[n-1]};arr[n-1]=t;
+  if(curRec)saveLib();
+  try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}
+  renderSplits(true);
+}
+function renderSplits(force){
+  const box=$('splits');const c=cfg.stagger?repContext():null;
+  box.hidden=!c;if(!c)return;
+  const it=plan[c.i],key=c.i+'-'+c.rep,arr=splitsData[key]||[],names=swimmerNames();
+  const sk=key+'|'+cfg.swimmers+'|'+names.join(',');
+  if(force||sk!==lastSpKey){
+    lastSpKey=sk;$('spRep').textContent='第 '+(c.i+1)+' 组 · 第 '+c.rep+' 趟';
+    const wrap=$('spBtns');wrap.innerHTML='';
+    names.forEach((nm,k)=>{const b=document.createElement('button');b.type='button';b.dataset.n=k+1;
+      b.innerHTML='<b></b><span></span><small></small>';b.querySelector('b').textContent=nm;
+      b.onclick=()=>tapSplit(k+1);wrap.appendChild(b)});
+  }
+  $('spBtns').querySelectorAll('button').forEach(b=>{
+    const n=+b.dataset.n,t=arr[n-1],left=c.ms/1000-(n-1)*cfg.gapSec;
+    b.classList.toggle('got',t!=null);b.classList.toggle('wait',t==null&&left<=0);
+    b.querySelector('span').textContent=t!=null?fmtSplit(t):left>0?'到边':'未出发';
+    b.querySelector('small').textContent=t!=null&&it&&it.target>0?((t-it.target>=0?'+':'−')+Math.abs(t-it.target).toFixed(1)):'';
+    b.setAttribute('aria-label',names[n-1]+(t!=null?' 成绩 '+fmtSplit(t):' 到边'));
+  });
+  $('spUndo').disabled=!spLast;
+}
+function splitTable(it,gi,data,names){
+  const reps=it?it.reps:Math.max(...Object.keys(data).filter(k=>+k.split('-')[0]===gi).map(k=>+k.split('-')[1]));
+  const cols=Math.max(names.length,...Object.keys(data).filter(k=>+k.split('-')[0]===gi).map(k=>data[k].length));
+  const nm=k=>names[k]||((k+1)+' 号');
+  const tb=document.createElement('table');
+  let h='<thead><tr><th>趟</th>';for(let k=0;k<cols;k++)h+='<th></th>';h+='</tr></thead><tbody>';
+  const sums=Array(cols).fill(0),cnt=Array(cols).fill(0),best=Array(cols).fill(Infinity);
+  for(let r=1;r<=reps;r++){h+='<tr><td>第 '+r+' 趟</td>';const a=data[gi+'-'+r]||[];
+    for(let k=0;k<cols;k++){const t=a[k];if(t!=null){sums[k]+=t;cnt[k]++;best[k]=Math.min(best[k],t);
+      const df=it&&it.target>0?t-it.target:null;h+='<td><b>'+fmtSplit(t)+'</b>'+(df!=null?'<small class="'+(df>0?'slow':'fast')+'">'+(df>=0?'+':'−')+Math.abs(df).toFixed(1)+'</small>':'')+'</td>'}else h+='<td>—</td>'}
+    h+='</tr>'}
+  h+='</tbody><tfoot><tr><td>平均</td>';for(let k=0;k<cols;k++)h+='<td>'+(cnt[k]?'<b>'+fmtSplit(Math.round(sums[k]/cnt[k]*10)/10)+'</b>':'—')+'</td>';
+  h+='</tr><tr><td>最快</td>';for(let k=0;k<cols;k++)h+='<td>'+(cnt[k]?fmtSplit(best[k]):'—')+'</td>';h+='</tr></tfoot>';
+  tb.innerHTML=h;tb.querySelectorAll('thead th').forEach((th,k)=>{if(k)th.textContent=nm(k-1)});
+  return tb;
+}
+function openSpTable(gi){
+  const keys=Object.keys(splitsData);const groups=[...new Set(keys.map(k=>+k.split('-')[0]))].sort((a,b)=>a-b);
+  const c=repContext();if(gi==null)gi=c?c.i:(groups[groups.length-1]??0);
+  const g=$('spGroup');g.innerHTML='';
+  const opts=[...new Set([...groups,gi])].filter(x=>plan[x]).sort((a,b)=>a-b);
+  opts.forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent='第 '+(k+1)+' 组 · '+shortName(plan[k])+(groups.includes(k)?'':'（还没有成绩）');if(k===gi)o.selected=true;g.appendChild(o)});
+  g.onchange=()=>openSpTable(+g.value);
+  $('spBody').innerHTML='';if(plan[gi])$('spBody').appendChild(splitTable(plan[gi],gi,splitsData,swimmerNames()));
+  $('spSub').textContent='间隔 '+cfg.gapSec+' 秒出发 · 每道 '+cfg.swimmers+' 人';
+  const d=$('spDlg');if(!d.open){try{d.showModal()}catch(e){d.setAttribute('open','')}}
+}
+$('spTable').onclick=()=>openSpTable();
+const closeSp=()=>{const d=$('spDlg');try{d.close()}catch(e){d.removeAttribute('open')}};
+$('spClose').onclick=closeSp;$('spDone').onclick=closeSp;$('spDlg').addEventListener('click',e=>{if(e.target===$('spDlg'))closeSp()});
+$('spUndo').onclick=()=>{if(!spLast)return;const a=splitsData[spLast.key];if(a){if(spLast.prev==null)delete a[spLast.n-1];else a[spLast.n-1]=spLast.prev}spLast=null;if(curRec)saveLib();renderSplits(true);toast('已撤销')};
 
 /* ---------- Routing ---------- */
 (function(){
@@ -1172,6 +1304,7 @@ function cfgSummary(){
   $('opt-count').hidden=!cfg.count;$('opt-stagger').hidden=!cfg.stagger;
 }
 function cfgInit(){
+  $('sNames').value=cfg.names||'';$('sNames').onchange=()=>{cfg.names=$('sNames').value.trim();saveCfg();lastSpKey=''};
   $('m-count').checked=cfg.count;$('m-stagger').checked=cfg.stagger;$('cEvery').value=cfg.every;$('cFrom').value=cfg.from;$('sGap').value=cfg.gapSec;$('sN').value=cfg.swimmers;$('cSound').value=cfg.sound;cfgSummary();
   ['count','stagger'].forEach(k=>{$('m-'+k).onchange=()=>{cfg[k]=$('m-'+k).checked;saveCfg();cfgSummary()}});
   [['cEvery','every',1,60],['cFrom','from',1,60],['sGap','gapSec',1,60],['sN','swimmers',2,10]].forEach(([id,k,lo,hi])=>{
@@ -1193,10 +1326,11 @@ $('addCustom').onclick=()=>{plan.push({custom:true,title:'',reps:1,dist:0,stroke
 $('addItem').onclick=()=>{const last=plan[plan.length-1];plan.push(last?{...clone(last),note:''}:{reps:4,dist:50,stroke:'自由泳',kind:'完整配合',target:45,rest:20,groupRest:0,note:''});changed();
   const items=document.querySelectorAll('#cards .item');items[items.length-1].scrollIntoView({behavior:'smooth',block:'center'})};
 document.addEventListener('keydown',e=>{
-  if(location.hash!=='#run'||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||$('qe').open||$('cfg').open||$('saveDlg').open)return;
+  if(location.hash!=='#run'||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||$('qe').open||$('cfg').open||$('saveDlg').open||$('spDlg').open)return;
   if(e.code==='Space'){e.preventDefault();toggle()}
   else if(e.key==='ArrowRight'){audio();go(si+1)}
   else if(e.key==='ArrowLeft'){audio();go(si-1)}
+  else if(/^[0-9]$/.test(e.key)&&cfg.stagger){tapSplit(e.key==='0'?10:+e.key)}
 });
 
 /* ---------- Standalone rest stopwatch ---------- */
