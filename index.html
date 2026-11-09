@@ -363,10 +363,109 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
 }
 @media (max-height:600px) and (min-width:760px){.dots,.note,.topline{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* ===== Run view layout by importance =====
+   1 scoreboard (clock, phase, rep, start/pause) - biggest, always in view
+   2 arrivals (live taps during staggered starts) - next to / right under the clock
+   3 progress + rest stopwatch - tabbed reference panel
+   4 tools (adjust plan, order, reminders, sound, restart, fullscreen) - slim toolbar above */
+.runtop{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.rt-prog{display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 280px;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rt-prog .tbar{flex:1;max-width:280px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.rt-prog .tbar span{display:block;height:100%;width:0;background:var(--accent);transition:width .4s}
+.rt-clock{font-family:var(--f-num);font-size:17px;font-weight:700;color:var(--fg)}
+.rt-tools{display:flex;flex-wrap:wrap;gap:6px}
+.tbtn{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:12px;font-size:14px;font-weight:600;background:var(--surface);max-width:240px}
+.tbtn .tl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbtn svg{width:18px;height:18px;flex:none}
+.tbtn.hl{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.tbtn[aria-pressed="false"]{color:var(--muted)}
+.tbtn[aria-pressed="false"] svg{opacity:.45}
+@media (max-width:1279px){.tbtn .tl:not(.keep){display:none}.tbtn:not(.hl){padding:9px}}
+
+.run{display:grid;gap:16px;grid-template-columns:minmax(0,1fr);align-items:start}
+.side{display:grid;gap:14px;align-content:start;align-items:start;min-width:0;position:static;max-height:none;overflow:visible}
+@media (min-width:1024px){
+  .run{grid-template-columns:minmax(0,1fr) 340px}
+  .board{min-height:calc(100dvh - 44px - 56px)}
+  .side{position:sticky;top:18px;max-height:calc(100dvh - 36px);overflow-y:auto}
+}
+@media (min-width:760px) and (max-width:1023px){
+  .side{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+}
+.board .inner{gap:clamp(8px,1.6vh,14px)}
+.titles{display:grid;gap:2px}
+.meter{display:grid;gap:10px}
+.board .controls{margin-top:auto}
+.board .next{margin-top:2px}
+.kbd{margin:0;text-align:center;color:var(--boardmuted);font-size:12px;opacity:.75}
+.kbd kbd{font-family:var(--f-num);border:1px solid var(--boardline);border-radius:5px;padding:0 5px;font-size:12px;margin:0 1px}
+
+/* arrivals: same dark "live" surface as the scoreboard */
+.arrive{align-content:start;--ph:var(--p-swim);background:var(--board);color:var(--boardfg);border:1px solid var(--boardline);border-radius:18px;padding:12px;display:grid;gap:10px;box-shadow:0 8px 30px rgba(4,18,26,.18)}
+.arrive .sphead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.arrive .spt{display:grid;line-height:1.2}
+.arrive .spt b{font-size:15px}
+.arrive .spt small{color:var(--boardmuted);font-size:12px;font-family:var(--f-num);letter-spacing:.02em}
+.arrive .spact{display:flex;gap:4px}
+.arrive .spact button{background:transparent;border:1px solid var(--boardline);color:var(--boardmuted);font-size:12px;padding:5px 9px;border-radius:999px}
+.arrive .spact button:hover{color:var(--boardfg);border-color:var(--boardmuted)}
+.arrive .spbtns{grid-template-columns:repeat(2,minmax(0,1fr))}
+.arrive .spbtns button{min-height:76px;align-content:center}
+@media (min-width:760px) and (max-width:1023px){.arrive .spbtns{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}}
+
+.tabs{display:grid;gap:12px}
+.tabbar{grid-template-columns:repeat(2,minmax(0,1fr))}
+.panehead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.panehead small{color:var(--muted);font-size:12px}
+.panehead a{font-size:13px;font-weight:600;color:var(--accent);text-decoration:none}
+#pane-iv .iv{grid-template-columns:1fr}
+#pane-iv .ivclock{font-size:64px;text-align:center}
+#pane-iv .ivctl{justify-content:center}
+
+.lineup .tg{background:var(--sunk);border:1px solid var(--line2);border-radius:14px;padding:10px 12px}
+.lineup .lusteps{grid-template-columns:1fr 1fr}
+@media (max-width:520px){.lineup .lusteps{grid-template-columns:1fr}}
+
+@media (max-width:759px){
+  .runtop{margin-bottom:10px;gap:8px}
+  .rt-prog{flex-basis:100%;font-size:13px}
+  .rt-tools{width:100%;justify-content:space-between}
+  .tbtn.hl .tl{display:inline}
+  .board{border-radius:18px}
+  .board .inner{padding:12px 14px 14px}
+  .clock{font-size:clamp(84px,25vw,160px)}
+  .board .kbd,.board .dots{display:none}
+  /* primary controls pinned above the tab bar, in thumb reach */
+  .board .controls{position:fixed;left:0;right:0;bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px));z-index:25;margin:0;
+    padding:8px max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px));background:var(--board);border-top:1px solid var(--boardline);box-shadow:0 -6px 18px rgba(0,0,0,.2)}
+  #view-run{padding-bottom:calc(var(--tabh) + 96px + env(safe-area-inset-bottom,0px))}
+  .arrive .spbtns{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+  .arrive .spbtns button{min-height:64px}
+  .rail{z-index:30}
+}
 </style>
 </head>
 <body>
 <div class="toast" id="toast" role="status" hidden></div>
+<dialog class="sheet" id="luDlg" aria-labelledby="luTitle">
+  <header>
+    <div><h2 id="luTitle">出发顺序</h2><p>同一道的学生按顺序间隔出发，每人一个「到边」按钮，自动算个人成绩。</p></div>
+    <button type="button" class="x" id="luClose" aria-label="关闭">✕</button>
+  </header>
+  <div class="cfgbody lineup">
+    <label class="tg"><input type="checkbox" id="luOn"><span class="sw" aria-hidden="true"></span><span><b>间隔出发</b><small>关掉后只报「出发」，没有到边按钮</small></span></label>
+          <p class="luoff" id="luOff">打开后，同一道的学生按顺序间隔出发，每人有自己的「到边」按钮，自动算出个人成绩。</p>
+          <div id="luBody">
+            <div class="lusteps">
+              <div class="lus"><span>间隔</span><button type="button" id="luGapM" aria-label="间隔减 1 秒">−</button><output id="luGap"></output><button type="button" id="luGapP" aria-label="间隔加 1 秒">+</button></div>
+              <div class="lus"><span>每道</span><button type="button" id="luNM" aria-label="人数减 1">−</button><output id="luN"></output><button type="button" id="luNP" aria-label="人数加 1">+</button></div>
+            </div>
+            <ol class="luslots" id="luSlots"></ol>
+            <div class="row"><button type="button" id="luRoster">管理学员名单</button><button type="button" id="luFill">按名单顺序填入</button></div>
+          </div>
+  </div>
+  <footer><span></span><button type="button" class="primary" id="luDone">完成</button></footer>
+</dialog>
 <dialog class="sheet" id="rosterDlg" aria-labelledby="rosterTitle">
   <header>
     <div><h2 id="rosterTitle">学员名单</h2><p>一行一个名字。保存后在「间隔出发」卡片的下拉框里直接选。</p></div>
@@ -462,31 +561,34 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
     <p class="libnote">计划库保存在这台设备的浏览器里；清除浏览器数据会一起清掉，换设备不会同步。</p>
   </section>
 
-  <!-- RUN VIEW -->
+  <!-- RUN VIEW: toolbar (secondary) / scoreboard (primary) / side: arrivals (live) + progress·stopwatch (reference) -->
   <section class="view" id="view-run" aria-label="训练计时" hidden>
+    <div class="runtop">
+      <div class="rt-prog"><span id="runtot"></span><div class="tbar"><span id="runbar"></span></div><span class="rt-clock" id="runclock"></span></div>
+      <div class="rt-tools">
+        <button type="button" id="qeBtn" class="tbtn hl" aria-label="调整计划"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span class="tl keep">调整计划</span></button>
+        <button type="button" id="luBtn" class="tbtn" aria-label="出发顺序"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="3"/><path d="M3 21v-1a6 6 0 0 1 12 0v1"/><path d="M16 4a3 3 0 0 1 0 6M21 21v-1a6 6 0 0 0-4-5.6"/></svg><span class="tl">出发顺序</span></button>
+        <button type="button" id="cfgbtn" class="tbtn" aria-label="提醒设置"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="tl" id="cfgbtnLabel">提醒设置</span></button>
+        <button type="button" id="sound" class="tbtn" aria-pressed="true" aria-label="提示音开关"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><span class="tl" id="soundLabel">提示音：开</span></button>
+        <button type="button" id="restart" class="tbtn" aria-label="重来本步"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span class="tl">重来本步</span></button>
+        <button type="button" id="fs" class="tbtn" aria-label="全屏"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="tl">全屏</span></button>
+      </div>
+    </div>
+
     <div class="run">
       <main class="board ph-ready" id="panel">
         <div class="lanes" aria-hidden="true"></div>
         <div class="inner">
-          <div class="topline">
-            <div class="tot"><span id="runtot"></span><div class="tbar"><span id="runbar"></span></div></div>
-            <span id="runclock"></span>
-          </div>
           <div class="row1">
             <span class="chip"><i></i><span id="chip">准备</span></span>
             <span class="rep" id="rep"></span>
           </div>
-          <div>
+          <div class="titles">
             <h2 class="title" id="title"></h2>
             <p class="note" id="note"></p>
           </div>
           <div class="clockwrap"><div class="clock" id="clock">0:00</div></div>
-          <div class="bar"><span id="bar"></span></div>
-          <div class="dots" id="dots"></div>
-          <div class="splits" id="splits" hidden>
-            <div class="sphead"><span>到边计时 <small id="spRep"></small></span><span class="spact"><button type="button" id="spUndo">撤销上一次</button><button type="button" id="spTable">成绩表</button></span></div>
-            <div class="spbtns" id="spBtns"></div>
-          </div>
+          <div class="meter"><div class="bar"><span id="bar"></span></div><div class="dots" id="dots"></div></div>
           <div class="hr" id="hr" hidden>
             <div><strong>测心率</strong><div class="msg">10 秒脉搏需在 30 次以下才能出发</div></div>
             <div class="hrclock" id="hrclock">10</div>
@@ -497,36 +599,34 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
             <span class="hint" id="hint"></span>
           </div>
           <div class="controls">
-            <button type="button" id="prev" aria-label="上一步"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg><span class="lbltxt">上一步</span></button>
+            <button type="button" id="prev" aria-label="上一步"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span class="lbltxt">上一步</span></button>
             <button type="button" class="btn-main" id="start">开始</button>
-            <button type="button" id="skip" aria-label="下一步"><span class="lbltxt">下一步</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+            <button type="button" id="skip" aria-label="下一步"><span class="lbltxt">下一步</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
           </div>
-          <div class="tools">
-            <button type="button" id="qeBtn" class="ico qe-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>调整计划</button>
-            <button type="button" id="restart" class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>重来本步</button>
-            <button type="button" id="sound" class="ico" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><span id="soundLabel">提示音：开</span></button>
-            <button type="button" id="cfgbtn" class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span id="cfgbtnLabel">提醒设置</span></button>
-            <button type="button" id="fs" class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>全屏</button>
-            <span class="kbd"><kbd>空格</kbd> 开始/暂停 · <kbd>→</kbd> 下一步 · <kbd>←</kbd> 上一步</span>
-          </div>
+          <p class="kbd"><kbd>空格</kbd> 开始/暂停　<kbd>←</kbd><kbd>→</kbd> 上一步/下一步　<kbd>1</kbd>–<kbd>9</kbd> 记到边</p>
         </div>
       </main>
 
       <div class="side">
-        <section class="scard lineup" aria-label="间隔出发">
-          <h2>间隔出发 <label class="tg mini" title="打开 / 关闭间隔出发"><input type="checkbox" id="luOn"><span class="sw" aria-hidden="true"></span><span class="vh">间隔出发开关</span></label></h2>
-          <p class="luoff" id="luOff">打开后，同一道的学生按顺序间隔出发，每人有自己的「到边」按钮，自动算出个人成绩。</p>
-          <div id="luBody">
-            <div class="lusteps">
-              <div class="lus"><span>间隔</span><button type="button" id="luGapM" aria-label="间隔减 1 秒">−</button><output id="luGap"></output><button type="button" id="luGapP" aria-label="间隔加 1 秒">+</button></div>
-              <div class="lus"><span>每道</span><button type="button" id="luNM" aria-label="人数减 1">−</button><output id="luN"></output><button type="button" id="luNP" aria-label="人数加 1">+</button></div>
-            </div>
-            <ol class="luslots" id="luSlots"></ol>
-            <div class="row"><button type="button" class="ghost" id="luRoster">管理学员名单</button><button type="button" class="ghost" id="luFill">按名单顺序填入</button></div>
+        <section class="arrive" id="splits" hidden aria-label="到边计时">
+          <div class="sphead">
+            <div class="spt"><b>到边计时</b><small id="spRep"></small></div>
+            <div class="spact"><button type="button" id="spUndo">撤销</button><button type="button" id="spTable">成绩表</button><button type="button" id="spOrder">顺序</button></div>
           </div>
+          <div class="spbtns" id="spBtns"></div>
         </section>
-        <section class="scard" aria-label="间歇秒表">
-          <h2>间歇秒表 <small id="ivmode">倒计时 25"</small></h2>
+
+        <section class="scard tabs">
+          <div class="seg tabbar" role="tablist" aria-label="侧栏内容">
+            <label><input type="radio" name="sidetab" value="prog" id="st-prog" checked><span>训练进度</span></label>
+            <label><input type="radio" name="sidetab" value="iv" id="st-iv"><span>间歇秒表</span></label>
+          </div>
+          <div class="pane prog" id="pane-prog">
+            <div class="panehead"><small>点组名跳转 · 铅笔改这一组</small><a href="#plan">修改计划</a></div>
+            <ol id="proglist"></ol>
+          </div>
+          <div class="pane" id="pane-iv" hidden>
+            <div class="panehead"><small id="ivmode">倒计时 25"</small></div>
           <div class="iv">
             <div class="ivclock" id="ivclock">0:25</div>
             <div class="ivctl">
@@ -541,11 +641,7 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
               <button type="button" id="ivreset">重置</button>
             </div>
           </div>
-        </section>
-
-        <section class="scard prog" aria-label="训练进度">
-          <h2>训练进度 <a href="#plan">修改计划</a></h2>
-          <ol id="proglist"></ol>
+          </div>
         </section>
       </div>
     </div>
@@ -1276,13 +1372,20 @@ const closeRoster=()=>{const d=$('rosterDlg');try{d.close()}catch(e){d.removeAtt
 $('rosterClose').onclick=closeRoster;$('rosterDlg').addEventListener('click',e=>{if(e.target===$('rosterDlg'))closeRoster()});
 $('rosterSave').onclick=()=>{cfg.roster=[...new Set($('rosterText').value.split(/\n/).map(x=>x.trim()).filter(Boolean))].slice(0,60);closeRoster();lineupChanged();toast('名单已保存，共 '+cfg.roster.length+' 人')};
 renderLineup();
+const openLu=()=>{const d=$('luDlg');renderLineup();if(!d.open){try{d.showModal()}catch(e){d.setAttribute('open','')}}};
+const closeLu=()=>{const d=$('luDlg');try{d.close()}catch(e){d.removeAttribute('open')}};
+$('luBtn').onclick=openLu;$('spOrder').onclick=openLu;$('luClose').onclick=closeLu;$('luDone').onclick=closeLu;
+$('luDlg').addEventListener('click',e=>{if(e.target===$('luDlg'))closeLu()});
+document.querySelectorAll('input[name=sidetab]').forEach(r=>r.onchange=()=>{$('pane-prog').hidden=r.value!=='prog'&&r.checked;$('pane-iv').hidden=r.value!=='iv'&&r.checked;
+  const v=document.querySelector('input[name=sidetab]:checked').value;$('pane-prog').hidden=v!=='prog';$('pane-iv').hidden=v!=='iv'});
 
 /* ---------- Routing ---------- */
 (function(){
   const app=document.querySelector('.app'),b=$('railToggle');
-  const set=c=>{app.classList.toggle('collapsed',c);b.setAttribute('aria-expanded',!c);b.title=c?'展开侧栏':'收起侧栏';b.querySelector('.txt').textContent=c?'展开侧栏':'收起侧栏';try{localStorage.setItem('swim-rail',c?'1':'0')}catch(e){}};
-  let c=false;try{c=localStorage.getItem('swim-rail')==='1'}catch(e){}
-  set(c);b.onclick=()=>set(!app.classList.contains('collapsed'));
+  const set=(c,save=true)=>{app.classList.toggle('collapsed',c);b.setAttribute('aria-expanded',!c);b.title=c?'展开侧栏':'收起侧栏';b.querySelector('.txt').textContent=c?'展开侧栏':'收起侧栏';if(save)try{localStorage.setItem('swim-rail',c?'1':'0')}catch(e){}};
+  // tablets and small laptops start with the slim rail so the scoreboard gets the width
+  let c=innerWidth<1200;try{const v=localStorage.getItem('swim-rail');if(v!==null)c=v==='1'}catch(e){}
+  set(c,false);b.onclick=()=>set(!app.classList.contains('collapsed'));
 })();
 /* ---------- Quick edit during training ---------- */
 let qeI=0;
@@ -1380,7 +1483,7 @@ $('cfg').addEventListener('click',e=>{if(e.target===$('cfg'))closeCfg()});
 function cfgSummary(){
   const parts=[];if(cfg.count)parts.push('每 '+cfg.every+' 秒倒数（剩 '+cfg.from+' 秒起）');if(cfg.stagger)parts.push('间隔 '+cfg.gapSec+' 秒出发 · 每道 '+cfg.swimmers+' 人');const m=parts.length?parts.join(' + '):'只在切换时提醒';
   const snd={whistle:'哨声',voice:'语音播报',both:'哨声 + 语音'}[cfg.sound];
-  $('cfgsum').textContent=m+' · '+snd;$('cfgbtnLabel').textContent='提醒：'+([cfg.count?'每 '+cfg.every+' 秒':'',cfg.stagger?'间隔出发':''].filter(Boolean).join('+')||'切换时')+' · '+snd;
+  $('cfgsum').textContent=m+' · '+snd;$('cfgbtnLabel').textContent='提醒设置';$('cfgbtn').title='提醒：'+m+' · '+snd;
   $('opt-count').hidden=!cfg.count;$('opt-stagger').hidden=!cfg.stagger;
   $('m-stagger').checked=cfg.stagger;$('sGap').value=cfg.gapSec;$('sN').value=cfg.swimmers;
   if(typeof renderLineup==='function')renderLineup();
@@ -1407,7 +1510,7 @@ $('addCustom').onclick=()=>{plan.push({custom:true,title:'',reps:1,dist:0,stroke
 $('addItem').onclick=()=>{const last=plan[plan.length-1];plan.push(last?{...clone(last),note:''}:{reps:4,dist:50,stroke:'自由泳',kind:'完整配合',target:45,rest:20,groupRest:0,note:''});changed();
   const items=document.querySelectorAll('#cards .item');items[items.length-1].scrollIntoView({behavior:'smooth',block:'center'})};
 document.addEventListener('keydown',e=>{
-  if(location.hash!=='#run'||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||$('qe').open||$('cfg').open||$('saveDlg').open||$('spDlg').open||$('rosterDlg').open)return;
+  if(location.hash!=='#run'||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||$('qe').open||$('cfg').open||$('saveDlg').open||$('spDlg').open||$('rosterDlg').open||$('luDlg').open)return;
   if(e.code==='Space'){e.preventDefault();toggle()}
   else if(e.key==='ArrowRight'){audio();go(si+1)}
   else if(e.key==='ArrowLeft'){audio();go(si-1)}
