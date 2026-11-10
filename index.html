@@ -445,12 +445,13 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
 }
 /* Safari/iPad fixes: never let the clock row shrink below the digits (flex-basis 0% bug),
    size the digits from the scoreboard's own width, keep button labels on one line */
-.board{container-type:inline-size}
-.clock{font-size:clamp(64px,min(36cqi,28dvh),360px);white-space:nowrap}
+/* clock size is set by fitClock() from the measured board width and screen height */
+.clockwrap{display:flex!important;align-items:center;justify-content:center}
+.clock{white-space:nowrap;line-height:1!important;display:block}
 .controls button{white-space:nowrap;min-width:0}
-@container (max-width:680px){.controls .lbltxt{display:none}}
+.board.narrow .controls .lbltxt{display:none}
 @media (hover:none) and (pointer:coarse){.board .kbd{display:none}}
-@media (max-width:759px){.clock{font-size:clamp(84px,min(34vw,36cqi),170px)}}
+
 </style>
 </head>
 <body>
@@ -1387,6 +1388,27 @@ $('luDlg').addEventListener('click',e=>{if(e.target===$('luDlg'))closeLu()});
 document.querySelectorAll('input[name=sidetab]').forEach(r=>r.onchange=()=>{$('pane-prog').hidden=r.value!=='prog'&&r.checked;$('pane-iv').hidden=r.value!=='iv'&&r.checked;
   const v=document.querySelector('input[name=sidetab]:checked').value;$('pane-prog').hidden=v!=='prog';$('pane-iv').hidden=v!=='iv'});
 
+/* ---------- Fit the clock to the real screen (works the same in Safari, Chrome, WeChat) ---------- */
+function fitClock(){
+  const board=$('panel'),inner=board.querySelector('.inner'),wrap=board.querySelector('.clockwrap'),c=$('clock');
+  if(!inner.clientWidth)return;
+  const cs=getComputedStyle(inner);
+  const w=inner.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+  const vh=window.innerHeight,phone=window.innerWidth<760;
+  // widest text is "15:00" (~2.35em in this face); height share keeps buttons on screen
+  let f=Math.min(w/2.45,vh*(phone?0.2:0.3),360);
+  f=Math.max(phone?64:72,Math.floor(f));
+  c.style.fontSize=f+'px';
+  wrap.style.minHeight=Math.ceil(f*1.02)+'px';
+  board.classList.toggle('narrow',board.clientWidth<680);
+}
+let fitRAF=0;const fitSoon=()=>{cancelAnimationFrame(fitRAF);fitRAF=requestAnimationFrame(()=>{fitClock();setTimeout(fitClock,250)})};
+window.addEventListener('resize',fitSoon);window.addEventListener('orientationchange',()=>setTimeout(fitSoon,300));
+document.addEventListener('fullscreenchange',fitSoon);document.addEventListener('webkitfullscreenchange',fitSoon);
+if(window.visualViewport)visualViewport.addEventListener('resize',fitSoon);
+try{new ResizeObserver(fitSoon).observe($('panel'))}catch(e){}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitSoon);
+
 /* ---------- Routing ---------- */
 (function(){
   const app=document.querySelector('.app'),b=$('railToggle');
@@ -1453,6 +1475,7 @@ function route(){
   const v=location.hash==='#run'?'run':location.hash==='#lib'?'lib':'plan';
   ['plan','run','lib'].forEach(k=>{$('view-'+k).hidden=v!==k;$('nav-'+k).removeAttribute('aria-current')});
   if(v==='lib')renderLib();
+  if(v==='run')fitSoon();
   $('nav-'+v).setAttribute('aria-current','page');
   window.scrollTo(0,0);
 }
