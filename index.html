@@ -468,6 +468,24 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
 .spbtns button small.fast{color:var(--p-group)}
 .spbtns button small.slow{color:#ff8a8a}
 .spbtns button span{letter-spacing:-.01em}
+.splanes{display:grid;gap:10px}
+.splane{display:grid;gap:6px}
+.splh{font-size:12px;color:var(--boardmuted);letter-spacing:.06em;padding-left:2px}
+.lineup .lanelist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.lanecard{border:1px solid var(--line);border-radius:14px;padding:10px;display:grid;gap:8px;background:var(--surface)}
+.lanehd{display:flex;align-items:center;gap:10px}
+.lanehd>b{font-size:16px;color:var(--accent);flex:none}
+.lus.mini{grid-template-columns:40px 64px 40px;padding:4px 6px}
+.lanerm{margin-left:auto;background:transparent;color:var(--danger);font-size:13px;padding:5px 10px}
+#luAddLane{justify-self:start}
+.laneh{margin:12px 0 4px;font-weight:700;color:var(--accent)}
+.lineup .lusteps{grid-template-columns:1fr!important}
+.rline{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:center}
+.rline select{width:100%}
+.rline small{grid-column:1/-1;color:var(--muted);font-size:11px}
+.arrive .sphead{flex-wrap:wrap}
+.arrive .spact button{white-space:nowrap}
+.arrive .spt{min-width:0}
 </style>
 </head>
 <body>
@@ -484,9 +502,10 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
           <div id="luBody">
             <div class="lusteps">
               <div class="lus"><span>间隔</span><button type="button" id="luGapM" aria-label="间隔减 1 秒">−</button><output id="luGap"></output><button type="button" id="luGapP" aria-label="间隔加 1 秒">+</button></div>
-              <div class="lus"><span>每道</span><button type="button" id="luNM" aria-label="人数减 1">−</button><output id="luN"></output><button type="button" id="luNP" aria-label="人数加 1">+</button></div>
+              
             </div>
-            <ol class="luslots" id="luSlots"></ol>
+            <ol class="lanelist" id="luSlots"></ol>
+            <button type="button" class="add" id="luAddLane">＋ 增加泳道（几道同时出发）</button>
             <div class="row"><button type="button" id="luRoster">管理学员名单</button><button type="button" id="luFill">按名单顺序填入</button></div>
           </div>
   </div>
@@ -640,7 +659,7 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
             <div class="spt"><b>到边计时</b><small id="spRep"></small></div>
             <div class="spact"><button type="button" id="spUndo">撤销</button><button type="button" id="spTable">成绩表</button><button type="button" id="spOrder">顺序</button></div>
           </div>
-          <div class="spbtns" id="spBtns"></div>
+          <div class="splanes" id="spBtns"></div>
         </section>
 
         <section class="scard tabs">
@@ -704,7 +723,7 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
           <div class="opt" id="opt-count">每 <input type="number" id="cEvery" min="1" max="60" inputmode="numeric"> 秒报一次，从剩 <input type="number" id="cFrom" min="1" max="60" inputmode="numeric"> 秒开始
             <small>例：每 10 秒、从剩 30 秒开始 → 报「30 秒」「20 秒」「10 秒」，最后 5 秒报「五、四、三、二、一」。手动计时的组按已游秒数报。</small></div>
           <label class="tg"><input type="checkbox" id="m-stagger"><span class="sw" aria-hidden="true"></span><span><b>间隔出发</b><small>同一道的学生按顺序依次出发</small></span></label>
-          <div class="opt" id="opt-stagger">每隔 <input type="number" id="sGap" min="1" max="60" inputmode="numeric"> 秒出发一人，每道 <input type="number" id="sN" min="2" max="10" inputmode="numeric"> 人
+          <div class="opt" id="opt-stagger">每隔 <input type="number" id="sGap" min="1" max="60" inputmode="numeric"> 秒出发一人
             <small>每趟开始时 1 号随出发哨出发，之后每隔设定秒数报「2 号出发」「3 号出发」……</small>
             <small>每个位置排谁、学员名单，在训练计时页右边的「间隔出发」卡片里用下拉框选。</small>
             <small>训练计时页会出现每个学生的「到边」按钮：学生到边时点他的名字，自动扣掉他晚出发的秒数，记下他自己的成绩。电脑上也可以按数字键 1–9、0（第 10 人）。</small></div>
@@ -875,6 +894,8 @@ const CKEY='swim-cue-v1';
 const cfg=Object.assign({count:true,stagger:false,roster:[],lineup:[],every:5,from:30,gapSec:5,swimmers:3,sound:'both',src:'pack'},(()=>{try{return JSON.parse(localStorage.getItem(CKEY))||{}}catch(e){return{}}})());
 if(!(cfg.v>=5)){if(!(cfg.v>=2))cfg.sound='both';if(!(cfg.v>=3))delete cfg.voice;cfg.src='pack';cfg.count=cfg.mode!=='stagger'&&cfg.mode!=='off';cfg.stagger=cfg.mode==='stagger';delete cfg.mode;cfg.v=5;try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
 if(typeof cfg.names==='string'){const n=cfg.names.split(/[\s,，、;；]+/).filter(Boolean);if(!cfg.roster.length)cfg.roster=n;if(!cfg.lineup.length)cfg.lineup=n.slice();delete cfg.names;try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
+if(!Array.isArray(cfg.lanes)||!cfg.lanes.length){cfg.lanes=[{n:Math.max(1,cfg.swimmers||3),lineup:(cfg.lineup||[]).slice()}];try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
+cfg.swimmers=Math.max(1,...cfg.lanes.map(l=>l.n));
 if(cfg.from>60){cfg.from=60;try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
 function saveCfg(){try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
 const secText=s=>s>=60?(s%60?Math.floor(s/60)+'分'+(s%60)+'秒':s/60+'分钟'):s+'秒';
@@ -983,10 +1004,17 @@ function cue(phase){
   else notify(()=>beep(1100,300),'准备');
 }
 const DIGITS=['','一','二','三','四','五'];
-function markCue(sec,down=true){
-  if((!cfg.count&&!cfg.stagger)||sec<1)return;
+// per-group reminder: it.rEvery 0/undefined = follow default, -1 = off, n = every n seconds; it.rFrom 0 = whole swim
+function remindRule(it){
+  if(it&&it.rEvery>0)return{on:true,every:it.rEvery,from:it.rFrom>0?it.rFrom:Infinity};
+  if(it&&it.rEvery===-1)return{on:false,off:true};
+  return{on:cfg.count,every:cfg.every,from:cfg.from};
+}
+function markCue(sec,down=true,it=null){
+  const rr=remindRule(it);
+  if(rr.off||(!rr.on&&!cfg.stagger)||sec<1)return;
   if(down&&sec<=5){if(cfg.sound==='whistle')beep(1250,sec===1?110:80);else{clearTimeout(sayTimer);say(DIGITS[sec],sec===5,true)}return}
-  if(!cfg.count||sec>cfg.from||sec%cfg.every)return;
+  if(!rr.on||sec>rr.from||sec%rr.every)return;
   notify(()=>beep(1000,120),secText(sec));
 }
 function staggerCue(n){notify(()=>beep(1320,350),n+' 号出发')}
@@ -1009,7 +1037,7 @@ function tick(){
     while(st.dur&&e>=st.dur*1000&&guard++<50){go(si+1,{auto:true,overflow:e-st.dur*1000});st=steps[si];e=elapsed()}
     if(running){
       const sec=st.dur?Math.ceil((st.dur*1000-e)/1000):Math.floor(e/1000);
-      if(sec!==lastCue){lastCue=sec;if(st.dur?sec<st.dur:sec>0)markCue(sec,!!st.dur)}
+      if(sec!==lastCue){lastCue=sec;if(st.dur?sec<st.dur:sec>0)markCue(sec,!!st.dur,(st.phase==='swim'||st.phase==='free')?plan[st.i]:null)}
       if(cfg.stagger&&(st.phase==='swim'||st.phase==='free')){
         const k=Math.floor(e/1000/cfg.gapSec);
         if(k>=stagDone&&k<cfg.swimmers&&(!st.dur||k*cfg.gapSec<st.dur)){stagDone=k+1;staggerCue(k+1)}
@@ -1048,6 +1076,7 @@ function render(force){
     const parts=[it.target>0?'目标 '+fmtShort(it.target):'手动计时'];
     if(it.rest>0)parts.push('间歇 '+fmtShort(it.rest));
     if(it.target>0&&it.rest>0)parts.push('每 '+fmt(it.target+it.rest)+' 出发');
+    if(it.rEvery>0)parts.push('每 '+fmtShort(it.rEvery)+' 报时');else if(it.rEvery===-1)parts.push('不报时');
     if(it.note)parts.push(it.note);
     $('note').textContent=parts.join(' · ');
     if(st.dur){
@@ -1132,6 +1161,21 @@ function customFields(host,it,i,onChange){
   dl.append(d,'米');row.append(r,x,dl);
   host.append(t,row);
 }
+/* per-group reminder controls (plan cards + live adjust dialog) */
+const R_EVERY=[[0,'报时：跟随默认'],[5,'每 5 秒报时'],[10,'每 10 秒报时'],[15,'每 15 秒报时'],[20,'每 20 秒报时'],[30,'每 30 秒报时'],[60,'每 1 分钟报时'],[-1,'这组不报时']];
+const R_FROM=[[30,'30 秒以内'],[60,'1 分钟以内'],[120,'2 分钟以内'],[180,'3 分钟以内'],[0,'全程']];
+function remindFields(host,it,idp,onChange){
+  const row=document.createElement('div');row.className='rline';
+  const mk=(list,val,id,label)=>{const s=document.createElement('select');s.id=id;s.setAttribute('aria-label',label);
+    list.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;if(+v===+val)o.selected=true;s.appendChild(o)});return s};
+  const ev=mk(R_EVERY,it.rEvery||0,'re'+idp,'这一组的报时间隔');
+  const fr=mk(R_FROM,it.rFrom==null?60:it.rFrom,'rf'+idp,'报时范围');
+  const hint=document.createElement('small');
+  const upd=()=>{const on=+ev.value>0;fr.hidden=!on;hint.textContent=on?(it.target>0?'倒计时剩这么多时间以内开始报':'手动计时的组：从出发起这段时间内报'):+ev.value===-1?'这组只在出发和间歇时提醒':'用「提醒设置」里的默认报时'};
+  ev.onchange=()=>{it.rEvery=+ev.value;if(it.rEvery>0&&it.rFrom==null)it.rFrom=60;upd();onChange()};
+  fr.onchange=()=>{it.rFrom=+fr.value;onChange()};
+  upd();row.append(ev,fr,hint);host.appendChild(row);
+}
 function renderCards(){
   const ol=$('cards');ol.innerHTML='';
   if(!plan.length){const li=document.createElement('li');li.className='empty';li.innerHTML='<div>还没有任何组。在上面的文本框里输入计划后点「识别并替换计划」，或点「＋ 添加一组」。</div>';ol.appendChild(li)}
@@ -1175,6 +1219,7 @@ function renderCards(){
       lab.appendChild(inp);f.appendChild(lab);
     });
     li.appendChild(f);
+    remindFields(li,it,'c'+i,()=>changed(true));
     const note=document.createElement('input');note.type='text';note.placeholder='备注（如：顶 8 字板、戴呼吸管）';note.value=it.note||'';note.id='n'+i;note.setAttribute('aria-label','备注');
     note.onchange=()=>{it.note=note.value.trim();changed(true)};
     li.appendChild(note);
@@ -1221,7 +1266,7 @@ function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTim
 function startRecord(){
   if(curRec||!plan.length)return;
   spLast=null;
-  const r={id:uid(),at:Date.now(),name:dstr(Date.now(),true)+' 训练',plan:clone(plan),done:false,splits:{},gap:cfg.gapSec,names:swimmerNames()};
+  const r={id:uid(),at:Date.now(),name:dstr(Date.now(),true)+' 训练',plan:clone(plan),done:false,splits:{},gap:cfg.gapSec,names:allLaneNames()};
   splitsData=r.splits;
   lib.records.unshift(r);lib.records=lib.records.slice(0,300);curRec=r.id;saveLib();
 }
@@ -1269,7 +1314,7 @@ function renderLib(){
       const box=document.createElement('div');box.className='sptable';
       [...new Set(Object.keys(e.splits).map(k=>+k.split('-')[0]))].sort((a,b)=>a-b).forEach(gi=>{
         const t=document.createElement('p');t.style.margin='10px 0 4px';t.style.fontWeight='600';t.textContent='第 '+(gi+1)+' 组 · '+(e.plan[gi]?shortName(e.plan[gi]):'');box.appendChild(t);
-        box.appendChild(splitTable(e.plan[gi],gi,e.splits,e.names||[]));
+        box.appendChild(laneTables(e.plan[gi],gi,e.splits,e.names));
       });
       d2.appendChild(box);det.after(d2);li.append(h,meta,det,d2,acts);
     }else li.append(h,meta,det,acts);
@@ -1288,10 +1333,16 @@ $('saveClose').onclick=closeSave;$('saveDlg').addEventListener('click',e=>{if(e.
 $('saveOk').onclick=()=>{const name=$('saveName').value.trim()||defaultName();lib.plans.unshift({id:uid(),name,plan:clone(plan),created:Date.now()});saveLib();closeSave();toast('已保存「'+name+'」到计划库')};
 $('saveName').onkeydown=e=>{if(e.key==='Enter')$('saveOk').click()};
 
-/* ---------- Arrival (到边) timing for staggered starts ---------- */
+/* ---------- Arrival (到边) timing for staggered starts, several lanes starting together ---------- */
 let lastSwimMs=0,splitsData={},spLast=null,lastSpKey='';
-function swimmerNames(){return Array.from({length:cfg.swimmers},(_,k)=>(cfg.lineup&&cfg.lineup[k])||((k+1)+' 号'))}
-// which rep the coach is timing right now, and ms since that rep's first swimmer left
+const lanes=()=>cfg.lanes;
+const syncSwimmers=()=>{cfg.swimmers=Math.max(1,...cfg.lanes.map(l=>l.n))};
+function slotName(L,k){const l=cfg.lanes[L];return (l&&l.lineup[k])||(cfg.lanes.length>1?(L+1)+' 道 '+(k+1)+' 号':(k+1)+' 号')}
+const laneNames=L=>Array.from({length:cfg.lanes[L].n},(_,k)=>slotName(L,k));
+const allLaneNames=()=>cfg.lanes.map((_,L)=>laneNames(L));
+const spKey=(i,rep,L)=>L?i+'-'+rep+'@'+L:i+'-'+rep;
+const keyLane=k=>{const m=k.match(/@(\d+)$/);return m?+m[1]:0};
+// which rep the coach is timing right now, and ms since that rep's first swimmers left
 function repContext(){
   const st=steps[si];if(!st||st.i<0)return null;
   if(st.phase==='swim'||st.phase==='free')return{i:st.i,rep:st.rep,ms:elapsed()};
@@ -1300,14 +1351,13 @@ function repContext(){
 }
 // swim-time format with hundredths: 29″60, 1:35″33
 const fmtSplit=t=>{const cs=Math.round(t*100),m=Math.floor(cs/6000),sec=Math.floor(cs%6000/100),h=String(cs%100).padStart(2,'0');return m?m+':'+String(sec).padStart(2,'0')+'″'+h:sec+'″'+h};
-// difference to the target, in words a coach reads at a glance
 const fmtDiff=d=>(d<=0?'快 ':'慢 ')+fmtSplit(Math.abs(d));
-function tapSplit(n){
-  if(!cfg.stagger||n<1||n>cfg.swimmers)return;
+function tapSplit(L,n){
+  if(!cfg.stagger||!cfg.lanes[L]||n<1||n>cfg.lanes[L].n)return;
   const c=repContext();if(!c)return;
   const t=Math.round((c.ms/1000-(n-1)*cfg.gapSec)*100)/100;
-  if(t<=0){toast(swimmerNames()[n-1]+' 还没出发');return}
-  const key=c.i+'-'+c.rep;const arr=splitsData[key]||(splitsData[key]=[]);
+  if(t<=0){toast(slotName(L,n-1)+' 还没出发');return}
+  const key=spKey(c.i,c.rep,L);const arr=splitsData[key]||(splitsData[key]=[]);
   spLast={key,n,prev:arr[n-1]};arr[n-1]=t;
   if(curRec)saveLib();
   try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}
@@ -1316,32 +1366,40 @@ function tapSplit(n){
 function renderSplits(force){
   const box=$('splits');const c=cfg.stagger?repContext():null;
   box.hidden=!c;if(!c)return;
-  const it=plan[c.i],key=c.i+'-'+c.rep,arr=splitsData[key]||[],names=swimmerNames();
-  const sk=key+'|'+cfg.swimmers+'|'+names.join(',');
+  const it=plan[c.i],multi=cfg.lanes.length>1;
+  const sk=c.i+'-'+c.rep+'|'+JSON.stringify(allLaneNames());
   if(force||sk!==lastSpKey){
     lastSpKey=sk;$('spRep').textContent='第 '+(c.i+1)+' 组 · 第 '+c.rep+' 趟';
     const wrap=$('spBtns');wrap.innerHTML='';
-    names.forEach((nm,k)=>{const b=document.createElement('button');b.type='button';b.dataset.n=k+1;
-      b.innerHTML='<b></b><span></span><small></small>';b.querySelector('b').textContent=nm;
-      b.onclick=()=>tapSplit(k+1);wrap.appendChild(b)});
+    cfg.lanes.forEach((l,L)=>{
+      const sec=document.createElement('div');sec.className='splane';
+      if(multi){const h=document.createElement('div');h.className='splh';h.textContent='第 '+(L+1)+' 道 · '+l.n+' 人';sec.appendChild(h)}
+      const g=document.createElement('div');g.className='spbtns';
+      laneNames(L).forEach((nm,k)=>{const b=document.createElement('button');b.type='button';b.dataset.l=L;b.dataset.n=k+1;
+        b.innerHTML='<b></b><span></span><small></small>';b.querySelector('b').textContent=multi&&!l.lineup[k]?(k+1)+' 号':nm;
+        b.onclick=()=>tapSplit(L,k+1);g.appendChild(b)});
+      sec.appendChild(g);wrap.appendChild(sec);
+    });
   }
   $('spBtns').querySelectorAll('button').forEach(b=>{
-    const n=+b.dataset.n,t=arr[n-1],left=c.ms/1000-(n-1)*cfg.gapSec;
+    const L=+b.dataset.l,n=+b.dataset.n,arr=splitsData[spKey(c.i,c.rep,L)]||[],t=arr[n-1],left=c.ms/1000-(n-1)*cfg.gapSec;
     b.classList.toggle('got',t!=null);b.classList.toggle('wait',t==null&&left<=0);
     b.querySelector('span').textContent=t!=null?fmtSplit(t):left>0?'到边':'未出发';
     const sm=b.querySelector('small');const df=t!=null&&it&&it.target>0?t-it.target:null;sm.textContent=df!=null?'比目标'+fmtDiff(df):'';sm.className=df==null?'':df>0?'slow':'fast';
-    b.setAttribute('aria-label',names[n-1]+(t!=null?' 成绩 '+fmtSplit(t):' 到边'));
+    b.setAttribute('aria-label',slotName(L,n-1)+(t!=null?' 成绩 '+fmtSplit(t):' 到边'));
   });
   $('spUndo').disabled=!spLast;
 }
-function splitTable(it,gi,data,names){
-  const reps=it?it.reps:Math.max(...Object.keys(data).filter(k=>+k.split('-')[0]===gi).map(k=>+k.split('-')[1]));
-  const cols=Math.max(names.length,...Object.keys(data).filter(k=>+k.split('-')[0]===gi).map(k=>data[k].length));
+// names: array of strings for one lane
+function splitTable(it,gi,data,names,L=0){
+  const ks=Object.keys(data).filter(k=>+k.split('-')[0]===gi&&keyLane(k)===L);
+  const reps=it?it.reps:Math.max(1,...ks.map(k=>parseInt(k.split('-')[1])));
+  const cols=Math.max(names.length,...ks.map(k=>data[k].length));
   const nm=k=>names[k]||((k+1)+' 号');
   const tb=document.createElement('table');
   let h='<thead><tr><th>趟</th>';for(let k=0;k<cols;k++)h+='<th></th>';h+='</tr></thead><tbody>';
   const sums=Array(cols).fill(0),cnt=Array(cols).fill(0),best=Array(cols).fill(Infinity);
-  for(let r=1;r<=reps;r++){h+='<tr><td>第 '+r+' 趟</td>';const a=data[gi+'-'+r]||[];
+  for(let r=1;r<=reps;r++){h+='<tr><td>第 '+r+' 趟</td>';const a=data[spKey(gi,r,L)]||[];
     for(let k=0;k<cols;k++){const t=a[k];if(t!=null){sums[k]+=t;cnt[k]++;best[k]=Math.min(best[k],t);
       const df=it&&it.target>0?t-it.target:null;h+='<td><b>'+fmtSplit(t)+'</b>'+(df!=null?'<small class="'+(df>0?'slow':'fast')+'">'+fmtDiff(df)+'</small>':'')+'</td>'}else h+='<td>—</td>'}
     h+='</tr>'}
@@ -1350,6 +1408,18 @@ function splitTable(it,gi,data,names){
   tb.innerHTML=h;tb.querySelectorAll('thead th').forEach((th,k)=>{if(k)th.textContent=nm(k-1)});
   return tb;
 }
+// all lane tables for one group; recNames is a record's saved names (old records: one flat list)
+function laneTables(it,gi,data,recNames){
+  const frag=document.createDocumentFragment();
+  const perLane=Array.isArray(recNames)&&Array.isArray(recNames[0])?recNames:[recNames||[]];
+  const used=[...new Set(Object.keys(data).filter(k=>+k.split('-')[0]===gi).map(keyLane))].sort((a,b)=>a-b);
+  const list=used.length?used:[0];
+  list.forEach(L=>{
+    if(list.length>1||L>0){const h=document.createElement('p');h.className='laneh';h.textContent='第 '+(L+1)+' 道';frag.appendChild(h)}
+    frag.appendChild(splitTable(it,gi,data,perLane[L]||[],L));
+  });
+  return frag;
+}
 function openSpTable(gi){
   const keys=Object.keys(splitsData);const groups=[...new Set(keys.map(k=>+k.split('-')[0]))].sort((a,b)=>a-b);
   const c=repContext();if(gi==null)gi=c?c.i:(groups[groups.length-1]??0);
@@ -1357,44 +1427,67 @@ function openSpTable(gi){
   const opts=[...new Set([...groups,gi])].filter(x=>plan[x]).sort((a,b)=>a-b);
   opts.forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent='第 '+(k+1)+' 组 · '+shortName(plan[k])+(groups.includes(k)?'':'（还没有成绩）');if(k===gi)o.selected=true;g.appendChild(o)});
   g.onchange=()=>openSpTable(+g.value);
-  $('spBody').innerHTML='';if(plan[gi])$('spBody').appendChild(splitTable(plan[gi],gi,splitsData,swimmerNames()));
-  $('spSub').textContent='间隔 '+cfg.gapSec+' 秒出发 · 每道 '+cfg.swimmers+' 人';
+  $('spBody').innerHTML='';
+  if(plan[gi]){const names=allLaneNames();const used=keys.filter(k=>+k.split('-')[0]===gi).map(keyLane);
+    const list=[...new Set([...cfg.lanes.map((_,L)=>L),...used])].sort((a,b)=>a-b);
+    list.forEach(L=>{if(list.length>1){const h=document.createElement('p');h.className='laneh';h.textContent='第 '+(L+1)+' 道';$('spBody').appendChild(h)}
+      $('spBody').appendChild(splitTable(plan[gi],gi,splitsData,names[L]||[],L))})}
+  $('spSub').textContent='间隔 '+cfg.gapSec+' 秒出发 · '+laneSummary();
   const d=$('spDlg');if(!d.open){try{d.showModal()}catch(e){d.setAttribute('open','')}}
 }
+const laneSummary=()=>cfg.lanes.length>1?cfg.lanes.length+' 道（'+cfg.lanes.map(l=>l.n).join(' / ')+' 人）':'每道 '+cfg.lanes[0].n+' 人';
 $('spTable').onclick=()=>openSpTable();
 const closeSp=()=>{const d=$('spDlg');try{d.close()}catch(e){d.removeAttribute('open')}};
 $('spClose').onclick=closeSp;$('spDone').onclick=closeSp;$('spDlg').addEventListener('click',e=>{if(e.target===$('spDlg'))closeSp()});
 $('spUndo').onclick=()=>{if(!spLast)return;const a=splitsData[spLast.key];if(a){if(spLast.prev==null)delete a[spLast.n-1];else a[spLast.n-1]=spLast.prev}spLast=null;if(curRec)saveLib();renderSplits(true);toast('已撤销')};
 
-/* ---------- Lineup card: staggered order + roster ---------- */
+/* ---------- Lineup dialog: lanes, order per lane, roster ---------- */
 function renderLineup(){
   $('luOn').checked=cfg.stagger;$('luBody').hidden=!cfg.stagger;$('luOff').hidden=cfg.stagger;
-  $('luGap').textContent=cfg.gapSec+'"';$('luN').textContent=cfg.swimmers+' 人';
-  $('luGapM').disabled=cfg.gapSec<=1;$('luGapP').disabled=cfg.gapSec>=60;$('luNM').disabled=cfg.swimmers<=2;$('luNP').disabled=cfg.swimmers>=10;
+  $('luGap').textContent=cfg.gapSec+'"';
+  $('luGapM').disabled=cfg.gapSec<=1;$('luGapP').disabled=cfg.gapSec>=60;
+  $('luAddLane').disabled=cfg.lanes.length>=8;
   const ol=$('luSlots');ol.innerHTML='';
-  for(let k=0;k<cfg.swimmers;k++){
-    const li=document.createElement('li');const b=document.createElement('b');b.textContent=(k+1)+' 号';
-    const cur=(cfg.lineup||[])[k]||'';
-    const s=document.createElement('select');s.id='lu'+k;s.setAttribute('aria-label',(k+1)+' 号出发的学生');
-    const opts=['',...cfg.roster];if(cur&&!cfg.roster.includes(cur))opts.push(cur);
-    opts.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n||'（不指定，显示「'+(k+1)+' 号」）';if(n===cur)o.selected=true;s.appendChild(o)});
-    if(!cfg.roster.length){const o=document.createElement('option');o.disabled=true;o.textContent='先点「管理学员名单」添加名字';s.appendChild(o)}
-    s.onchange=()=>{
-      const v=s.value;cfg.lineup=cfg.lineup||[];
-      const other=v?cfg.lineup.findIndex((n,j)=>n===v&&j!==k):-1;
-      if(other>=0&&other<cfg.swimmers)cfg.lineup[other]=cfg.lineup[k]||''; // same name picked twice: swap the two positions
-      cfg.lineup[k]=v;lineupChanged();
-    };
-    li.append(b,s);ol.appendChild(li);
-  }
+  cfg.lanes.forEach((l,L)=>{
+    const card=document.createElement('li');card.className='lanecard';
+    const hd=document.createElement('div');hd.className='lanehd';
+    const t=document.createElement('b');t.textContent='第 '+(L+1)+' 道';
+    const st=document.createElement('div');st.className='lus mini';
+    st.innerHTML='<button type="button" aria-label="第 '+(L+1)+' 道减 1 人">−</button><output>'+l.n+' 人</output><button type="button" aria-label="第 '+(L+1)+' 道加 1 人">+</button>';
+    const [bm,bp]=st.querySelectorAll('button');bm.disabled=l.n<=1;bp.disabled=l.n>=10;
+    bm.onclick=()=>{l.n=Math.max(1,l.n-1);lineupChanged()};bp.onclick=()=>{l.n=Math.min(10,l.n+1);lineupChanged()};
+    hd.append(t,st);
+    if(cfg.lanes.length>1){const rm=document.createElement('button');rm.type='button';rm.className='lanerm';rm.textContent='删除这道';
+      rm.onclick=()=>{if(!rm.dataset.armed){rm.dataset.armed='1';rm.textContent='再点一次';setTimeout(()=>{if(rm.isConnected){delete rm.dataset.armed;rm.textContent='删除这道'}},3000);return}
+        cfg.lanes.splice(L,1);lineupChanged()};hd.appendChild(rm)}
+    card.appendChild(hd);
+    const slots=document.createElement('ol');slots.className='luslots';
+    for(let k=0;k<l.n;k++){
+      const li=document.createElement('li');const b=document.createElement('b');b.textContent=(k+1)+' 号';
+      const cur=l.lineup[k]||'';
+      const s=document.createElement('select');s.id='lu'+L+'-'+k;s.setAttribute('aria-label','第 '+(L+1)+' 道 '+(k+1)+' 号出发的学生');
+      const opts=['',...cfg.roster];if(cur&&!cfg.roster.includes(cur))opts.push(cur);
+      opts.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n||'（不指定）';if(n===cur)o.selected=true;s.appendChild(o)});
+      if(!cfg.roster.length){const o=document.createElement('option');o.disabled=true;o.textContent='先点「管理学员名单」添加名字';s.appendChild(o)}
+      s.onchange=()=>{
+        const v=s.value;
+        // a name already placed elsewhere (any lane) swaps with this slot
+        if(v)cfg.lanes.forEach((ol2,L2)=>ol2.lineup.forEach((nm,j)=>{if(nm===v&&!(L2===L&&j===k))ol2.lineup[j]=l.lineup[k]||''}));
+        l.lineup[k]=v;lineupChanged();
+      };
+      li.append(b,s);slots.appendChild(li);
+    }
+    card.appendChild(slots);ol.appendChild(card);
+  });
 }
-function lineupChanged(){saveCfg();lastSpKey='';cfgSummary();renderSplits(true)}
+function lineupChanged(){syncSwimmers();saveCfg();lastSpKey='';cfgSummary();renderSplits(true)}
 $('luOn').onchange=()=>{cfg.stagger=$('luOn').checked;lineupChanged()};
 $('luGapM').onclick=()=>{cfg.gapSec=Math.max(1,cfg.gapSec-1);lineupChanged()};
 $('luGapP').onclick=()=>{cfg.gapSec=Math.min(60,cfg.gapSec+1);lineupChanged()};
-$('luNM').onclick=()=>{cfg.swimmers=Math.max(2,cfg.swimmers-1);lineupChanged()};
-$('luNP').onclick=()=>{cfg.swimmers=Math.min(10,cfg.swimmers+1);lineupChanged()};
-$('luFill').onclick=()=>{if(!cfg.roster.length){toast('名单是空的，先点「管理学员名单」');return}cfg.lineup=cfg.roster.slice(0,10);lineupChanged();toast('已按名单顺序填入')};
+$('luAddLane').onclick=()=>{if(cfg.lanes.length>=8)return;const last=cfg.lanes[cfg.lanes.length-1];cfg.lanes.push({n:last?last.n:3,lineup:[]});lineupChanged();
+  const cards=document.querySelectorAll('#luSlots .lanecard');cards[cards.length-1].scrollIntoView({behavior:'smooth',block:'nearest'})};
+$('luFill').onclick=()=>{if(!cfg.roster.length){toast('名单是空的，先点「管理学员名单」');return}
+  let p=0;cfg.lanes.forEach(l=>{l.lineup=cfg.roster.slice(p,p+l.n);p+=l.n});lineupChanged();toast('已按名单顺序填入'+(cfg.lanes.length>1?'各泳道':''))};
 const rosterCount=()=>{const n=$('rosterText').value.split(/\n/).map(x=>x.trim()).filter(Boolean).length;$('rosterCount').textContent='共 '+n+' 人'};
 $('luRoster').onclick=()=>{$('rosterText').value=cfg.roster.join('\n');rosterCount();const d=$('rosterDlg');try{d.showModal()}catch(e){d.setAttribute('open','')}};
 $('rosterText').oninput=rosterCount;
@@ -1474,6 +1567,7 @@ function renderQE(){
     });
     show();b.appendChild(row);
   });
+  remindFields(b,it,'q'+qeI,()=>applyQE(true));
   const note=document.createElement('input');note.type='text';note.id='qeNote';note.placeholder='备注（如：要求心率 30 以下）';note.value=it.note||'';note.setAttribute('aria-label','备注');
   note.onchange=()=>{it.note=note.value.trim();applyQE(true)};
   b.appendChild(note);
@@ -1533,17 +1627,17 @@ const closeCfg=()=>{const d=$('cfg');try{d.close()}catch(e){d.removeAttribute('o
 $('cfgclose').onclick=closeCfg;$('cfgdone').onclick=closeCfg;
 $('cfg').addEventListener('click',e=>{if(e.target===$('cfg'))closeCfg()});
 function cfgSummary(){
-  const parts=[];if(cfg.count)parts.push('每 '+cfg.every+' 秒倒数（剩 '+cfg.from+' 秒起）');if(cfg.stagger)parts.push('间隔 '+cfg.gapSec+' 秒出发 · 每道 '+cfg.swimmers+' 人');const m=parts.length?parts.join(' + '):'只在切换时提醒';
+  const parts=[];if(cfg.count)parts.push('每 '+cfg.every+' 秒倒数（剩 '+cfg.from+' 秒起）');if(cfg.stagger)parts.push('间隔 '+cfg.gapSec+' 秒出发 · '+laneSummary());const m=parts.length?parts.join(' + '):'只在切换时提醒';
   const snd={whistle:'哨声',voice:'语音播报',both:'哨声 + 语音'}[cfg.sound];
   $('cfgsum').textContent=m+' · '+snd;$('cfgbtnLabel').textContent='提醒设置';$('cfgbtn').title='提醒：'+m+' · '+snd;
   $('opt-count').hidden=!cfg.count;$('opt-stagger').hidden=!cfg.stagger;
-  $('m-stagger').checked=cfg.stagger;$('sGap').value=cfg.gapSec;$('sN').value=cfg.swimmers;
+  $('m-stagger').checked=cfg.stagger;$('sGap').value=cfg.gapSec;
   if(typeof renderLineup==='function')renderLineup();
 }
 function cfgInit(){
-  $('m-count').checked=cfg.count;$('m-stagger').checked=cfg.stagger;$('cEvery').value=cfg.every;$('cFrom').value=cfg.from;$('sGap').value=cfg.gapSec;$('sN').value=cfg.swimmers;$('cSound').value=cfg.sound;cfgSummary();
+  $('m-count').checked=cfg.count;$('m-stagger').checked=cfg.stagger;$('cEvery').value=cfg.every;$('cFrom').value=cfg.from;$('sGap').value=cfg.gapSec;$('cSound').value=cfg.sound;cfgSummary();
   ['count','stagger'].forEach(k=>{$('m-'+k).onchange=()=>{cfg[k]=$('m-'+k).checked;saveCfg();cfgSummary()}});
-  [['cEvery','every',1,60],['cFrom','from',1,60],['sGap','gapSec',1,60],['sN','swimmers',2,10]].forEach(([id,k,lo,hi])=>{
+  [['cEvery','every',1,60],['cFrom','from',1,60],['sGap','gapSec',1,60]].forEach(([id,k,lo,hi])=>{
     $(id).onchange=()=>{const v=Math.round(+$(id).value);if(v>=lo&&v<=hi){cfg[k]=v;saveCfg();cfgSummary()}else $(id).value=cfg[k]};
   });
   $('cSound').onchange=()=>{cfg.sound=$('cSound').value;saveCfg();cfgSummary();pickVoice()};
@@ -1566,7 +1660,7 @@ document.addEventListener('keydown',e=>{
   if(e.code==='Space'){e.preventDefault();toggle()}
   else if(e.key==='ArrowRight'){audio();go(si+1)}
   else if(e.key==='ArrowLeft'){audio();go(si-1)}
-  else if(/^[0-9]$/.test(e.key)&&cfg.stagger){tapSplit(e.key==='0'?10:+e.key)}
+  else if(/^[0-9]$/.test(e.key)&&cfg.stagger){tapSplit(0,e.key==='0'?10:+e.key)}
 });
 
 /* ---------- Standalone rest stopwatch ---------- */
