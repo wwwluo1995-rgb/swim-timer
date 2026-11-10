@@ -159,7 +159,7 @@ select{appearance:none;-webkit-appearance:none;padding-right:28px;background-ima
 @media (min-width:1100px){.board{min-height:calc(100dvh - 44px)}}
 .ph-ready{--ph:var(--p-ready)} .ph-swim{--ph:var(--p-swim)} .ph-rest{--ph:var(--p-rest)} .ph-group{--ph:var(--p-group)} .ph-free{--ph:var(--p-free)} .ph-done{--ph:var(--p-done)}
 .lanes{height:8px;background:repeating-linear-gradient(90deg,var(--ph) 0 24px,#0000 24px 32px,var(--lane) 32px 56px,#0000 56px 64px);opacity:.9;transition:background .3s}
-.inner{flex:1;padding:clamp(14px,2.4vh,26px) clamp(16px,3vw,34px);display:flex;flex-direction:column;gap:clamp(8px,1.6vh,16px)}
+.inner{flex:1 0 auto;padding:clamp(14px,2.4vh,26px) clamp(16px,3vw,34px);display:flex;flex-direction:column;gap:clamp(8px,1.6vh,16px)}
 .topline{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;color:var(--boardmuted);font-size:14px;font-variant-numeric:tabular-nums}
 .topline .tot{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
 .topline .tbar{flex:1;max-width:220px;height:6px;border-radius:3px;background:var(--boardline);overflow:hidden}
@@ -173,7 +173,7 @@ select{appearance:none;-webkit-appearance:none;padding-right:28px;background-ima
 .rep small{color:var(--boardmuted);font-size:.6em;font-weight:600}
 .title{margin:0;font-size:clamp(20px,2.6vw,32px);font-weight:700;line-height:1.25;text-wrap:balance}
 .note{margin:4px 0 0;color:var(--boardmuted);font-size:clamp(14px,1.6vw,18px);font-variant-numeric:tabular-nums}
-.clockwrap{flex:1;display:grid;place-items:center;min-height:0}
+.clockwrap{flex:1 0 auto;display:grid;place-items:center;min-height:auto}
 .clock{font-family:var(--f-num);font-weight:800;font-size:clamp(78px,min(22vw,26vh),360px);font-size:clamp(78px,min(22vw,26dvh),360px);line-height:.88;font-variant-numeric:tabular-nums;color:var(--ph);text-align:center;letter-spacing:-.01em;text-shadow:0 0 40px color-mix(in srgb,var(--ph) 35%,transparent);transition:color .3s}
 .clock.warn{animation:blink .5s steps(2) infinite}
 @keyframes blink{50%{opacity:.4}}
@@ -443,6 +443,14 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
   .arrive .spbtns button{min-height:64px}
   .rail{z-index:30}
 }
+/* Safari/iPad fixes: never let the clock row shrink below the digits (flex-basis 0% bug),
+   size the digits from the scoreboard's own width, keep button labels on one line */
+.board{container-type:inline-size}
+.clock{font-size:clamp(64px,min(36cqi,28dvh),360px);white-space:nowrap}
+.controls button{white-space:nowrap;min-width:0}
+@container (max-width:680px){.controls .lbltxt{display:none}}
+@media (hover:none) and (pointer:coarse){.board .kbd{display:none}}
+@media (max-width:759px){.clock{font-size:clamp(84px,min(34vw,36cqi),170px)}}
 </style>
 </head>
 <body>
