@@ -465,6 +465,9 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
   .mbrand small{color:var(--muted);font-size:12px;margin-left:auto}
   .view{padding-top:8px}
 }
+.spbtns button small.fast{color:var(--p-group)}
+.spbtns button small.slow{color:#ff8a8a}
+.spbtns button span{letter-spacing:-.01em}
 </style>
 </head>
 <body>
@@ -503,7 +506,7 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
     <button type="button" class="x" id="spClose" aria-label="关闭">✕</button>
   </header>
   <div class="cfgbody"><select id="spGroup" aria-label="选择组"></select><div class="sptable" id="spBody"></div></div>
-  <footer><span class="spnote">成绩 = 点「到边」的时刻 − 这个学生的出发时刻；括号里是和目标时间的差。</span><button type="button" class="primary" id="spDone">关闭</button></footer>
+  <footer><span class="spnote">成绩 = 点「到边」的时刻 − 这个学生的出发时刻；小字是和这一组目标时间比：「快」= 比目标快多少，「慢」= 比目标慢多少。</span><button type="button" class="primary" id="spDone">关闭</button></footer>
 </dialog>
     <dialog class="sheet" id="saveDlg" aria-labelledby="saveTitle">
       <header>
@@ -1295,11 +1298,14 @@ function repContext(){
   if(st.phase==='rest'||st.phase==='group')return{i:st.i,rep:st.rep,ms:lastSwimMs+elapsed()};
   return null;
 }
-const fmtSplit=t=>t<60?t.toFixed(1)+'"':Math.floor(t/60)+"'"+(t%60).toFixed(1).padStart(4,'0')+'"';
+// swim-time format with hundredths: 29″60, 1:35″33
+const fmtSplit=t=>{const cs=Math.round(t*100),m=Math.floor(cs/6000),sec=Math.floor(cs%6000/100),h=String(cs%100).padStart(2,'0');return m?m+':'+String(sec).padStart(2,'0')+'″'+h:sec+'″'+h};
+// difference to the target, in words a coach reads at a glance
+const fmtDiff=d=>(d<=0?'快 ':'慢 ')+fmtSplit(Math.abs(d));
 function tapSplit(n){
   if(!cfg.stagger||n<1||n>cfg.swimmers)return;
   const c=repContext();if(!c)return;
-  const t=Math.round((c.ms/1000-(n-1)*cfg.gapSec)*10)/10;
+  const t=Math.round((c.ms/1000-(n-1)*cfg.gapSec)*100)/100;
   if(t<=0){toast(swimmerNames()[n-1]+' 还没出发');return}
   const key=c.i+'-'+c.rep;const arr=splitsData[key]||(splitsData[key]=[]);
   spLast={key,n,prev:arr[n-1]};arr[n-1]=t;
@@ -1323,7 +1329,7 @@ function renderSplits(force){
     const n=+b.dataset.n,t=arr[n-1],left=c.ms/1000-(n-1)*cfg.gapSec;
     b.classList.toggle('got',t!=null);b.classList.toggle('wait',t==null&&left<=0);
     b.querySelector('span').textContent=t!=null?fmtSplit(t):left>0?'到边':'未出发';
-    b.querySelector('small').textContent=t!=null&&it&&it.target>0?((t-it.target>=0?'+':'−')+Math.abs(t-it.target).toFixed(1)):'';
+    const sm=b.querySelector('small');const df=t!=null&&it&&it.target>0?t-it.target:null;sm.textContent=df!=null?'比目标'+fmtDiff(df):'';sm.className=df==null?'':df>0?'slow':'fast';
     b.setAttribute('aria-label',names[n-1]+(t!=null?' 成绩 '+fmtSplit(t):' 到边'));
   });
   $('spUndo').disabled=!spLast;
@@ -1337,9 +1343,9 @@ function splitTable(it,gi,data,names){
   const sums=Array(cols).fill(0),cnt=Array(cols).fill(0),best=Array(cols).fill(Infinity);
   for(let r=1;r<=reps;r++){h+='<tr><td>第 '+r+' 趟</td>';const a=data[gi+'-'+r]||[];
     for(let k=0;k<cols;k++){const t=a[k];if(t!=null){sums[k]+=t;cnt[k]++;best[k]=Math.min(best[k],t);
-      const df=it&&it.target>0?t-it.target:null;h+='<td><b>'+fmtSplit(t)+'</b>'+(df!=null?'<small class="'+(df>0?'slow':'fast')+'">'+(df>=0?'+':'−')+Math.abs(df).toFixed(1)+'</small>':'')+'</td>'}else h+='<td>—</td>'}
+      const df=it&&it.target>0?t-it.target:null;h+='<td><b>'+fmtSplit(t)+'</b>'+(df!=null?'<small class="'+(df>0?'slow':'fast')+'">'+fmtDiff(df)+'</small>':'')+'</td>'}else h+='<td>—</td>'}
     h+='</tr>'}
-  h+='</tbody><tfoot><tr><td>平均</td>';for(let k=0;k<cols;k++)h+='<td>'+(cnt[k]?'<b>'+fmtSplit(Math.round(sums[k]/cnt[k]*10)/10)+'</b>':'—')+'</td>';
+  h+='</tbody><tfoot><tr><td>平均</td>';for(let k=0;k<cols;k++)h+='<td>'+(cnt[k]?'<b>'+fmtSplit(Math.round(sums[k]/cnt[k]*100)/100)+'</b>':'—')+'</td>';
   h+='</tr><tr><td>最快</td>';for(let k=0;k<cols;k++)h+='<td>'+(cnt[k]?fmtSplit(best[k]):'—')+'</td>';h+='</tr></tfoot>';
   tb.innerHTML=h;tb.querySelectorAll('thead th').forEach((th,k)=>{if(k)th.textContent=nm(k-1)});
   return tb;
