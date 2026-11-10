@@ -3,13 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#082230">
+<meta name="theme-color" content="#f1f5fa">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="泳鲨计时台">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='12' fill='%230a7cc0'/%3E%3Cpath d='M10 33c5-1 9-9 12-20 4 6 9 14 16 20z' fill='%23fff'/%3E%3Cpath d='M6 35c4 0 4 2.5 8 2.5s4-2.5 8-2.5 4 2.5 8 2.5 4-2.5 8-2.5 4 2.5 8 2.5' fill='none' stroke='%239fe0ff' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/png;base64,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">
-<script>try{var t=localStorage.getItem('swim-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<script>(function(){var t=null;try{t=localStorage.getItem('swim-theme')}catch(e){}
+if(t!=='light'&&t!=='dark'){t='light';try{if(matchMedia('(prefers-color-scheme: dark)').matches)t='dark'}catch(e){}}
+document.documentElement.setAttribute('data-theme',t)})();</script>
 <style>
 :root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0;font:14px/1.5 system-ui,sans-serif}
@@ -19,35 +21,34 @@ img{max-width:100%}
 <title>泳鲨训练计时台</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 <style>
-/* Layout: deep-water side rail + light deck; the run view is a high-contrast poolside scoreboard (always dark),
-   the plan view is a two-column worksheet (input left, group cards right) with a sticky action bar. */
+/* Layout: side rail + deck; the run view is a high-contrast poolside scoreboard,
+   the plan view is a two-column worksheet (input left, group rows right) with a sticky action bar.
+   Two colour schemes, switched by data-theme on <html>: day (default) and night. */
 :root{
-  --bg:#edf2f5; --surface:#ffffff; --sunk:#f4f7f9; --fg:#0b2533; --muted:#5b7482; --line:#d6e1e7; --line2:#e6edf1;
-  --accent:#0a7cc0; --accent-ink:#ffffff; --accent-soft:#e1f0f9;
-  --rail:#082230; --rail2:#0e3346; --railfg:#b9d3df;
-  --danger:#cc2f42; --ok:#13865a;
-  --lane:#d1293d;
-  --shadow:0 1px 2px rgba(8,34,48,.06),0 6px 20px rgba(8,34,48,.06);
+  /* Day: bright deck. White surfaces, ink text, one clear pool blue; the scoreboard is light with deep, saturated digits. */
+  --bg:#f1f5fa; --surface:#ffffff; --sunk:#f3f6fb; --fg:#0f1c2e; --muted:#5a6a82; --line:#d9e2ee; --line2:#e7edf5;
+  --accent:#0b6fd6; --accent-ink:#ffffff; --accent-soft:#e2eeff;
+  --rail:#ffffff; --rail2:#ffffff; --railfg:#4b5c75; --railstrong:#0f1c2e; --railline:#d9e2ee; --railhover:rgba(15,28,46,.05); --railcur:#e2eeff; --railcurfg:#0b6fd6; --railmark:#0b6fd6;
+  --danger:#d42f42; --ok:#0a8557;
+  --lane:#e5484d;
+  --shadow:0 1px 2px rgba(15,28,46,.05),0 8px 24px rgba(15,28,46,.07);
   --f-num:"Barlow Condensed","DIN Alternate","Arial Narrow",sans-serif;
   --f-body:"Barlow","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
-  /* scoreboard: deliberately dark in both themes for poolside glare */
-  --board:#071a25; --board2:#0d2635; --boardline:#1b3a4c; --boardfg:#eaf5fa; --boardmuted:#86a7b8;
-  --p-swim:#38c4ff; --p-rest:#ffb21f; --p-group:#3fe0a1; --p-ready:#aaa6ff; --p-free:#8fd6f2; --p-done:#3fe0a1;
+  --board:#ffffff; --board2:#eaf3ff; --boardline:#d3deec; --boardfg:#0f1c2e; --boardmuted:#5a6a82;
+  --boardtint:rgba(15,28,46,.045); --boardtint2:rgba(15,28,46,.09); --boardshadow:0 10px 36px rgba(15,28,46,.10); --ph-ink:#ffffff; --glow:0%;
+  --p-swim:#0a5fcf; --p-rest:#cf5600; --p-group:#087a50; --p-ready:#5b34b8; --p-free:#0b7fae; --p-done:#087a50;
   --tabh:0px;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#06131b; --surface:#0c1e29; --sunk:#091822; --fg:#e3eff5; --muted:#86a2b1; --line:#1b3442; --line2:#152b38;
-  --accent:#3aaee9; --accent-ink:#04121a; --accent-soft:#0e2d40;
-  --rail:#030c12; --rail2:#0a1d29; --railfg:#a9c3cf;
-  --danger:#ff6474; --ok:#3fd69b; --lane:#ff5a6a;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
-  color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#06131b; --surface:#0c1e29; --sunk:#091822; --fg:#e3eff5; --muted:#86a2b1; --line:#1b3442; --line2:#152b38;
-  --accent:#3aaee9; --accent-ink:#04121a; --accent-soft:#0e2d40;
-  --rail:#030c12; --rail2:#0a1d29; --railfg:#a9c3cf;
-  --danger:#ff6474; --ok:#3fd69b; --lane:#ff5a6a;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  /* Night: deep navy, soft-white text, luminous phase colours on a near-black scoreboard. */
+  --bg:#0a0f1a; --surface:#121a29; --sunk:#0d1422; --fg:#e8eef8; --muted:#8c9bb3; --line:#232f44; --line2:#1b2537;
+  --accent:#4da3ff; --accent-ink:#04101f; --accent-soft:#14284a;
+  --rail:#070b14; --rail2:#0b1120; --railfg:#9fb0c9; --railstrong:#ffffff; --railline:rgba(255,255,255,.09); --railhover:rgba(255,255,255,.06); --railcur:rgba(77,163,255,.16); --railcurfg:#ffffff; --railmark:#4da3ff;
+  --danger:#ff6b78; --ok:#3ddc97; --lane:#ff5d6c;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+  --board:#060a12; --board2:#101a2c; --boardline:#1f2a3f; --boardfg:#eef4fc; --boardmuted:#8c9bb3;
+  --boardtint:rgba(255,255,255,.055); --boardtint2:rgba(255,255,255,.11); --boardshadow:0 10px 40px rgba(0,0,0,.45); --ph-ink:#04101c; --glow:35%;
+  --p-swim:#4cc2ff; --p-rest:#ffb829; --p-group:#3ddc97; --p-ready:#b3a4ff; --p-free:#8ad8ff; --p-done:#3ddc97;
   color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -68,23 +69,23 @@ select{appearance:none;-webkit-appearance:none;padding-right:28px;background-ima
 
 /* ---------- App shell ---------- */
 .app{display:grid;grid-template-columns:216px minmax(0,1fr);min-height:100vh;min-height:100dvh}
-.rail{position:sticky;top:0;height:100vh;height:100dvh;background:linear-gradient(180deg,var(--rail),var(--rail2));color:var(--railfg);padding:22px 14px;display:flex;flex-direction:column;gap:22px;padding-left:max(14px,env(safe-area-inset-left,0px))}
+.rail{position:sticky;top:0;height:100vh;height:100dvh;background:linear-gradient(180deg,var(--rail),var(--rail2));color:var(--railfg);border-right:1px solid var(--railline);padding:22px 14px;display:flex;flex-direction:column;gap:22px;padding-left:max(14px,env(safe-area-inset-left,0px))}
 .brand{display:flex;gap:10px;align-items:center;padding:0 6px}
 .brand .mark{width:38px;height:38px;border-radius:11px;flex:none;overflow:hidden;display:block}
 .brand .mark svg,.brand .mark img{width:100%;height:100%;display:block;object-fit:contain}
-.brand b{display:block;white-space:nowrap;font-family:var(--f-num);font-weight:700;font-size:19px;line-height:1.05;color:#fff;letter-spacing:.02em}
+.brand b{display:block;white-space:nowrap;font-family:var(--f-num);font-weight:700;font-size:19px;line-height:1.05;color:var(--railstrong);letter-spacing:.02em}
 .brand small{display:block;white-space:nowrap;font-size:12px;opacity:.7}
 .nav{display:grid;gap:4px}
 .nav a{display:flex;align-items:center;gap:12px;color:var(--railfg);text-decoration:none;padding:11px 12px;border-radius:12px;font-weight:600;font-size:16px;position:relative}
 .nav a svg{width:20px;height:20px;flex:none}
-.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
-.nav a[aria-current="page"]{background:rgba(56,196,255,.14);color:#fff}
-.nav a[aria-current="page"]::before{content:"";position:absolute;left:-14px;top:10px;bottom:10px;width:4px;border-radius:0 4px 4px 0;background:#38c4ff}
+.nav a:hover{background:var(--railhover);color:var(--railstrong)}
+.nav a[aria-current="page"]{background:var(--railcur);color:var(--railcurfg)}
+.nav a[aria-current="page"]::before{content:"";position:absolute;left:-14px;top:10px;bottom:10px;width:4px;border-radius:0 4px 4px 0;background:var(--railmark)}
 .nav a .step{margin-left:auto;font-family:var(--f-num);font-size:13px;opacity:.55}
-.rail .sum{margin-top:auto;border-top:1px solid rgba(255,255,255,.08);padding:14px 6px 0;font-size:13px;line-height:1.6;font-variant-numeric:tabular-nums}
-.rail .sum b{font-family:var(--f-num);font-size:30px;color:#fff;font-weight:700;line-height:1}
-.railbtn{display:flex;align-items:center;gap:10px;background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--railfg);border-radius:12px;padding:9px 12px;font-size:14px;font-weight:600}
-.railbtn:hover{background:rgba(255,255,255,.06);color:#fff;border-color:rgba(255,255,255,.2)}
+.rail .sum{margin-top:auto;border-top:1px solid var(--railline);padding:14px 6px 0;font-size:13px;line-height:1.6;font-variant-numeric:tabular-nums}
+.rail .sum b{font-family:var(--f-num);font-size:30px;color:var(--railstrong);font-weight:700;line-height:1}
+.railbtn{display:flex;align-items:center;gap:10px;background:transparent;border:1px solid var(--railline);color:var(--railfg);border-radius:12px;padding:9px 12px;font-size:14px;font-weight:600}
+.railbtn:hover{background:var(--railhover);color:var(--railstrong);border-color:var(--muted)}
 .railbtn svg{width:18px;height:18px;flex:none;transition:transform .2s}
 .app{transition:grid-template-columns .2s}
 @media (min-width:760px){
@@ -103,7 +104,7 @@ select{appearance:none;-webkit-appearance:none;padding-right:28px;background-ima
 @media (max-width:759px){
   :root{--tabh:64px}
   .app{grid-template-columns:minmax(0,1fr)}
-  .rail{position:fixed;inset:auto 0 0 0;top:auto;height:auto;z-index:30;flex-direction:row;padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));gap:0;background:var(--rail);box-shadow:0 -6px 20px rgba(0,0,0,.18)}
+  .rail{position:fixed;inset:auto 0 0 0;top:auto;height:auto;z-index:30;flex-direction:row;padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));gap:0;background:var(--rail);border-right:0;border-top:1px solid var(--railline);box-shadow:0 -6px 20px rgba(0,0,0,.10)}
   .brand,.rail .sum,.railbtn{display:none}
   .nav{grid-template-columns:1fr 1fr 1fr;width:100%;gap:6px}
   .nav a{justify-content:center;flex-direction:column;gap:2px;padding:7px 6px;font-size:13px}
@@ -160,7 +161,7 @@ select{appearance:none;-webkit-appearance:none;padding-right:28px;background-ima
 .run{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
 @media (min-width:1100px){.run{grid-template-columns:minmax(0,1fr) 320px;align-items:start}.side{position:sticky;top:22px;max-height:calc(100dvh - 44px);overflow-y:auto}}
 .side{display:grid;gap:14px;align-content:start;min-width:0}
-.board{--ph:var(--p-swim);background:radial-gradient(120% 80% at 50% 0%,var(--board2),var(--board) 70%);color:var(--boardfg);border-radius:22px;overflow:hidden;border:1px solid var(--boardline);box-shadow:0 10px 40px rgba(4,18,26,.25);display:flex;flex-direction:column}
+.board{--ph:var(--p-swim);background:radial-gradient(120% 80% at 50% 0%,var(--board2),var(--board) 70%);color:var(--boardfg);border-radius:22px;overflow:hidden;border:1px solid var(--boardline);box-shadow:var(--boardshadow);display:flex;flex-direction:column}
 @media (min-width:1100px){.board{min-height:calc(100dvh - 44px)}}
 .ph-ready{--ph:var(--p-ready)} .ph-swim{--ph:var(--p-swim)} .ph-rest{--ph:var(--p-rest)} .ph-group{--ph:var(--p-group)} .ph-free{--ph:var(--p-free)} .ph-done{--ph:var(--p-done)}
 .lanes{height:8px;background:repeating-linear-gradient(90deg,var(--ph) 0 24px,#0000 24px 32px,var(--lane) 32px 56px,#0000 56px 64px);opacity:.9;transition:background .3s}
@@ -179,7 +180,7 @@ select{appearance:none;-webkit-appearance:none;padding-right:28px;background-ima
 .title{margin:0;font-size:clamp(20px,2.6vw,32px);font-weight:700;line-height:1.25;text-wrap:balance}
 .note{margin:4px 0 0;color:var(--boardmuted);font-size:clamp(14px,1.6vw,18px);font-variant-numeric:tabular-nums}
 .clockwrap{flex:1 0 auto;display:grid;place-items:center;min-height:auto}
-.clock{font-family:var(--f-num);font-weight:800;font-size:clamp(78px,min(22vw,26vh),360px);font-size:clamp(78px,min(22vw,26dvh),360px);line-height:.88;font-variant-numeric:tabular-nums;color:var(--ph);text-align:center;letter-spacing:-.01em;text-shadow:0 0 40px color-mix(in srgb,var(--ph) 35%,transparent);transition:color .3s}
+.clock{font-family:var(--f-num);font-weight:800;font-size:clamp(78px,min(22vw,26vh),360px);font-size:clamp(78px,min(22vw,26dvh),360px);line-height:.88;font-variant-numeric:tabular-nums;color:var(--ph);text-align:center;letter-spacing:-.01em;text-shadow:0 0 40px color-mix(in srgb,var(--ph) var(--glow),transparent);transition:color .3s}
 .clock.warn{animation:blink .5s steps(2) infinite}
 @keyframes blink{50%{opacity:.4}}
 .bar{height:10px;border-radius:5px;background:var(--boardline);overflow:hidden}
@@ -188,19 +189,19 @@ select{appearance:none;-webkit-appearance:none;padding-right:28px;background-ima
 .dots b{width:14px;height:14px;border-radius:50%;border:2px solid color-mix(in srgb,var(--ph) 70%,transparent)}
 .dots b.on{background:var(--ph);border-color:var(--ph)}
 .dots b.cur{background:color-mix(in srgb,var(--ph) 40%,transparent);box-shadow:0 0 0 4px color-mix(in srgb,var(--ph) 18%,transparent)}
-.next{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between;align-items:center;font-size:17px;background:rgba(255,255,255,.04);border:1px solid var(--boardline);border-radius:14px;padding:10px 14px}
+.next{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between;align-items:center;font-size:17px;background:var(--boardtint);border:1px solid var(--boardline);border-radius:14px;padding:10px 14px}
 .next .lbl{color:var(--boardmuted);font-size:12px;letter-spacing:.14em;margin-right:10px}
 .next .hint{color:var(--boardmuted);font-size:13px}
 .hr{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;background:color-mix(in srgb,var(--p-group) 10%,transparent);border:1px solid color-mix(in srgb,var(--p-group) 55%,transparent);border-radius:14px;padding:10px 14px}
 .hr strong{font-size:17px;color:var(--p-group)}
 .hr .hrclock{font-family:var(--f-num);font-size:42px;font-weight:800;color:var(--p-group);font-variant-numeric:tabular-nums;min-width:2.2ch;text-align:center;line-height:1}
 .hr .msg{color:var(--boardmuted);flex:1 1 160px;min-width:0;font-size:14px}
-.hr button{background:var(--p-group);color:#04150e;border:0}
+.hr button{background:var(--p-group);color:var(--ph-ink);border:0}
 .controls{display:grid;grid-template-columns:1fr 2.2fr 1fr;gap:10px}
-.controls button{padding:clamp(12px,2vh,18px) 8px;font-size:17px;background:rgba(255,255,255,.06);border:1px solid var(--boardline);color:var(--boardfg);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.controls button{padding:clamp(12px,2vh,18px) 8px;font-size:17px;background:var(--boardtint);border:1px solid var(--boardline);color:var(--boardfg);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .controls button svg{width:20px;height:20px}
-.controls button:hover{background:rgba(255,255,255,.1);border-color:var(--boardmuted)}
-.btn-main{background:var(--ph)!important;color:#03131c!important;border-color:transparent!important;font-size:22px!important;font-weight:800;letter-spacing:.08em;box-shadow:0 6px 24px color-mix(in srgb,var(--ph) 40%,transparent)}
+.controls button:hover{background:var(--boardtint2);border-color:var(--boardmuted)}
+.btn-main{background:var(--ph)!important;color:var(--ph-ink)!important;border-color:transparent!important;font-size:22px!important;font-weight:800;letter-spacing:.08em;box-shadow:0 6px 24px color-mix(in srgb,var(--ph) 40%,transparent)}
 .tools{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .tools button{font-size:13px;padding:7px 12px;font-weight:600;background:transparent;border:1px solid var(--boardline);color:var(--boardmuted);border-radius:999px}
 .tools button:hover{color:var(--boardfg);border-color:var(--boardmuted)}
@@ -219,7 +220,7 @@ select{appearance:none;-webkit-appearance:none;padding-right:28px;background-ima
 .ivctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end}
 .ivctl select,.ivctl input{font-family:var(--f-num);font-size:18px;font-weight:600;padding:6px 28px 6px 10px}
 .ivctl input{width:84px;padding-right:10px}
-.iv .go{background:#e39a12;color:#1d1300;border-color:transparent;min-width:76px}
+.iv .go{background:var(--p-rest);color:var(--ph-ink);border-color:transparent;min-width:76px}
 .prog ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .prog li button{width:100%;text-align:left;display:grid;gap:2px;padding:9px 12px;border-radius:12px;font-weight:500;background:var(--sunk);border-color:var(--line2);position:relative;overflow:hidden}
 .prog li button::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:calc(var(--p,0)*100%);background:var(--accent);transition:width .4s}
@@ -304,13 +305,13 @@ dialog.sheet::backdrop{background:rgba(4,16,24,.5);-webkit-backdrop-filter:blur(
 .cline label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
 .ctitle{width:100%;font-size:16px!important;font-weight:600}
 .item.custom::before{background:var(--p-rest)}
- .splits{display:grid;gap:8px;background:rgba(255,255,255,.04);border:1px solid var(--boardline);border-radius:14px;padding:10px}
+ .splits{display:grid;gap:8px;background:var(--boardtint);border:1px solid var(--boardline);border-radius:14px;padding:10px}
 .sphead{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--boardmuted);font-size:13px;letter-spacing:.06em}
 .sphead small{color:var(--boardfg);font-family:var(--f-num);font-size:15px;letter-spacing:0;margin-left:6px}
 .spact{display:flex;gap:6px}
 .spact button{background:transparent;border:1px solid var(--boardline);color:var(--boardmuted);font-size:12px;padding:4px 10px;border-radius:999px}
 .spbtns{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
-.spbtns button{display:grid;gap:0;justify-items:center;padding:8px 6px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid var(--boardline);color:var(--boardfg);font-weight:600}
+.spbtns button{display:grid;gap:0;justify-items:center;padding:8px 6px;border-radius:12px;background:var(--boardtint);border:1px solid var(--boardline);color:var(--boardfg);font-weight:600}
 .spbtns button b{font-size:14px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .spbtns button span{font-family:var(--f-num);font-size:24px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ph)}
 .spbtns button small{font-family:var(--f-num);font-size:13px;color:var(--boardmuted);font-variant-numeric:tabular-nums;min-height:1em}
@@ -406,7 +407,7 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
 .kbd kbd{font-family:var(--f-num);border:1px solid var(--boardline);border-radius:5px;padding:0 5px;font-size:12px;margin:0 1px}
 
 /* arrivals: same dark "live" surface as the scoreboard */
-.arrive{align-content:start;--ph:var(--p-swim);background:var(--board);color:var(--boardfg);border:1px solid var(--boardline);border-radius:18px;padding:12px;display:grid;gap:10px;box-shadow:0 8px 30px rgba(4,18,26,.18)}
+.arrive{align-content:start;--ph:var(--p-swim);background:var(--board);color:var(--boardfg);border:1px solid var(--boardline);border-radius:18px;padding:12px;display:grid;gap:10px;box-shadow:var(--boardshadow)}
 .arrive .sphead{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .arrive .spt{display:grid;line-height:1.2}
 .arrive .spt b{font-size:15px}
@@ -470,7 +471,7 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
   .view{padding-top:8px}
 }
 .spbtns button small.fast{color:var(--p-group)}
-.spbtns button small.slow{color:#ff8a8a}
+.spbtns button small.slow{color:var(--danger)}
 .spbtns button span{letter-spacing:-.01em}
 .splanes{display:grid;gap:10px}
 .splane{display:grid;gap:6px}
@@ -492,9 +493,7 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
 .arrive .spt{min-width:0}
 
 /* ===== v2: compact plan cards, undo toast, labelled toolbar, live adjust, finish actions ===== */
-:root{--c-swim:#0a6fae;--c-rest:#a05a00;--c-group:#0f7a52}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--c-swim:#5cc8f5;--c-rest:#ffb84a;--c-group:#4fe0a6}}
-:root[data-theme="dark"]{--c-swim:#5cc8f5;--c-rest:#ffb84a;--c-group:#4fe0a6}
+:root{--c-swim:var(--p-swim);--c-rest:var(--p-rest);--c-group:var(--p-group)}
 
 /* plan cards: one scannable row per group, tap to edit */
 .cards{grid-template-columns:minmax(0,1fr);gap:8px}
@@ -544,13 +543,23 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 @media (max-width:759px){dialog.sheet[open]{max-height:calc(100dvh - 40px)}}
 
 /* rail: appearance switch */
-#themeBtn{margin-top:auto}
 .rail .sum{margin-top:auto}
-.rail .sum+#themeBtn{margin-top:0}
 #railToggle{margin-top:-12px}
-.mtheme{margin-left:8px;width:36px;height:36px;padding:0;display:grid;place-items:center;border-radius:10px;background:var(--surface);flex:none}
-.mtheme svg{width:18px;height:18px}
-@media (min-width:760px){.app.collapsed .rail #themeBtn{margin-top:auto}}
+.themesw{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;border-radius:12px;background:var(--railhover);border:1px solid var(--railline);flex:none}
+.themesw button{display:flex;align-items:center;justify-content:center;gap:6px;border:0;background:transparent;color:var(--railfg);padding:7px 6px;border-radius:9px;font-size:13px;font-weight:600}
+.themesw button svg{width:16px;height:16px;flex:none}
+.themesw button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.themesw.mini{margin-left:8px;background:var(--sunk);border-color:var(--line)}
+.themesw.mini button{color:var(--muted);padding:6px 9px}
+.themesw.mini .txt{display:none}
+@media (min-width:760px){.app.collapsed .rail .themesw{margin-top:auto;grid-template-columns:1fr}.collapsed .themesw .txt{display:none}.collapsed .themesw button{padding:8px 0}}
+@media (max-width:759px){.rail .themesw{display:none}}
+/* reminder settings: grouped lines */
+.optt{flex-basis:100%;font-size:14px}
+.opt .optt small{display:inline;font-weight:500;margin-left:6px}
+.optl{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.optl input[type=number]{width:62px}
+.opt .optt:not(:first-child){margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
 
 /* run toolbar: every tool keeps its name; stacked icon + label when space is tight */
 .tbtn[aria-pressed="true"] .mute{display:none}
@@ -567,14 +576,14 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 
 /* this-step adjust during rest / ready */
 .adj{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--boardmuted);font-size:13px}
-.adj button{background:rgba(255,255,255,.06);border:1px solid var(--boardline);color:var(--boardfg);border-radius:999px;padding:7px 16px;font-family:var(--f-num);font-size:17px;font-weight:700;min-width:76px}
+.adj button{background:var(--boardtint);border:1px solid var(--boardline);color:var(--boardfg);border-radius:999px;padding:7px 16px;font-family:var(--f-num);font-size:17px;font-weight:700;min-width:76px}
 .adj button:hover{border-color:var(--boardmuted)}
 /* manual-timing reps: the action the coach needs every lap is "到边" */
 .controls button.hot{background:color-mix(in srgb,var(--ph) 22%,transparent);border-color:var(--ph);color:var(--ph);font-weight:800}
 .controls button.hot .lbltxt{display:inline!important}
 /* finish actions */
 .doneacts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.doneacts button{background:rgba(255,255,255,.06);border:1px solid var(--boardline);color:var(--boardfg);border-radius:12px}
+.doneacts button{background:var(--boardtint);border:1px solid var(--boardline);color:var(--boardfg);border-radius:12px}
 .doneacts button:hover{border-color:var(--boardmuted)}
 
 /* library backup */
@@ -663,11 +672,11 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
       <a href="#lib" id="nav-lib" title="计划库"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h11l3 3v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 3v5h7V3M8 13h8M8 17h5"/></svg><span class="txt">计划库</span><span class="step">03</span></a>
     </div>
     <div class="sum" id="railsum"></div>
-    <button type="button" class="railbtn" id="themeBtn" title="外观"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 7.5a4.5 4.5 0 0 1 0 9" fill="currentColor"/></svg><span class="txt">外观：跟随系统</span></button>
+    <div class="themesw" role="group" aria-label="配色模式"><button type="button" data-t="light" title="日间模式" aria-label="日间模式"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span class="txt">日间</span></button><button type="button" data-t="dark" title="夜间模式" aria-label="夜间模式"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><span class="txt">夜间</span></button></div>
     <button type="button" class="railbtn" id="railToggle" aria-expanded="true" title="收起侧栏"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg><span class="txt">收起侧栏</span></button>
   </nav>
 
-  <div class="mbrand"><span class="mark" role="img" aria-label="泳鲨 logo"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#0a7cc0"/><path d="M10 33c5-1 9-9 12-20 4 6 9 14 16 20z" fill="#fff"/><path d="M6 35c4 0 4 2.5 8 2.5s4-2.5 8-2.5 4 2.5 8 2.5 4-2.5 8-2.5 4 2.5 8 2.5" fill="none" stroke="#9fe0ff" stroke-width="2.6" stroke-linecap="round"/></svg></span><b>泳鲨训练计时台</b><small>泳鲨青训</small><button type="button" class="mtheme" id="themeBtnM" aria-label="外观"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 7.5a4.5 4.5 0 0 1 0 9" fill="currentColor"/></svg></button></div>
+  <div class="mbrand"><span class="mark" role="img" aria-label="泳鲨 logo"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#0a7cc0"/><path d="M10 33c5-1 9-9 12-20 4 6 9 14 16 20z" fill="#fff"/><path d="M6 35c4 0 4 2.5 8 2.5s4-2.5 8-2.5 4 2.5 8 2.5 4-2.5 8-2.5 4 2.5 8 2.5" fill="none" stroke="#9fe0ff" stroke-width="2.6" stroke-linecap="round"/></svg></span><b>泳鲨训练计时台</b><small>泳鲨青训</small><div class="themesw mini" role="group" aria-label="配色模式"><button type="button" data-t="light" title="日间模式" aria-label="日间模式"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span class="txt">日间</span></button><button type="button" data-t="dark" title="夜间模式" aria-label="夜间模式"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><span class="txt">夜间</span></button></div></div>
   <!-- PLAN VIEW -->
   <section class="view" id="view-plan" aria-label="制定计划">
     <div class="phead">
@@ -850,9 +859,17 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
       <div class="cfgbody">
         <div class="grp">
           <span class="gl">提醒内容（可同时开启，都关掉就只在出发和间歇切换时提醒）</span>
-          <label class="tg"><input type="checkbox" id="m-count"><span class="sw" aria-hidden="true"></span><span><b>倒数报时</b><small>按设定间隔报剩余秒数，最后 5 秒报「五、四、三、二、一」</small></span></label>
-          <div class="opt" id="opt-count">每 <input type="number" id="cEvery" min="1" max="60" inputmode="numeric"> 秒报一次，从剩 <input type="number" id="cFrom" min="1" max="60" inputmode="numeric"> 秒开始
-            <small>例：每 10 秒、从剩 30 秒开始 → 报「30 秒」「20 秒」「10 秒」，最后 5 秒报「五、四、三、二、一」。手动计时的组按已游秒数报。</small></div>
+          <label class="tg"><input type="checkbox" id="m-count"><span class="sw" aria-hidden="true"></span><span><b>报时</b><small>倒计时报剩余秒数，正计时报已游秒数；从什么时候开始报、从什么时候起每一秒都报，都可以设</small></span></label>
+          <div class="opt" id="opt-count">
+            <b class="optt">倒计时<small>有目标时间的组、间歇、组间休息</small></b>
+            <span class="optl">每 <input type="number" id="cEvery" min="1" max="60" inputmode="numeric"> 秒报一次，从剩 <input type="number" id="cFrom" min="1" max="60" inputmode="numeric"> 秒开始</span>
+            <span class="optl">最后 <input type="number" id="cLast" min="0" max="59" inputmode="numeric"> 秒，每一秒都报</span>
+            <small>例：每 10 秒、从剩 30 秒开始、最后 10 秒逐秒 → 报「30 秒」「20 秒」，然后「10 秒、9 秒……6 秒、五、四、三、二、一」。最后几秒填 0 = 不逐秒报。</small>
+            <b class="optt">正计时<small>手动计时的组、正计时秒表</small></b>
+            <span class="optl">从第 <input type="number" id="cUpFrom" min="0" max="59" inputmode="numeric"> 秒开始报（间隔同上）</span>
+            <span class="optl">从第 <input type="number" id="cUpEach" min="0" max="59" inputmode="numeric"> 秒起，每一秒都报</span>
+            <small>例：从第 30 秒开始 → 前 30 秒不出声，之后报「30 秒」「35 秒」……超过 1 分钟后每半分钟报一次。逐秒报填 0 = 不用，最多报到 59 秒。</small>
+            <small>以上是默认值；每一组还可以在计划里单独设置。</small></div>
           <label class="tg"><input type="checkbox" id="m-stagger"><span class="sw" aria-hidden="true"></span><span><b>间隔出发</b><small>同一道的学生按顺序依次出发</small></span></label>
           <div class="opt" id="opt-stagger">每隔 <input type="number" id="sGap" min="1" max="60" inputmode="numeric"> 秒出发一人
             <small>每趟开始时 1 号随出发哨出发，之后每隔设定秒数报「2 号出发」「3 号出发」……训练计时页会出现每个学生的「到边」按钮：学生到边时点他的名字，自动扣掉他晚出发的秒数，记下他自己的成绩。电脑上也可以按数字键 1–9、0（第 10 人）。</small>
@@ -1031,7 +1048,7 @@ function whistle(t,dur,base){
 }
 /* Settings + voice */
 const CKEY='swim-cue-v1';
-const cfg=Object.assign({count:true,stagger:false,roster:[],lineup:[],every:5,from:30,gapSec:5,swimmers:3,sound:'both',src:'pack'},(()=>{try{return JSON.parse(localStorage.getItem(CKEY))||{}}catch(e){return{}}})());
+const cfg=Object.assign({count:true,stagger:false,roster:[],lineup:[],every:5,from:30,last:5,upFrom:30,upEach:0,gapSec:5,swimmers:3,sound:'both',src:'pack'},(()=>{try{return JSON.parse(localStorage.getItem(CKEY))||{}}catch(e){return{}}})());
 if(!(cfg.v>=5)){if(!(cfg.v>=2))cfg.sound='both';if(!(cfg.v>=3))delete cfg.voice;cfg.src='pack';cfg.count=cfg.mode!=='stagger'&&cfg.mode!=='off';cfg.stagger=cfg.mode==='stagger';delete cfg.mode;cfg.v=5;try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
 if(typeof cfg.names==='string'){const n=cfg.names.split(/[\s,，、;；]+/).filter(Boolean);if(!cfg.roster.length)cfg.roster=n;if(!cfg.lineup.length)cfg.lineup=n.slice();delete cfg.names;try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
 if(!Array.isArray(cfg.lanes)||!cfg.lanes.length){cfg.lanes=[{n:Math.max(1,cfg.swimmers||3),lineup:(cfg.lineup||[]).slice()}];try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}}
@@ -1144,17 +1161,40 @@ function cue(phase){
   else notify(()=>beep(1100,300),'准备');
 }
 const DIGITS=['','一','二','三','四','五'];
-// per-group reminder: it.rEvery 0/undefined = follow default, -1 = off, n = every n seconds; it.rFrom 0 = whole swim
+// Reminder rule for one step. Per group: rEvery 0/undefined = follow default, -1 = off, n = every n seconds;
+// countdown (timed groups): rFrom = report within the last rFrom seconds (0 = whole swim), rLast = count every second for the last rLast seconds;
+// count-up (manual groups): rUp = stay silent until this second, rEach = from this second on call every second (0 = never).
+// rLast / rUp / rEach undefined = use the defaults in cfg.
 function remindRule(it){
-  if(it&&it.rEvery>0)return{on:true,every:it.rEvery,from:it.rFrom>0?it.rFrom:Infinity};
-  if(it&&it.rEvery===-1)return{on:false,off:true};
-  return{on:cfg.count,every:cfg.every,from:cfg.from};
+  const g={on:cfg.count,every:cfg.every,from:cfg.from,last:cfg.last,upFrom:cfg.upFrom,upEach:cfg.upEach};
+  if(!it)return g;
+  if(it.rEvery===-1)return{off:true};
+  if(it.rEvery>0){g.on=true;g.every=it.rEvery;g.from=it.rFrom>0?it.rFrom:Infinity;if(it.rUp!=null)g.upFrom=it.rUp}
+  if(it.rLast!=null){g.last=it.rLast;g.ownLast=true}
+  if(it.rEach!=null){g.upEach=it.rEach;g.ownEach=true}
+  return g;
 }
-function markCue(sec,down=true,it=null){
+// total = length of a countdown step, so a short step's opening announcement is not talked over
+function markCue(sec,down=true,it=null,total=0){
   const rr=remindRule(it);
-  if(rr.off||(!rr.on&&!cfg.stagger)||sec<1)return;
-  if(down&&sec<=5){if(cfg.sound==='whistle')beep(1250,sec===1?110:80);else{clearTimeout(sayTimer);say(DIGITS[sec],sec===5,true)}return}
-  if(!rr.on||sec>rr.from||sec%rr.every)return;
+  if(rr.off||sec<1)return;
+  if(down){
+    const last=(rr.on||cfg.stagger||rr.ownLast)?rr.last:0;
+    if(sec<=last){
+      if(sec>5&&total&&sec>total-2)return;
+      if(cfg.sound==='whistle')beep(1250,sec===1?110:80);
+      else{clearTimeout(sayTimer);if(sec<=5)say(DIGITS[sec],sec===Math.min(5,last),true);else say(sec+'秒',true,true)}
+      return;
+    }
+    if(!rr.on||sec>rr.from||sec%rr.every)return;
+  }else{
+    if(rr.upEach>0&&sec>=rr.upEach&&sec<=59&&(rr.on||rr.ownEach)){
+      if(cfg.sound==='whistle')beep(1250,80);else{clearTimeout(sayTimer);say(sec+'秒',true,true)}
+      return;
+    }
+    // past one minute only the half-minute marks are recorded, so only those are called
+    if(!rr.on||sec<rr.upFrom||(sec>=60?sec%30:sec%rr.every))return;
+  }
   notify(()=>beep(1000,120),secText(sec));
 }
 function staggerCue(n){notify(()=>beep(1320,350),n+' 号出发')}
@@ -1177,7 +1217,7 @@ function tick(){
     while(st.dur&&e>=st.dur*1000&&guard++<50){go(si+1,{auto:true,overflow:e-st.dur*1000});st=steps[si];e=elapsed()}
     if(running){
       const sec=st.dur?Math.ceil((st.dur*1000-e)/1000):Math.floor(e/1000);
-      if(sec!==lastCue){lastCue=sec;if(st.dur?sec<st.dur:sec>0)markCue(sec,!!st.dur,(st.phase==='swim'||st.phase==='free')?plan[st.i]:null)}
+      if(sec!==lastCue){lastCue=sec;if(st.dur?sec<st.dur:sec>0)markCue(sec,!!st.dur,(st.phase==='swim'||st.phase==='free')?plan[st.i]:null,st.dur||0)}
       if(cfg.stagger&&(st.phase==='swim'||st.phase==='free')){
         const k=Math.floor(e/1000/cfg.gapSec);
         if(k>=stagDone&&k<cfg.swimmers&&(!st.dur||k*cfg.gapSec<st.dur)){stagDone=k+1;staggerCue(k+1)}
@@ -1221,6 +1261,7 @@ function render(force){
     if(it.rest>0)parts.push('间歇 '+fmtShort(it.rest));
     if(it.target>0&&it.rest>0)parts.push('每 '+fmt(it.target+it.rest)+' 出发');
     if(it.rEvery>0)parts.push('每 '+fmtShort(it.rEvery)+' 报时');else if(it.rEvery===-1)parts.push('不报时');
+    if(eachTxt(it))parts.push(eachTxt(it));
     if(it.note)parts.push(it.note);
     $('note').textContent=parts.join(' · ');
     if(st.dur){
@@ -1331,18 +1372,40 @@ function customFields(host,it,i,onChange){
 }
 /* per-group reminder controls (plan cards + live adjust dialog) */
 const R_EVERY=[[0,'报时：跟随默认'],[5,'每 5 秒报时'],[10,'每 10 秒报时'],[15,'每 15 秒报时'],[20,'每 20 秒报时'],[30,'每 30 秒报时'],[60,'每 1 分钟报时'],[-1,'这组不报时']];
-const R_FROM=[[30,'30 秒以内'],[60,'1 分钟以内'],[120,'2 分钟以内'],[180,'3 分钟以内'],[0,'全程']];
+const R_FROM=[[30,'剩 30 秒以内报'],[60,'剩 1 分钟以内报'],[120,'剩 2 分钟以内报'],[180,'剩 3 分钟以内报'],[0,'全程都报']];
+const R_STEPS=[10,15,20,25,30,35,40,45,50,55];
+const R_LAST=[['','逐秒倒数：跟随默认'],[0,'不逐秒倒数'],...[3,5,10,15,20,30].map(v=>[v,'最后 '+v+' 秒逐秒报'])];
+const R_UP=[['','开始报：跟随默认'],[0,'一出发就开始报'],...R_STEPS.map(v=>[v,'第 '+v+' 秒开始报'])];
+const R_EACH=[['','逐秒报：跟随默认'],[0,'不逐秒报'],...R_STEPS.map(v=>[v,'第 '+v+' 秒起逐秒报'])];
+// returns a function that re-syncs the row after the group's target changes (timed <-> manual)
 function remindFields(host,it,idp,onChange){
   const row=document.createElement('div');row.className='rline';
   const mk=(list,val,id,label)=>{const s=document.createElement('select');s.id=id;s.setAttribute('aria-label',label);
-    list.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;if(+v===+val)o.selected=true;s.appendChild(o)});return s};
+    const v0=val==null?'':String(val);
+    if(!list.some(([v])=>String(v)===v0))list=[...list,[val,val+' 秒']];
+    list.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;if(String(v)===v0)o.selected=true;s.appendChild(o)});return s};
   const ev=mk(R_EVERY,it.rEvery||0,'re'+idp,'这一组的报时间隔');
-  const fr=mk(R_FROM,it.rFrom==null?60:it.rFrom,'rf'+idp,'报时范围');
+  const fr=mk(R_FROM,it.rFrom==null?60:it.rFrom,'rf'+idp,'倒计时报时范围');
+  const la=mk(R_LAST,it.rLast,'rl'+idp,'最后几秒每一秒都报');
+  const up=mk(R_UP,it.rUp,'ru'+idp,'正计时从第几秒开始报');
+  const ea=mk(R_EACH,it.rEach,'rc'+idp,'正计时从第几秒起每一秒都报');
   const hint=document.createElement('small');
-  const upd=()=>{const on=+ev.value>0;fr.hidden=!on;hint.textContent=on?(it.target>0?'倒计时剩这么多时间以内开始报':'手动计时的组：从出发起这段时间内报'):+ev.value===-1?'这组只在出发和间歇时提醒':'用「提醒设置」里的默认报时'};
+  const upd=()=>{
+    const e=+ev.value,timed=it.target>0,off=e===-1;
+    fr.hidden=!(e>0&&timed);up.hidden=!(e>0&&!timed);la.hidden=off||!timed;ea.hidden=off||timed;
+    hint.textContent=off?'这组只在出发和间歇时提醒':timed?'倒计时：按间隔报剩余秒数；最后几秒可以每一秒都报':'手动计时：前面不出声，从设定的秒数开始报已游时间；也可以从某一秒起每一秒都报';
+  };
   ev.onchange=()=>{it.rEvery=+ev.value;if(it.rEvery>0&&it.rFrom==null)it.rFrom=60;upd();onChange()};
   fr.onchange=()=>{it.rFrom=+fr.value;onChange()};
-  upd();row.append(ev,fr,hint);host.appendChild(row);
+  [[la,'rLast'],[up,'rUp'],[ea,'rEach']].forEach(([s,k])=>{s.onchange=()=>{if(s.value==='')delete it[k];else it[k]=+s.value;onChange()}});
+  upd();row.append(ev,fr,up,la,ea,hint);host.appendChild(row);
+  return upd;
+}
+// short labels for a group's own every-second rule (plan row chips, scoreboard note)
+function eachTxt(it){
+  if(it.rEvery===-1)return'';
+  if(it.target>0)return it.rLast>0?'最后 '+it.rLast+' 秒逐秒':it.rLast===0?'不逐秒倒数':'';
+  return it.rEach>0?'第 '+it.rEach+' 秒起逐秒':'';
 }
 /* Plan cards: one compact row per group (number, name, colour-coded timing chips, note); tap a row to edit it */
 const openCards=new WeakSet();
@@ -1357,6 +1420,7 @@ function fillSummary(li,it,i){
   if(it.rest>0)chip('间歇 '+fmtShort(it.rest),'r');
   if(it.groupRest>0&&i<plan.length-1)chip('组后休息 '+fmtShort(it.groupRest),'g');
   if(it.rEvery>0)chip('每 '+fmtShort(it.rEvery)+' 报时');else if(it.rEvery===-1)chip('不报时');
+  if(eachTxt(it))chip(eachTxt(it));
   if(it.note){const n=document.createElement('span');n.className='nt';n.textContent=it.note;c.appendChild(n)}
 }
 function syncToggleAll(){const b=$('toggleAll');b.hidden=plan.length<2;b.textContent=plan.length&&plan.every(it=>openCards.has(it))?'全部收起':'全部展开'}
@@ -1401,17 +1465,18 @@ function renderCards(){
       body.appendChild(line);
     }
 
+    let rupd=()=>{};
     const f=document.createElement('div');f.className='fields';
     [['target','目标时间','手动计时'],['rest','每趟间歇','无'],['groupRest','组后休息','无']].forEach(([k,l,ph])=>{
       const lab=document.createElement('label');lab.textContent=l;
       const inp=document.createElement('input');inp.type='text';inp.inputMode='numeric';inp.autocomplete='off';inp.id='f'+i+k;inp.value=tval(it[k]);inp.placeholder=ph;
       inp.onfocus=()=>inp.select();
-      inp.onchange=()=>{const v=parseTime(inp.value);if(!(v>=0&&v<=900)){inp.value=tval(it[k]);toast('时间填秒数（如 55）或 分:秒（如 1:30），最长 15 分钟');return}it[k]=v;inp.value=tval(v);changed(true)};
+      inp.onchange=()=>{const v=parseTime(inp.value);if(!(v>=0&&v<=900)){inp.value=tval(it[k]);toast('时间填秒数（如 55）或 分:秒（如 1:30），最长 15 分钟');return}it[k]=v;inp.value=tval(v);rupd();changed(true)};
       lab.appendChild(inp);f.appendChild(lab);
     });
     body.appendChild(f);
     const fh=document.createElement('p');fh.className='fhint';fh.textContent='填秒数，或 1:30 这样的 分:秒。目标留空 = 手动计时（到边自己点）。';body.appendChild(fh);
-    remindFields(body,it,'c'+i,()=>changed(true));
+    rupd=remindFields(body,it,'c'+i,()=>changed(true));
     const note=document.createElement('input');note.type='text';note.placeholder='备注（如：顶 8 字板、戴呼吸管）';note.value=it.note||'';note.id='n'+i;note.setAttribute('aria-label','备注');
     note.onchange=()=>{it.note=note.value.trim();changed(true)};
     body.appendChild(note);
@@ -1588,7 +1653,7 @@ function copyLive(){
 }
 $('spCopy').onclick=copyLive;$('doneCopy').onclick=copyLive;$('doneSp').onclick=()=>openSpTable();
 $('bkExport').onclick=()=>{
-  const data={app:'swim-timer',v:1,at:Date.now(),lib,plan,text:$('bulk').value,cfg:{roster:cfg.roster,lanes:cfg.lanes,gapSec:cfg.gapSec,every:cfg.every,from:cfg.from,count:cfg.count,sound:cfg.sound}};
+  const data={app:'swim-timer',v:1,at:Date.now(),lib,plan,text:$('bulk').value,cfg:{roster:cfg.roster,lanes:cfg.lanes,gapSec:cfg.gapSec,every:cfg.every,from:cfg.from,last:cfg.last,upFrom:cfg.upFrom,upEach:cfg.upEach,count:cfg.count,sound:cfg.sound}};
   const d=new Date(),name='swim-timer-backup-'+d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+'.json';
   try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));a.download=name;
     document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
@@ -1835,6 +1900,7 @@ function renderQE(){
   $('qePrevG').disabled=qeI===0;$('qeNextG').disabled=qeI===plan.length-1;$('qeDel').disabled=plan.length<=1;
   const b=$('qeBody');b.innerHTML='';
   const line=document.createElement('div');line.className='qeline';
+  let rupd=()=>{};
   const mk=(opts,key,label,f)=>{const s=sel(opts,it[key],label,f);s.onchange=()=>{it[key]=typeof it[key]==='number'?+s.value:s.value;applyQE()};return s};
   if(it.custom)customFields(b,it,'q'+qeI,soft=>applyQE(soft));
   else{line.append(mk(REPS,'reps','趟数',x=>x+' 趟'),mk(DISTS,'dist','距离',x=>x+' 米'),mk(STROKES,'stroke','泳姿'),mk(KINDS,'kind','类型'));
@@ -1850,12 +1916,12 @@ function renderQE(){
       if(idx===2)c.appendChild(out);
       const bt=document.createElement('button');bt.type='button';bt.textContent=(dv>0?'+':'−')+Math.abs(dv);
       bt.setAttribute('aria-label',l+(dv>0?'加':'减')+Math.abs(dv)+'秒');
-      bt.onclick=()=>{it[k]=Math.max(0,Math.min(900,it[k]+dv));show();applyQE(true)};
+      bt.onclick=()=>{it[k]=Math.max(0,Math.min(900,it[k]+dv));show();rupd();applyQE(true)};
       c.appendChild(bt);
     });
     show();b.appendChild(row);
   });
-  remindFields(b,it,'q'+qeI,()=>applyQE(true));
+  rupd=remindFields(b,it,'q'+qeI,()=>applyQE(true));
   const note=document.createElement('input');note.type='text';note.id='qeNote';note.placeholder='备注（如：要求心率 30 以下）';note.value=it.note||'';note.setAttribute('aria-label','备注');
   note.onchange=()=>{it.note=note.value.trim();applyQE(true)};
   b.appendChild(note);
@@ -1917,15 +1983,16 @@ function restoreSession(){
 window.addEventListener('pagehide',saveSession);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveSession()});
 
-/* ---------- Appearance: follow system / light / dark ---------- */
-const THEME_TXT={auto:'外观：跟随系统',light:'外观：浅色',dark:'外观：深色'};
-let theme='auto';try{const v=localStorage.getItem('swim-theme');if(v==='light'||v==='dark')theme=v}catch(e){}
+/* ---------- Appearance: day / night (first visit follows the system, then the coach's choice sticks) ---------- */
+let theme=document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light';
 function applyTheme(announce){
-  if(theme==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',theme);
-  [$('themeBtn'),$('themeBtnM')].forEach(b=>{b.title=THEME_TXT[theme]+'（点击切换）';b.setAttribute('aria-label',THEME_TXT[theme]+'，点击切换');const x=b.querySelector('.txt');if(x)x.textContent=THEME_TXT[theme]});
-  if(announce)toast(THEME_TXT[theme]);
+  document.documentElement.setAttribute('data-theme',theme);
+  document.querySelectorAll('.themesw button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===theme));
+  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=theme==='dark'?'#0a0f1a':'#f1f5fa';
+  if(announce)toast(theme==='dark'?'已切换到夜间模式':'已切换到日间模式');
 }
-$('themeBtn').onclick=$('themeBtnM').onclick=()=>{theme={auto:'light',light:'dark',dark:'auto'}[theme];try{localStorage.setItem('swim-theme',theme)}catch(e){}applyTheme(true)};
+document.querySelectorAll('.themesw button').forEach(b=>b.onclick=()=>{
+  if(theme===b.dataset.t)return;theme=b.dataset.t;try{localStorage.setItem('swim-theme',theme)}catch(e){}applyTheme(true)});
 applyTheme(false);
 
 /* ---------- This-step adjust: lengthen or shorten the current rest without touching the plan ---------- */
@@ -1965,7 +2032,7 @@ $('cfgclose').onclick=closeCfg;$('cfgdone').onclick=closeCfg;
 $('cfgToLu').onclick=()=>{closeCfg();openLu()};
 $('cfg').addEventListener('click',e=>{if(e.target===$('cfg'))closeCfg()});
 function cfgSummary(){
-  const parts=[];if(cfg.count)parts.push('每 '+cfg.every+' 秒倒数（剩 '+cfg.from+' 秒起）');if(cfg.stagger)parts.push('间隔 '+cfg.gapSec+' 秒出发 · '+laneSummary());const m=parts.length?parts.join(' + '):'只在切换时提醒';
+  const parts=[];if(cfg.count)parts.push('每 '+cfg.every+' 秒报时'+(cfg.last>0?'，最后 '+cfg.last+' 秒逐秒':''));if(cfg.stagger)parts.push('间隔 '+cfg.gapSec+' 秒出发 · '+laneSummary());const m=parts.length?parts.join(' + '):'只在切换时提醒';
   const snd={whistle:'哨声',voice:'语音播报',both:'哨声 + 语音'}[cfg.sound];
   $('cfgsum').textContent=m+' · '+snd;$('cfgbtnLabel').textContent='提醒设置';$('cfgbtn').title='提醒：'+m+' · '+snd;
   $('opt-count').hidden=!cfg.count;$('opt-stagger').hidden=!cfg.stagger;
@@ -1973,10 +2040,10 @@ function cfgSummary(){
   if(typeof renderLineup==='function')renderLineup();
 }
 function cfgInit(){
-  $('m-count').checked=cfg.count;$('m-stagger').checked=cfg.stagger;$('cEvery').value=cfg.every;$('cFrom').value=cfg.from;$('sGap').value=cfg.gapSec;$('cSound').value=cfg.sound;cfgSummary();
+  $('m-count').checked=cfg.count;$('m-stagger').checked=cfg.stagger;$('cEvery').value=cfg.every;$('cFrom').value=cfg.from;$('cLast').value=cfg.last;$('cUpFrom').value=cfg.upFrom;$('cUpEach').value=cfg.upEach;$('sGap').value=cfg.gapSec;$('cSound').value=cfg.sound;cfgSummary();
   ['count','stagger'].forEach(k=>{$('m-'+k).onchange=()=>{cfg[k]=$('m-'+k).checked;saveCfg();cfgSummary()}});
-  [['cEvery','every',1,60],['cFrom','from',1,60],['sGap','gapSec',1,60]].forEach(([id,k,lo,hi])=>{
-    $(id).onchange=()=>{const v=Math.round(+$(id).value);if(v>=lo&&v<=hi){cfg[k]=v;saveCfg();cfgSummary()}else $(id).value=cfg[k]};
+  [['cEvery','every',1,60],['cFrom','from',1,60],['cLast','last',0,59],['cUpFrom','upFrom',0,59],['cUpEach','upEach',0,59],['sGap','gapSec',1,60]].forEach(([id,k,lo,hi])=>{
+    $(id).onchange=()=>{const v=Math.round(+$(id).value);if($(id).value!==''&&v>=lo&&v<=hi){cfg[k]=v;saveCfg();cfgSummary()}else $(id).value=cfg[k]};
   });
   $('cSound').onchange=()=>{cfg.sound=$('cSound').value;saveCfg();cfgSummary();pickVoice()};
   $('cTest').onclick=()=>{audio();let t=0;if(cfg.count){const a=Math.min(cfg.from,30)-(Math.min(cfg.from,30)%cfg.every)||cfg.every;markCue(a);t=1500}setTimeout(()=>notify(()=>beep(1320,600),cfg.stagger?'1 号出发':'出发'),t);if(cfg.stagger)setTimeout(()=>staggerCue(2),t+1600)};
@@ -2020,7 +2087,7 @@ function ivTick(){
     const rem=(iv.dur*1000-e)/1000;
     if(iv.run){
       const r=Math.ceil(rem);
-      if(r!==iv.last){iv.last=r;if(r>0&&r<iv.dur)markCue(r)}
+      if(r!==iv.last){iv.last=r;if(r>0&&r<iv.dur)markCue(r,true,null,iv.dur)}
       if(rem<=0&&!iv.ended){iv.ended=true;notify(()=>beep(1320,600),'时间到，出发')}
     }
     c.textContent=rem>0?fmt(Math.ceil(rem-1e-6)):'+'+fmt(Math.floor(-rem));
