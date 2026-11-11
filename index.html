@@ -594,13 +594,38 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 /* wide screens: the side column never scrolls as a whole; arrivals stay put, the group list scrolls inside its card */
 @media (min-width:1024px){
   .side{display:flex;flex-direction:column;align-items:stretch;overflow:hidden;max-height:calc(100dvh - 100px)}
-  .side>.arrive{flex:0 0 auto;max-height:calc((100dvh - 100px)*.58);overflow-y:auto}
+  .side>.arrive{flex:0 0 auto;height:max(300px,calc((100dvh - 100px)*.64))}
   .side>.tabs{flex:0 1 auto;min-height:220px;display:flex;flex-direction:column}
   #pane-prog{display:flex;flex-direction:column;min-height:0;flex:0 1 auto}
   #proglist{overflow-y:auto;min-height:0;flex:0 1 auto;padding:2px}
 }
 /* tablets and up: messages appear at the top so they never cover the start/pause controls */
 @media (min-width:760px){.toast{bottom:auto;top:calc(64px + env(safe-area-inset-top,0px))}}
+/* Arrivals: one fixed-size card that never scrolls. fitSplits() picks the column count and button height
+   so every swimmer in every lane is on screen at once; buttons shrink as swimmers are added. */
+.arrive{display:flex;flex-direction:column;overflow:hidden}
+.arrive .sphead{flex:none}
+@media (min-width:760px) and (max-width:1023px){.arrive{height:clamp(300px,52dvh,460px)}}
+@media (max-width:759px){.arrive{height:clamp(260px,56dvh,440px)}}
+#spBtns{flex:1 1 auto;min-height:0;overflow:hidden;display:grid;align-content:start;row-gap:var(--lg,10px)}
+#spBtns .splane{display:grid;gap:var(--g,8px);grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));grid-auto-rows:var(--bh,64px)}
+#spBtns.multi .splane{grid-template-columns:var(--lab,30px) repeat(var(--cols,2),minmax(0,1fr))}
+#spBtns .splh{grid-column:1;display:grid;place-items:center;padding:0;font-size:12px;font-weight:700;line-height:1.1;letter-spacing:0;text-align:center;color:var(--boardmuted);background:var(--boardtint);border-radius:8px}
+#spBtns .splane button{min-height:0;height:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:2px 4px;overflow:hidden;border-radius:clamp(6px,calc(var(--bh)*.16),12px)}
+#spBtns .splane button b{font-size:clamp(11px,calc(var(--bh)*.2),15px);line-height:1.15}
+#spBtns .splane button span{font-size:clamp(13px,calc(var(--bh)*.34),26px);line-height:1.05}
+#spBtns .splane button small{font-size:clamp(10px,calc(var(--bh)*.15),13px);line-height:1.15;min-height:0}
+#spBtns.compact .splane button small{display:none}
+/* small buttons: name and time side by side when the button is wide enough, otherwise two small lines */
+#spBtns.tiny .splane button b{font-size:clamp(10px,calc(var(--bh)*.3),12px);line-height:1.1}
+#spBtns.tiny .splane button span{font-size:clamp(11px,calc(var(--bh)*.38),14px);line-height:1.1}
+#spBtns.tiny.wide .splane button{flex-direction:row;justify-content:space-between;gap:4px;padding:0 7px}
+#spBtns.tiny.wide .splane button b{font-size:clamp(11px,calc(var(--bh)*.44),14px)}
+#spBtns.tiny.wide .splane button span{font-size:clamp(12px,calc(var(--bh)*.5),16px)}
+#spBtns.tiny .splane button span.ph{display:none}
+#spBtns.tiny .splane button:has(span.ph){justify-content:center}
+/* very small: one line only - the name until the swimmer is in, then the time (colour marks who is done) */
+#spBtns.micro:not(.wide) .splane button.got b{display:none}
 @media (max-width:759px){
   .cardsHead .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto auto;gap:6px}
   .cardsHead .row button{white-space:nowrap}
@@ -864,7 +889,7 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
             <b class="optt">倒计时<small>有目标时间的组、间歇、组间休息</small></b>
             <span class="optl">每 <input type="number" id="cEvery" min="1" max="60" inputmode="numeric"> 秒报一次，从剩 <input type="number" id="cFrom" min="1" max="60" inputmode="numeric"> 秒开始</span>
             <span class="optl">最后 <input type="number" id="cLast" min="0" max="59" inputmode="numeric"> 秒，每一秒都报</span>
-            <small>例：每 10 秒、从剩 30 秒开始、最后 10 秒逐秒 → 报「30 秒」「20 秒」，然后「10 秒、9 秒……6 秒、五、四、三、二、一」。最后几秒填 0 = 不逐秒报。</small>
+            <small>例：每 10 秒、从剩 30 秒开始、最后 10 秒逐秒 → 报「30 秒」「20 秒」，然后「十、九、八、七、六、五、四、三、二、一」。最后几秒填 0 = 不逐秒报。</small>
             <b class="optt">正计时<small>手动计时的组、正计时秒表</small></b>
             <span class="optl">从第 <input type="number" id="cUpFrom" min="0" max="59" inputmode="numeric"> 秒开始报（间隔同上）</span>
             <span class="optl">从第 <input type="number" id="cUpEach" min="0" max="59" inputmode="numeric"> 秒起，每一秒都报</span>
@@ -1103,8 +1128,20 @@ function loadPack(){
   })));
   return packLoading;
 }
+/* Number-only countdown for 10..6: play only the number part of the coach's "N秒" clip.
+   Values = where 「秒」 begins, in seconds after speech onset (measured from the recordings' spectrograms). */
+const NUM_ONLY={10:.19,9:.133,8:.12,7:.156,6:.132};
+const onsetCache=new WeakMap();
+function onsetOf(b){
+  if(onsetCache.has(b))return onsetCache.get(b);
+  const d=b.getChannelData(0),h=Math.max(1,Math.round(b.sampleRate*.005)),r=[];let mx=0;
+  for(let i=0;i+h<d.length;i+=h){let s=0;for(let j=i;j<i+h;j++)s+=d[j]*d[j];const v=Math.sqrt(s/h);r.push(v);if(v>mx)mx=v}
+  const o=Math.max(0,r.findIndex(v=>v>mx*.1))*.005;onsetCache.set(b,o);return o;
+}
 function clipsFor(text){
   const has=k=>typeof VOICE_PACK!=='undefined'&&k in VOICE_PACK;
+  const nm=text.match(/^#(\d+)$/);
+  if(nm){const k=nm[1]+'秒';return has(k)?[NUM_ONLY[nm[1]]?{k,trim:NUM_ONLY[nm[1]]}:k]:null}
   if(has(text))return[text];
   const m=text.match(/^间歇(.+)$/);
   if(m&&has('间歇'))return has(m[1])?['间歇',m[1]]:['间歇'];
@@ -1113,8 +1150,15 @@ function clipsFor(text){
 function playClips(keys,interrupt){
   if(interrupt){packActive.forEach(s=>{try{s.stop()}catch(e){}});packActive=[]}
   let t=ctx.currentTime+.01;const m=out();
-  keys.forEach(k=>{const s=ctx.createBufferSource();s.buffer=packBuf[k];s.connect(m);s.start(t);t+=packBuf[k].duration+.03;
-    packActive.push(s);s.onended=()=>{packActive=packActive.filter(x=>x!==s)}});
+  // a key is a clip name, or {k, trim} for the number-only countdown (strings have a .trim method, so test the type)
+  keys.forEach(x=>{const cut=typeof x==='object'?x.trim:0,b=packBuf[typeof x==='object'?x.k:x],s=ctx.createBufferSource();s.buffer=b;
+    if(cut){
+      // stop just after the number, with a short fade so the cut is not heard as a click
+      const end=Math.min(b.duration,onsetOf(b)+cut+.015),g=ctx.createGain();
+      g.gain.setValueAtTime(1,t);g.gain.setValueAtTime(1,t+Math.max(0,end-.045));g.gain.linearRampToValueAtTime(0,t+end);
+      s.connect(g).connect(m);s.start(t,0,end);t+=end+.03;
+    }else{s.connect(m);s.start(t);t+=b.duration+.03}
+    packActive.push(s);s.onended=()=>{packActive=packActive.filter(y=>y!==s)}});
 }
 function say(text,interrupt=true,fast=false){
   if(!soundOn)return;
@@ -1123,8 +1167,9 @@ function say(text,interrupt=true,fast=false){
   // only the coach's recordings are ever played; anything not recorded becomes a short whistle
   if(!keys){if(cfg.sound==='voice')beep(1250,fast?80:150);return}
   if(ctx.state!=='running')ctx.resume().catch(()=>{});
-  if(keys.every(k=>packBuf[k]))playClips(keys,interrupt);
-  else{const t=now();loadPack().then(()=>{if(now()-t<400&&keys.every(k=>packBuf[k]))playClips(keys,interrupt)})}
+  const ready=()=>keys.every(k=>packBuf[typeof k==='object'?k.k:k]);
+  if(ready())playClips(keys,interrupt);
+  else{const t=now();loadPack().then(()=>{if(now()-t<400&&ready())playClips(keys,interrupt)})}
 }
 function sayTTS(text,interrupt=true,fast=false){
   if(!soundOn||!('speechSynthesis' in window))return;
@@ -1183,7 +1228,7 @@ function markCue(sec,down=true,it=null,total=0){
     if(sec<=last){
       if(sec>5&&total&&sec>total-2)return;
       if(cfg.sound==='whistle')beep(1250,sec===1?110:80);
-      else{clearTimeout(sayTimer);if(sec<=5)say(DIGITS[sec],sec===Math.min(5,last),true);else say(sec+'秒',true,true)}
+      else{clearTimeout(sayTimer);if(sec<=5)say(DIGITS[sec],sec===Math.min(5,last),true);else say(sec<=10?'#'+sec:sec+'秒',true,true)}
       return;
     }
     if(!rr.on||sec>rr.from||sec%rr.every)return;
@@ -1723,26 +1768,51 @@ function renderSplits(force){
   const sk=c.i+'-'+c.rep+'|'+JSON.stringify(allLaneNames());
   if(force||sk!==lastSpKey){
     lastSpKey=sk;$('spRep').textContent='第 '+(c.i+1)+' 组 · 第 '+c.rep+' 趟';
-    const wrap=$('spBtns');wrap.innerHTML='';
+    const wrap=$('spBtns');wrap.innerHTML='';wrap.classList.toggle('multi',multi);
     cfg.lanes.forEach((l,L)=>{
-      const sec=document.createElement('div');sec.className='splane';
-      if(multi){const h=document.createElement('div');h.className='splh';h.textContent='第 '+(L+1)+' 道 · '+l.n+' 人';sec.appendChild(h)}
-      const g=document.createElement('div');g.className='spbtns';
+      // one grid per lane: [lane label] + the lane's buttons, sized by fitSplits()
+      const sec=document.createElement('div');sec.className='splane spbtns';
+      if(multi){const h=document.createElement('div');h.className='splh';h.textContent=(L+1)+'道';h.title='第 '+(L+1)+' 道 · '+l.n+' 人';sec.appendChild(h)}
       laneNames(L).forEach((nm,k)=>{const b=document.createElement('button');b.type='button';b.dataset.l=L;b.dataset.n=k+1;
         b.innerHTML='<b></b><span></span><small></small>';b.querySelector('b').textContent=multi&&!l.lineup[k]?(k+1)+' 号':nm;
-        b.onclick=()=>tapSplit(L,k+1);g.appendChild(b)});
-      sec.appendChild(g);wrap.appendChild(sec);
+        b.onclick=()=>tapSplit(L,k+1);sec.appendChild(b)});
+      wrap.appendChild(sec);
     });
+    fitSplits();
   }
   $('spBtns').querySelectorAll('button').forEach(b=>{
     const L=+b.dataset.l,n=+b.dataset.n,arr=splitsData[spKey(c.i,c.rep,L)]||[],t=arr[n-1],left=c.ms/1000-(n-1)*cfg.gapSec;
     b.classList.toggle('got',t!=null);b.classList.toggle('wait',t==null&&left<=0);
-    b.querySelector('span').textContent=t!=null?fmtSplit(t):left>0?'到边':'未出发';
+    const sp=b.querySelector('span');sp.textContent=t!=null?fmtSplit(t):left>0?'到边':'未出发';sp.className=t!=null?'':'ph';
     const sm=b.querySelector('small');const df=t!=null&&it&&it.target>0?t-it.target:null;sm.textContent=df!=null?'比目标'+fmtDiff(df):'';sm.className=df==null?'':df>0?'slow':'fast';
     b.setAttribute('aria-label',slotName(L,n-1)+(t!=null?' 成绩 '+fmtSplit(t):' 到边'));
   });
   $('spUndo').disabled=!spLast;
 }
+// Fit every arrival button into the fixed card: try 1..6 columns and a few gap sizes, keep the layout
+// whose buttons are largest (height, or width for very narrow columns). Lanes stack; a narrow label column marks each lane.
+function fitSplits(){
+  const box=$('splits'),wrap=$('spBtns');if(box.hidden)return;
+  const W=wrap.clientWidth,H=wrap.clientHeight;if(!W||!H)return;
+  const ns=cfg.lanes.map(l=>l.n),nl=ns.length,lab=nl>1?30:0,maxN=Math.max(...ns);
+  let best=null;
+  for(let c=1;c<=Math.min(maxN,6);c++){
+    const rows=ns.reduce((a,n)=>a+Math.ceil(n/c),0);
+    for(const g of [8,5,3]){
+      const lg=nl>1?g+4:0;
+      const h=(H-(rows-nl)*g-(nl-1)*lg)/rows,w=(W-(lab?lab+g:0)-(c-1)*g)/c;
+      const sc=Math.min(h,w*.8)+g*.4;
+      if(!best||sc>best.sc)best={sc,c,g,lg,h};
+    }
+  }
+  // never taller than needed: a small group keeps comfortable, not giant, buttons
+  const h=Math.max(12,Math.min(Math.floor(best.h),130));
+  const st=wrap.style;st.setProperty('--cols',best.c);st.setProperty('--bh',h+'px');st.setProperty('--g',best.g+'px');st.setProperty('--lg',best.lg+'px');st.setProperty('--lab',lab+'px');
+  const bw=(W-(lab?lab+best.g:0)-(best.c-1)*best.g)/best.c;
+  wrap.classList.toggle('compact',h<64);wrap.classList.toggle('tiny',h<42);wrap.classList.toggle('micro',h<30);wrap.classList.toggle('wide',bw>=118);
+  wrap.querySelectorAll('.splh').forEach((el,L)=>{el.style.gridRow='span '+Math.ceil(ns[L]/best.c)});
+}
+try{new ResizeObserver(()=>fitSplits()).observe($('spBtns'))}catch(e){}
 // names: array of strings for one lane
 function splitTable(it,gi,data,names,L=0){
   const ks=Object.keys(data).filter(k=>+k.split('-')[0]===gi&&keyLane(k)===L);
