@@ -106,8 +106,8 @@ select{appearance:none;-webkit-appearance:none;padding-right:28px;background-ima
   .app{grid-template-columns:minmax(0,1fr)}
   .rail{position:fixed;inset:auto 0 0 0;top:auto;height:auto;z-index:30;flex-direction:row;padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));gap:0;background:var(--rail);border-right:0;border-top:1px solid var(--railline);box-shadow:0 -6px 20px rgba(0,0,0,.10)}
   .brand,.rail .sum,.railbtn{display:none}
-  .nav{grid-template-columns:1fr 1fr 1fr;width:100%;gap:6px}
-  .nav a{justify-content:center;flex-direction:column;gap:2px;padding:7px 6px;font-size:13px}
+  .nav{grid-template-columns:repeat(4,minmax(0,1fr));width:100%;gap:4px}
+  .nav a{justify-content:center;flex-direction:column;gap:2px;padding:7px 2px;font-size:12px;white-space:nowrap}
   .nav a .step{display:none}
   .nav a[aria-current="page"]::before{left:30%;right:30%;top:-6px;bottom:auto;width:auto;height:3px;border-radius:0 0 3px 3px}
   .view{padding-block:14px calc(var(--tabh) + 24px + env(safe-area-inset-bottom,0px));padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
@@ -601,31 +601,93 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 }
 /* tablets and up: messages appear at the top so they never cover the start/pause controls */
 @media (min-width:760px){.toast{bottom:auto;top:calc(64px + env(safe-area-inset-top,0px))}}
+/* keyboard hint on each arrival button (devices with a keyboard): one keyboard row per lane */
+.fitgrid .splane button{position:relative}
+.fitgrid kbd{display:none;position:absolute;top:2px;left:5px;font-family:var(--f-num);font-size:clamp(8px,calc(var(--bh)*.2),11px);font-weight:700;line-height:1;color:var(--boardmuted);opacity:.85}
+@media (hover:hover) and (pointer:fine){.fitgrid kbd{display:block}}
+/* slower than the bar (previous set's average) */
+.spbtns button.got.slow{background:color-mix(in srgb,var(--danger) 13%,transparent);border-color:color-mix(in srgb,var(--danger) 60%,transparent)}
+.spbtns button.got.slow span{color:var(--danger)}
+
+/* ===== Toolbox ===== */
+.thead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-bottom:14px}
+.thead h1{margin:0;font-size:28px;font-weight:700}
+.tooltabs{grid-template-columns:repeat(2,minmax(0,1fr));min-width:min(100%,360px)}
+.tcard{padding:18px;display:grid;gap:14px;max-width:780px}
+.tcard .tip{margin:0;color:var(--muted);font-size:14px;line-height:1.65}
+.tcard .tip code{font-family:inherit;background:var(--sunk);border:1px solid var(--line2);border-radius:6px;padding:0 5px;color:var(--fg);white-space:nowrap}
+.tsteps{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.tsteps select{font-family:var(--f-num);font-size:20px;font-weight:700;padding:6px 30px 6px 12px;background-color:var(--surface)}
+.tlane{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;background:var(--sunk);border:1px solid var(--line2);border-radius:14px;padding:10px 12px}
+.tlane b{display:block;font-size:15px}.tlane small{color:var(--muted);font-size:12px}
+.tgo{font-size:17px;padding:12px 26px;justify-self:start}
+.avg{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.avgside{--ph:var(--p-ready);background:radial-gradient(120% 80% at 50% 0%,var(--board2),var(--board) 70%);color:var(--boardfg);border:1px solid var(--boardline);border-radius:18px;box-shadow:var(--boardshadow);padding:14px;display:grid;gap:10px;align-content:start}
+.avgside.t-swim{--ph:var(--p-swim)}.avgside.t-set{--ph:var(--p-group)}
+.avgpos{display:grid;gap:2px;font-variant-numeric:tabular-nums;min-width:0}
+.avgpos b{font-family:var(--f-num);font-size:26px;font-weight:700;line-height:1.1;color:var(--ph)}
+.avgpos small{color:var(--boardmuted);font-size:13px}
+.avgclock{font-family:var(--f-num);font-weight:800;font-size:clamp(52px,7vw,88px);line-height:1;color:var(--ph);font-variant-numeric:tabular-nums;text-align:center;white-space:nowrap}
+.avgmsg{color:var(--boardmuted);font-size:14px;text-align:center;min-height:1.5em;font-variant-numeric:tabular-nums}
+.avgmain{background:var(--ph);color:var(--ph-ink);border:0;font-size:21px;font-weight:800;letter-spacing:.04em;padding:16px 10px;border-radius:16px;box-shadow:0 6px 24px color-mix(in srgb,var(--ph) 35%,transparent)}
+.avgsub{display:flex;flex-wrap:wrap;gap:6px;align-content:start}
+.avgsub button{font-size:13px;padding:8px 13px;border-radius:999px;background:var(--surface)}
+.avgsub button.warn{color:var(--danger)}
+.avgsub button[aria-pressed="false"]{color:var(--danger)}
+#avgBox{height:clamp(240px,calc(100dvh - 380px),520px)}
+@media (min-width:1024px){
+  .avg{grid-template-columns:340px minmax(0,1fr);grid-template-rows:auto 1fr;align-items:start}
+  .avg #avgBox{grid-column:2;grid-row:1/3;height:calc(100dvh - 130px);min-height:360px}
+  .avgside{grid-column:1;grid-row:1}.avgsub{grid-column:1;grid-row:2}
+}
+@media (max-width:1023px){
+  .avgside{grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:10px 12px;gap:6px 12px}
+  .avgside .avgclock{font-size:46px}
+  .avgside .avgmsg{grid-column:1/-1;text-align:left;font-size:13px;min-height:0}
+  .avgside .avgmain{grid-column:1/-1;padding:13px 10px;font-size:19px}
+  .avgpos b{font-size:22px}
+}
+.tres{padding:16px;margin-top:14px;display:grid;gap:10px}
+.treshead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.tres summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px}
+.sptable td.slowc b{color:var(--danger)}.sptable tr.lh td{font-weight:700;color:var(--accent);text-align:left;border-bottom:0;padding-top:12px}
+.lap{display:grid;gap:14px;max-width:600px}
+.lapboard{background:radial-gradient(120% 80% at 50% 0%,var(--board2),var(--board) 70%);color:var(--boardfg);border:1px solid var(--boardline);border-radius:18px;box-shadow:var(--boardshadow);padding:18px 16px;display:grid;gap:12px;text-align:center}
+.lapclock{font-family:var(--f-num);font-weight:800;font-size:clamp(60px,15vw,116px);line-height:1;color:var(--p-swim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.lapcur{color:var(--boardmuted);font-family:var(--f-num);font-size:20px;font-variant-numeric:tabular-nums}
+.lapctl{display:grid;grid-template-columns:1fr 1.7fr;gap:10px}
+.lapctl button{padding:15px 8px;font-size:19px;font-weight:700;border-radius:16px;background:var(--boardtint);border:1px solid var(--boardline);color:var(--boardfg)}
+.lapctl .lapgo{background:var(--p-swim);color:var(--ph-ink);border-color:transparent;font-weight:800}
+.lapctl .lapgo.on{background:var(--p-rest)}
+.lapboard .kbd{margin:0}
+.laplist{padding:14px}
+.sptable tr.best td b{color:var(--ok)}.sptable tr.worst td b{color:var(--danger)}
+@media (max-width:759px){.thead h1{display:none}.thead{margin-bottom:10px}.tooltabs{width:100%}.tcard{padding:14px}}
 /* Arrivals: one fixed-size card that never scrolls. fitSplits() picks the column count and button height
    so every swimmer in every lane is on screen at once; buttons shrink as swimmers are added. */
 .arrive{display:flex;flex-direction:column;overflow:hidden}
 .arrive .sphead{flex:none}
 @media (min-width:760px) and (max-width:1023px){.arrive{height:clamp(300px,52dvh,460px)}}
 @media (max-width:759px){.arrive{height:clamp(260px,56dvh,440px)}}
-#spBtns{flex:1 1 auto;min-height:0;overflow:hidden;display:grid;align-content:start;row-gap:var(--lg,10px)}
-#spBtns .splane{display:grid;gap:var(--g,8px);grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));grid-auto-rows:var(--bh,64px)}
-#spBtns.multi .splane{grid-template-columns:var(--lab,30px) repeat(var(--cols,2),minmax(0,1fr))}
-#spBtns .splh{grid-column:1;display:grid;place-items:center;padding:0;font-size:12px;font-weight:700;line-height:1.1;letter-spacing:0;text-align:center;color:var(--boardmuted);background:var(--boardtint);border-radius:8px}
-#spBtns .splane button{min-height:0;height:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:2px 4px;overflow:hidden;border-radius:clamp(6px,calc(var(--bh)*.16),12px)}
-#spBtns .splane button b{font-size:clamp(11px,calc(var(--bh)*.2),15px);line-height:1.15}
-#spBtns .splane button span{font-size:clamp(13px,calc(var(--bh)*.34),26px);line-height:1.05}
-#spBtns .splane button small{font-size:clamp(10px,calc(var(--bh)*.15),13px);line-height:1.15;min-height:0}
-#spBtns.compact .splane button small{display:none}
+.fitgrid{flex:1 1 auto;min-height:0;overflow:hidden;display:grid;align-content:start;row-gap:var(--lg,10px)}
+.fitgrid .splane{display:grid;gap:var(--g,8px);grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));grid-auto-rows:var(--bh,64px)}
+.fitgrid.multi .splane{grid-template-columns:var(--lab,30px) repeat(var(--cols,2),minmax(0,1fr))}
+.fitgrid .splh{grid-column:1;display:grid;place-items:center;padding:0;font-size:12px;font-weight:700;line-height:1.1;letter-spacing:0;text-align:center;color:var(--boardmuted);background:var(--boardtint);border-radius:8px}
+.fitgrid .splane button{min-height:0;height:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:2px 4px;overflow:hidden;border-radius:clamp(6px,calc(var(--bh)*.16),12px)}
+.fitgrid .splane button b{font-size:clamp(11px,calc(var(--bh)*.2),15px);line-height:1.15}
+.fitgrid .splane button span{font-size:clamp(13px,calc(var(--bh)*.34),26px);line-height:1.05}
+.fitgrid .splane button small{font-size:clamp(10px,calc(var(--bh)*.15),13px);line-height:1.15;min-height:0}
+.fitgrid.compact .splane button small{display:none}
 /* small buttons: name and time side by side when the button is wide enough, otherwise two small lines */
-#spBtns.tiny .splane button b{font-size:clamp(10px,calc(var(--bh)*.3),12px);line-height:1.1}
-#spBtns.tiny .splane button span{font-size:clamp(11px,calc(var(--bh)*.38),14px);line-height:1.1}
-#spBtns.tiny.wide .splane button{flex-direction:row;justify-content:space-between;gap:4px;padding:0 7px}
-#spBtns.tiny.wide .splane button b{font-size:clamp(11px,calc(var(--bh)*.44),14px)}
-#spBtns.tiny.wide .splane button span{font-size:clamp(12px,calc(var(--bh)*.5),16px)}
-#spBtns.tiny .splane button span.ph{display:none}
-#spBtns.tiny .splane button:has(span.ph){justify-content:center}
+.fitgrid.tiny .splane button b{font-size:clamp(10px,calc(var(--bh)*.3),12px);line-height:1.1}
+.fitgrid.tiny .splane button span{font-size:clamp(11px,calc(var(--bh)*.38),14px);line-height:1.1}
+.fitgrid.tiny.wide .splane button{flex-direction:row;justify-content:space-between;gap:4px;padding:0 7px}
+.fitgrid.tiny.wide .splane button b{font-size:clamp(11px,calc(var(--bh)*.44),14px)}
+.fitgrid.tiny.wide .splane button span{font-size:clamp(12px,calc(var(--bh)*.5),16px)}
+.fitgrid.tiny .splane button span.ph{display:none}
+.fitgrid.tiny .splane button:has(span.ph){justify-content:center}
 /* very small: one line only - the name until the swimmer is in, then the time (colour marks who is done) */
-#spBtns.micro:not(.wide) .splane button.got b{display:none}
+.fitgrid.micro:not(.wide) .splane button.got b{display:none}
 @media (max-width:759px){
   .cardsHead .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto auto;gap:6px}
   .cardsHead .row button{white-space:nowrap}
@@ -695,6 +757,7 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
       <a href="#plan" id="nav-plan" title="制定计划"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h10a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9"/><path d="M4 4l5 5M9 4v5H4"/><path d="M9 14h7M9 17h5"/></svg><span class="txt">制定计划</span><span class="step">01</span></a>
       <a href="#run" id="nav-run" title="训练计时"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M10 2h4"/></svg><span class="txt">训练计时</span><span class="step">02</span></a>
       <a href="#lib" id="nav-lib" title="计划库"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h11l3 3v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 3v5h7V3M8 13h8M8 17h5"/></svg><span class="txt">计划库</span><span class="step">03</span></a>
+      <a href="#tools" id="nav-tools" title="工具箱"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><circle cx="17.5" cy="17.5" r="3.5"/></svg><span class="txt">工具箱</span><span class="step">04</span></a>
     </div>
     <div class="sum" id="railsum"></div>
     <div class="themesw" role="group" aria-label="配色模式"><button type="button" data-t="light" title="日间模式" aria-label="日间模式"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span class="txt">日间</span></button><button type="button" data-t="dark" title="夜间模式" aria-label="夜间模式"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><span class="txt">夜间</span></button></div>
@@ -741,6 +804,73 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
       <span class="meta" id="actionmeta"></span>
       <button type="button" id="saveLibBtn" class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M7 3v5h8V3M7 21v-7h10v7"/></svg><span>保存<span class="wide">到计划库</span></span></button>
       <a href="#run" class="primary go-run" id="goRun" role="button"><span id="goRunTxt">开始训练</span> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </div>
+  </section>
+
+  <!-- TOOLBOX VIEW -->
+  <section class="view" id="view-tools" aria-label="工具箱" hidden>
+    <div class="thead">
+      <h1>工具箱</h1>
+      <div class="seg tooltabs" role="tablist" aria-label="选择工具">
+        <label><input type="radio" name="tooltab" value="avg" checked><span>依次出发 · 分组平均</span></label>
+        <label><input type="radio" name="tooltab" value="lap"><span>分段秒表</span></label>
+      </div>
+    </div>
+
+    <div id="tool-avg">
+      <div class="card tcard" id="avgSetup">
+        <h2 class="sh">依次出发，每组算平均</h2>
+        <p class="tip">同一道的学生按间隔一个一个出发，几条道同时出发。学生到边时点他的按钮，自动扣掉他晚出发的秒数，记下他这一趟的成绩。一组游完自动算出每个人这一组的平均；下一组每一趟都和上一组平均比，比平均慢就标红。</p>
+        <div class="tsteps" id="avgSteps"></div>
+        <div class="tlane"><div><b id="avgLaneSum"></b><small>道数、每道人数、出发间隔、每个位置排谁，都在这里改</small></div><button type="button" id="avgLanes">设置泳道、人数、出发顺序</button></div>
+        <p class="tip">电脑键盘：每条道用一排键记到边——第 1 道 <code>1</code>–<code>0</code>，第 2 道 <code>Q</code>–<code>P</code>，第 3 道 <code>A</code>–<code>;</code>，第 4 道 <code>Z</code>–<code>/</code>；<code>空格</code> 出发 / 下一趟，<code>退格</code> 撤销。</p>
+        <button type="button" class="primary tgo" id="avgStart">开始</button>
+      </div>
+      <div id="avgLive" hidden>
+        <div class="avg">
+          <div class="avgside" id="avgSide">
+            <div class="avgpos"><b id="avgPos"></b><small id="avgPos2"></small></div>
+            <div class="avgclock" id="avgClock">0:00.0</div>
+            <div class="avgmsg" id="avgMsg"></div>
+            <button type="button" class="avgmain" id="avgMain"></button>
+          </div>
+          <section class="arrive" id="avgBox" aria-label="到边">
+            <div class="sphead">
+              <div class="spt"><b>到边</b><small id="avgRep"></small></div>
+              <div class="spact"><button type="button" id="avgUndo">撤销</button><button type="button" id="avgLanes2">泳道 / 顺序</button></div>
+            </div>
+            <div class="splanes fitgrid" id="avgBtns"></div>
+          </section>
+          <div class="avgsub">
+            <button type="button" id="avgStop">停表</button>
+            <button type="button" id="avgRedo">重来这一趟</button>
+            <button type="button" id="avgBack">上一趟</button>
+            <button type="button" id="avgSound" aria-pressed="true">声音：开</button>
+            <button type="button" id="avgEnd" class="warn">结束测试</button>
+          </div>
+        </div>
+        <div class="card tres">
+          <div class="treshead"><h2 class="sh">各组平均</h2><button type="button" id="avgCopy">复制成绩</button></div>
+          <div class="sptable" id="avgTable"></div>
+          <details><summary>每一趟的成绩</summary><div class="sptable" id="avgDetail"></div></details>
+          <p class="spnote">平均慢于上一组平均的标红。成绩同时存进「计划库 → 训练记录」。</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="tool-lap" hidden>
+      <div class="lap">
+        <div class="lapboard">
+          <div class="lapclock" id="lapClock">0:00.00</div>
+          <div class="lapcur" id="lapCur">&nbsp;</div>
+          <div class="lapctl"><button type="button" id="lapMark">分段</button><button type="button" class="lapgo" id="lapGo">开始</button></div>
+          <p class="kbd"><kbd>空格</kbd> 开始/暂停　<kbd>回车</kbd> 分段</p>
+        </div>
+        <div class="card laplist">
+          <div class="treshead"><h2 class="sh">分段记录</h2><button type="button" id="lapCopy">复制</button></div>
+          <div class="sptable" id="lapTable"></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -814,7 +944,7 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
             <button type="button" class="btn-main" id="start">开始</button>
             <button type="button" id="skip" aria-label="下一步"><span class="lbltxt" id="skipTxt">下一步</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
           </div>
-          <p class="kbd"><kbd>空格</kbd> 开始/暂停　<kbd>←</kbd><kbd>→</kbd> 上一步/下一步　<kbd>1</kbd>–<kbd>9</kbd> 记到边</p>
+          <p class="kbd"><kbd>空格</kbd> 开始/暂停　<kbd>←</kbd><kbd>→</kbd> 上一步/下一步　<kbd>1</kbd>–<kbd>0</kbd> / <kbd>Q</kbd>–<kbd>P</kbd> / <kbd>A</kbd>–<kbd>;</kbd> / <kbd>Z</kbd>–<kbd>/</kbd> 记第 1–4 道到边　<kbd>退格</kbd> 撤销</p>
         </div>
       </main>
 
@@ -824,7 +954,7 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
             <div class="spt"><b>到边计时</b><small id="spRep"></small></div>
             <div class="spact"><button type="button" id="spUndo">撤销</button><button type="button" id="spTable">成绩表</button><button type="button" id="spOrder">顺序</button></div>
           </div>
-          <div class="splanes" id="spBtns"></div>
+          <div class="splanes fitgrid" id="spBtns"></div>
         </section>
 
         <section class="scard tabs">
@@ -1270,7 +1400,7 @@ function tick(){
     }
   }
   if(hrEnd&&now()>=hrEnd){hrEnd=0;notify(()=>beep(990,500),'停');$('hrclock').textContent='停'}
-  ivTick();
+  ivTick();tbTick();
   render(false);
   if(running&&++tickN%20===0)saveSession();
 }
@@ -1761,6 +1891,31 @@ function tapSplit(L,n){
   try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}
   renderSplits(true);
 }
+// Keyboard: one keyboard row per lane, the key's position in the row = the swimmer's start number.
+const LANE_KEYS=[['Digit1','Digit2','Digit3','Digit4','Digit5','Digit6','Digit7','Digit8','Digit9','Digit0'],
+  ['KeyQ','KeyW','KeyE','KeyR','KeyT','KeyY','KeyU','KeyI','KeyO','KeyP'],
+  ['KeyA','KeyS','KeyD','KeyF','KeyG','KeyH','KeyJ','KeyK','KeyL','Semicolon'],
+  ['KeyZ','KeyX','KeyC','KeyV','KeyB','KeyN','KeyM','Comma','Period','Slash']];
+const LANE_KEY_TXT=['1234567890','QWERTYUIOP','ASDFGHJKL;','ZXCVBNM,./'];
+function laneKeyOf(e){
+  if(e.ctrlKey||e.metaKey||e.altKey)return null;
+  const np=/^Numpad(\d)$/.exec(e.code);if(np)return[0,np[1]==='0'?10:+np[1]];
+  for(let L=0;L<LANE_KEYS.length;L++){const k=LANE_KEYS[L].indexOf(e.code);if(k>=0)return[L,k+1]}
+  return null;
+}
+// one grid per lane: [lane label] + the lane's buttons (name, big value, small line), sized by fitGrid()
+function buildLaneGrid(wrap,onTap){
+  const multi=cfg.lanes.length>1;wrap.innerHTML='';wrap.classList.toggle('multi',multi);
+  cfg.lanes.forEach((l,L)=>{
+    const sec=document.createElement('div');sec.className='splane spbtns';
+    if(multi){const h=document.createElement('div');h.className='splh';h.textContent=(L+1)+'道';h.title='第 '+(L+1)+' 道 · '+l.n+' 人';sec.appendChild(h)}
+    laneNames(L).forEach((nm,k)=>{const b=document.createElement('button');b.type='button';b.dataset.l=L;b.dataset.n=k+1;
+      b.innerHTML='<b></b><span></span><small></small>';b.querySelector('b').textContent=multi&&!l.lineup[k]?(k+1)+' 号':nm;
+      if(L<LANE_KEYS.length&&k<10){const kb=document.createElement('kbd');kb.textContent=LANE_KEY_TXT[L][k];kb.setAttribute('aria-hidden','true');b.appendChild(kb)}
+      b.onclick=()=>onTap(L,k+1);sec.appendChild(b)});
+    wrap.appendChild(sec);
+  });
+}
 function renderSplits(force){
   const box=$('splits');const c=cfg.stagger?repContext():null;
   box.hidden=!c;if(!c)return;
@@ -1768,16 +1923,7 @@ function renderSplits(force){
   const sk=c.i+'-'+c.rep+'|'+JSON.stringify(allLaneNames());
   if(force||sk!==lastSpKey){
     lastSpKey=sk;$('spRep').textContent='第 '+(c.i+1)+' 组 · 第 '+c.rep+' 趟';
-    const wrap=$('spBtns');wrap.innerHTML='';wrap.classList.toggle('multi',multi);
-    cfg.lanes.forEach((l,L)=>{
-      // one grid per lane: [lane label] + the lane's buttons, sized by fitSplits()
-      const sec=document.createElement('div');sec.className='splane spbtns';
-      if(multi){const h=document.createElement('div');h.className='splh';h.textContent=(L+1)+'道';h.title='第 '+(L+1)+' 道 · '+l.n+' 人';sec.appendChild(h)}
-      laneNames(L).forEach((nm,k)=>{const b=document.createElement('button');b.type='button';b.dataset.l=L;b.dataset.n=k+1;
-        b.innerHTML='<b></b><span></span><small></small>';b.querySelector('b').textContent=multi&&!l.lineup[k]?(k+1)+' 号':nm;
-        b.onclick=()=>tapSplit(L,k+1);sec.appendChild(b)});
-      wrap.appendChild(sec);
-    });
+    buildLaneGrid($('spBtns'),tapSplit);
     fitSplits();
   }
   $('spBtns').querySelectorAll('button').forEach(b=>{
@@ -1791,8 +1937,9 @@ function renderSplits(force){
 }
 // Fit every arrival button into the fixed card: try 1..6 columns and a few gap sizes, keep the layout
 // whose buttons are largest (height, or width for very narrow columns). Lanes stack; a narrow label column marks each lane.
-function fitSplits(){
-  const box=$('splits'),wrap=$('spBtns');if(box.hidden)return;
+function fitSplits(){fitGrid($('splits'),$('spBtns'))}
+function fitGrid(box,wrap){
+  if(box.hidden)return;
   const W=wrap.clientWidth,H=wrap.clientHeight;if(!W||!H)return;
   const ns=cfg.lanes.map(l=>l.n),nl=ns.length,lab=nl>1?30:0,maxN=Math.max(...ns);
   let best=null;
@@ -1812,7 +1959,7 @@ function fitSplits(){
   wrap.classList.toggle('compact',h<64);wrap.classList.toggle('tiny',h<42);wrap.classList.toggle('micro',h<30);wrap.classList.toggle('wide',bw>=118);
   wrap.querySelectorAll('.splh').forEach((el,L)=>{el.style.gridRow='span '+Math.ceil(ns[L]/best.c)});
 }
-try{new ResizeObserver(()=>fitSplits()).observe($('spBtns'))}catch(e){}
+try{const ro=new ResizeObserver(()=>{fitSplits();fitGrid($('avgBox'),$('avgBtns'))});ro.observe($('spBtns'));ro.observe($('avgBtns'))}catch(e){}
 // names: array of strings for one lane
 function splitTable(it,gi,data,names,L=0){
   const ks=Object.keys(data).filter(k=>+k.split('-')[0]===gi&&keyLane(k)===L);
@@ -1865,8 +2012,10 @@ $('spClose').onclick=closeSp;$('spDone').onclick=closeSp;$('spDlg').addEventList
 $('spUndo').onclick=()=>{if(!spLast)return;const a=splitsData[spLast.key];if(a){if(spLast.prev==null)delete a[spLast.n-1];else a[spLast.n-1]=spLast.prev}spLast=null;if(curRec)saveLib();renderSplits(true);toast('已撤销')};
 
 /* ---------- Lineup dialog: lanes, order per lane, roster ---------- */
+let luForce=false; // opened from the toolbox: staggered starts are always on there
 function renderLineup(){
-  $('luOn').checked=cfg.stagger;$('luBody').hidden=!cfg.stagger;$('luOff').hidden=cfg.stagger;
+  const on=cfg.stagger||luForce;
+  $('luOn').checked=cfg.stagger;$('luOn').closest('label').hidden=luForce;$('luBody').hidden=!on;$('luOff').hidden=on;
   $('luGap').textContent=cfg.gapSec+'"';
   $('luGapM').disabled=cfg.gapSec<=1;$('luGapP').disabled=cfg.gapSec>=60;
   $('luAddLane').disabled=cfg.lanes.length>=8;
@@ -1903,7 +2052,7 @@ function renderLineup(){
     card.appendChild(slots);ol.appendChild(card);
   });
 }
-function lineupChanged(){syncSwimmers();saveCfg();lastSpKey='';cfgSummary();renderSplits(true);const r=recOf();if(r&&!r.done){r.names=allLaneNames();saveLib()}}
+function lineupChanged(){syncSwimmers();saveCfg();lastSpKey='';cfgSummary();renderSplits(true);const r=recOf();if(r&&!r.done){r.names=allLaneNames();saveLib()}tbLanesChanged()}
 $('luOn').onchange=()=>{cfg.stagger=$('luOn').checked;lineupChanged()};
 $('luGapM').onclick=()=>{cfg.gapSec=Math.max(1,cfg.gapSec-1);lineupChanged()};
 $('luGapP').onclick=()=>{cfg.gapSec=Math.min(60,cfg.gapSec+1);lineupChanged()};
@@ -1918,7 +2067,7 @@ const closeRoster=()=>{const d=$('rosterDlg');try{d.close()}catch(e){d.removeAtt
 $('rosterClose').onclick=closeRoster;$('rosterDlg').addEventListener('click',e=>{if(e.target===$('rosterDlg'))closeRoster()});
 $('rosterSave').onclick=()=>{cfg.roster=[...new Set($('rosterText').value.split(/\n/).map(x=>x.trim()).filter(Boolean))].slice(0,60);closeRoster();lineupChanged();toast('名单已保存，共 '+cfg.roster.length+' 人')};
 renderLineup();
-const openLu=()=>{const d=$('luDlg');renderLineup();if(!d.open){try{d.showModal()}catch(e){d.setAttribute('open','')}}};
+const openLu=force=>{luForce=force===true;const d=$('luDlg');renderLineup();if(!d.open){try{d.showModal()}catch(e){d.setAttribute('open','')}}};
 const closeLu=()=>{const d=$('luDlg');try{d.close()}catch(e){d.removeAttribute('open')}};
 $('luBtn').onclick=openLu;$('spOrder').onclick=openLu;$('luClose').onclick=closeLu;$('luDone').onclick=closeLu;
 $('luDlg').addEventListener('click',e=>{if(e.target===$('luDlg'))closeLu()});
@@ -2011,11 +2160,12 @@ $('qeDel').onclick=e=>{const b=e.currentTarget;if(!b.dataset.armed){b.dataset.ar
   delete b.dataset.armed;b.textContent='删除这一组';const at=qeI,wasCur=steps[si].i===at;plan.splice(at,1);qeI=Math.min(qeI,plan.length-1);changed(false,wasCur?-1:at+1,-1);renderQE()};
 
 function route(){
-  const v=location.hash==='#run'?'run':location.hash==='#lib'?'lib':'plan';
-  ['plan','run','lib'].forEach(k=>{$('view-'+k).hidden=v!==k;$('nav-'+k).removeAttribute('aria-current')});
+  const v=location.hash==='#run'?'run':location.hash==='#lib'?'lib':location.hash==='#tools'?'tools':'plan';
+  ['plan','run','lib','tools'].forEach(k=>{$('view-'+k).hidden=v!==k;$('nav-'+k).removeAttribute('aria-current')});
   if(v==='lib')renderLib();
   if(v==='run')fitSoon();
   if(v==='plan')goLabel();
+  if(v==='tools'){tbRender(true);lapRender(true)}
   $('nav-'+v).setAttribute('aria-current','page');
   window.scrollTo(0,0);
 }
@@ -2024,7 +2174,7 @@ window.addEventListener('hashchange',route);
 /* ---------- Wake lock ---------- */
 async function holdWake(){try{if('wakeLock' in navigator&&!wake){wake=await navigator.wakeLock.request('screen');wake.addEventListener('release',()=>{wake=null})}}catch(e){}}
 function releaseWake(){try{wake&&wake.release()}catch(e){}wake=null}
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(running||iv.run))holdWake()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(running||iv.run||tb.lap.run||(tb.sess&&tb.sess.phase==='swim')))holdWake()});
 
 /* ---------- Session: survive a refresh or the browser killing the tab mid-training ---------- */
 const SKEY='swim-session-v1';let booted=false,tickN=0;
@@ -2095,7 +2245,13 @@ $('restart').onclick=()=>{
   if(running&&st)cue(st.phase);
   render(true);renderSplits(true);saveSession();toast('本步已重新开始计时');
 };
-$('sound').onclick=e=>{soundOn=!soundOn;audio();e.currentTarget.setAttribute('aria-pressed',soundOn);$('soundLabel').textContent='声音：'+(soundOn?'开':'关');if(soundOn)notify(()=>beep(880,300),'提示音已打开')};
+function toggleSound(){
+  soundOn=!soundOn;audio();
+  $('sound').setAttribute('aria-pressed',soundOn);$('soundLabel').textContent='声音：'+(soundOn?'开':'关');
+  $('avgSound').setAttribute('aria-pressed',soundOn);$('avgSound').textContent='声音：'+(soundOn?'开':'关');
+  if(soundOn)notify(()=>beep(880,300),'提示音已打开');
+}
+$('sound').onclick=toggleSound;
 $('cfgbtn').onclick=()=>{const d=$('cfg');try{d.showModal()}catch(e){d.setAttribute('open','')}};
 const closeCfg=()=>{const d=$('cfg');try{d.close()}catch(e){d.removeAttribute('open')}};
 $('cfgclose').onclick=closeCfg;$('cfgdone').onclick=closeCfg;
@@ -2141,11 +2297,29 @@ $('addCustom').onclick=()=>{plan.push({custom:true,title:'',reps:1,dist:0,stroke
 $('addItem').onclick=()=>{const last=plan[plan.length-1];plan.push(last?{...clone(last),note:''}:{reps:4,dist:50,stroke:'自由泳',kind:'完整配合',target:45,rest:20,groupRest:0,note:''});openCards.add(plan[plan.length-1]);changed();
   const items=document.querySelectorAll('#cards .item');items[items.length-1].scrollIntoView({behavior:'smooth',block:'center'})};
 document.addEventListener('keydown',e=>{
-  if(location.hash!=='#run'||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||$('qe').open||$('cfg').open||$('saveDlg').open||$('spDlg').open||$('rosterDlg').open||$('luDlg').open)return;
-  if(e.code==='Space'){e.preventDefault();toggle()}
-  else if(e.key==='ArrowRight'){audio();go(si+1)}
-  else if(e.key==='ArrowLeft'){audio();go(si-1)}
-  else if(/^[0-9]$/.test(e.key)&&cfg.stagger){tapSplit(0,e.key==='0'?10:+e.key)}
+  const tg=e.target,pick=tg.tagName==='INPUT'&&/^(radio|checkbox)$/.test(tg.type);
+  if(tg.tagName==='TEXTAREA'||tg.tagName==='SELECT'||(tg.tagName==='INPUT'&&!pick)||e.repeat||topDialog())return;
+  // a tab or switch that was just clicked keeps the focus: let go of it so the shortcuts work and the key does not flip it
+  if(pick)tg.blur();
+  // a focused button must not also fire on the same key press
+  const unfocus=()=>{const a=document.activeElement;if(a&&a.tagName==='BUTTON')a.blur()};
+  const lk=laneKeyOf(e);
+  if(location.hash==='#run'){
+    if(e.code==='Space'){e.preventDefault();unfocus();toggle()}
+    else if(e.key==='ArrowRight'){audio();go(si+1)}
+    else if(e.key==='ArrowLeft'){audio();go(si-1)}
+    else if(e.key==='Backspace'&&cfg.stagger){e.preventDefault();$('spUndo').click()}
+    else if(lk&&cfg.stagger){e.preventDefault();tapSplit(lk[0],lk[1])}
+  }else if(location.hash==='#tools'){
+    if(tb.tab==='lap'){
+      if(e.code==='Space'){e.preventDefault();unfocus();lapToggle()}
+      else if(e.key==='Enter'){e.preventDefault();unfocus();lapMark()}
+    }else if(tb.sess){
+      if(e.code==='Space'){e.preventDefault();unfocus();tbMain()}
+      else if(e.key==='Backspace'){e.preventDefault();tbUndo()}
+      else if(lk){e.preventDefault();tbTap(lk[0],lk[1])}
+    }
+  }
 });
 
 /* ---------- Standalone rest stopwatch ---------- */
@@ -2178,6 +2352,256 @@ $('ivpreset').onchange=()=>{const v=$('ivpreset').value;
 $('ivsec').onchange=()=>{const v=Math.round(+$('ivsec').value);if(v>=1){iv.dur=v;ivReset()}};
 $('ivgo').onclick=()=>{audio();if(iv.run){iv.acc=ivE();iv.run=false}else{iv.seg=now();iv.run=true;holdWake();if(iv.acc===0)notify(()=>beep(1100,300),'开始')}ivTick()};
 $('ivreset').onclick=ivReset;
+
+/* ---------- Toolbox ----------
+   1) Staggered starts with a per-set average: swimmers in a lane leave one by one (lanes together), every arrival is
+      tapped, each set of N reps gives every swimmer an average, and the next set is judged against it.
+      Results live in an ordinary training record (same split keys as the run view), so the library tables,
+      copy-as-text and backup all work unchanged.
+   2) Split (lap) stopwatch. */
+const TBKEY='swim-tools-v1';
+const tb=Object.assign({sets:3,reps:6,dist:25,tab:'avg',sess:null,lap:{acc:0,wall:0,run:false,laps:[]}},(()=>{try{return JSON.parse(localStorage.getItem(TBKEY))||{}}catch(e){return{}}})());
+if(!tb.lap||!Array.isArray(tb.lap.laps))tb.lap={acc:0,wall:0,run:false,laps:[]};
+function saveTb(){try{localStorage.setItem(TBKEY,JSON.stringify(tb))}catch(e){}}
+let tbT0=0,tbStag=1,tbLast=null,tbData={},tbGridKey='';
+const fmtTenth=ms=>{const t=Math.floor(Math.max(0,ms)/100);return Math.floor(t/600)+':'+pad2(Math.floor(t/10)%60)+'.'+t%10};
+const tbRec=()=>tb.sess?lib.records.find(x=>x.id===tb.sess.rec)||null:null;
+const tbElapsed=()=>tb.sess&&tb.sess.phase==='swim'?now()-tbT0:0;
+const tbRepKeys=(set,r)=>Object.keys(tbData).filter(k=>k.replace(/@\d+$/,'')===set+'-'+r);
+const tbHas=(set,r)=>tbRepKeys(set,r).some(k=>tbData[k].some(t=>t!=null));
+function tbAvg(set,L,k){
+  let s=0,c=0;for(let r=1;r<=tb.sess.reps;r++){const t=(tbData[spKey(set,r,L)]||[])[k];if(t!=null){s+=t;c++}}
+  return c?Math.round(s/c*100)/100:null;
+}
+// the bar a swimmer has to match: their average in the most recent earlier set
+function tbBar(set,L,k){for(let s=set-1;s>=0;s--){const a=tbAvg(s,L,k);if(a!=null)return a}return null}
+function tbStartSession(){
+  audio();
+  const item=()=>({custom:true,title:'依次出发',reps:tb.reps,dist:tb.dist,stroke:'自由泳',kind:'完整配合',target:0,rest:0,groupRest:0,note:''});
+  const r={id:uid(),at:Date.now(),name:dstr(Date.now(),true)+' 分组平均 '+tb.sets+'×'+tb.reps+'×'+tb.dist+' 米',plan:Array.from({length:tb.sets},item),done:false,splits:{},gap:cfg.gapSec,names:allLaneNames()};
+  lib.records.unshift(r);lib.records=lib.records.slice(0,300);saveLib();
+  tbData=r.splits;tbLast=null;
+  tb.sess={rec:r.id,set:0,rep:1,phase:'idle',sets:tb.sets,reps:tb.reps,dist:tb.dist};
+  saveTb();tbRender(true);
+}
+function tbSend(){
+  const s=tb.sess,r=tbRec();
+  tbRepKeys(s.set,s.rep).forEach(k=>delete tbData[k]);
+  tbT0=now();tbStag=1;tbLast=null;s.phase='swim';
+  if(r){r.gap=cfg.gapSec;r.names=allLaneNames();saveLib()}
+  notify(()=>beep(1320,600),'1 号出发');holdWake();saveTb();tbRender(true);
+}
+function tbSetDone(){
+  const s=tb.sess;s.phase='setdone';releaseWake();
+  if(s.set>=s.sets-1){const r=tbRec();if(r&&!r.done){r.done=true;r.end=Date.now();saveLib()}notify(()=>beep(990,200,3,100),'训练完成')}
+  else notify(()=>beep(900,140,2,80),'');
+  saveTb();tbRender(true);
+}
+// the big button always moves forward to the next thing that has not been timed
+function tbMain(){
+  const s=tb.sess;if(!s)return;audio();
+  if(s.phase==='setdone'){if(s.set<s.sets-1){s.set++;s.rep=1;tbSend()}else tbFinish();return}
+  if(s.phase==='swim'&&now()-tbT0<3000){toast('刚出发，3 秒内不会进入下一趟（防止连按）');return}
+  if(s.phase==='swim'||tbHas(s.set,s.rep)){if(s.rep<s.reps){s.rep++;tbSend()}else tbSetDone()}
+  else tbSend();
+}
+function tbStop(){const s=tb.sess;if(!s||s.phase!=='swim')return;s.phase='idle';releaseWake();saveTb();tbRender(true);toast('已停表，这一趟的成绩保留')}
+function tbRedo(){
+  const s=tb.sess;if(!s||s.phase==='setdone')return;
+  tbRepKeys(s.set,s.rep).forEach(k=>delete tbData[k]);tbLast=null;s.phase='idle';releaseWake();saveLib();saveTb();tbRender(true);
+  toast('第 '+s.rep+' 趟已清空，按「出发」重新计');
+}
+function tbBack(){
+  const s=tb.sess;if(!s||s.phase==='swim')return;
+  if(s.phase==='setdone')s.phase='idle';
+  else if(s.rep>1)s.rep--;
+  else if(s.set>0){s.set--;s.rep=s.reps}
+  else return;
+  tbLast=null;saveTb();tbRender(true);
+}
+function tbFinish(){
+  const r=tbRec();if(r&&!r.end){r.end=Date.now();saveLib()}
+  tb.sess=null;tbLast=null;releaseWake();saveTb();tbRender(true);
+  toast('成绩已保存到「计划库 → 训练记录」');
+}
+function tbTap(L,n){
+  const s=tb.sess;if(!s||!cfg.lanes[L]||n<1||n>cfg.lanes[L].n)return;
+  if(s.phase!=='swim'){toast(s.phase==='setdone'?'这一组已结束':'先点「出发」，再记到边');return}
+  const t=Math.round((tbElapsed()/1000-(n-1)*cfg.gapSec)*100)/100;
+  if(t<=0){toast(slotName(L,n-1)+' 还没出发');return}
+  const key=spKey(s.set,s.rep,L),arr=tbData[key]||(tbData[key]=[]);
+  tbLast={key,n,prev:arr[n-1]};arr[n-1]=t;saveLib();
+  try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}
+  tbRender(true);
+}
+function tbUndo(){
+  if(!tbLast)return;const a=tbData[tbLast.key];
+  if(a){if(tbLast.prev==null)delete a[tbLast.n-1];else a[tbLast.n-1]=tbLast.prev}
+  tbLast=null;saveLib();tbRender(true);toast('已撤销');
+}
+function tbLanesChanged(){tbGridKey='';if(!$('view-tools').hidden)tbRender(true)}
+function tbTick(){
+  const s=tb.sess;if(!s)return;
+  if(s.phase==='swim'){
+    const k=Math.floor(tbElapsed()/1000/cfg.gapSec),mx=Math.max(...cfg.lanes.map(l=>l.n));
+    if(k>=tbStag&&k<mx){tbStag=k+1;staggerCue(k+1)}
+  }
+  if(!$('view-tools').hidden&&tb.tab==='avg')tbRender(false);
+}
+function tbRender(force){
+  const s=tb.sess;
+  $('tool-avg').hidden=tb.tab!=='avg';$('tool-lap').hidden=tb.tab!=='lap';
+  $('avgSetup').hidden=!!s;$('avgLive').hidden=!s;
+  if(!s){
+    if(force)$('avgLaneSum').textContent=cfg.lanes.length+' 条道同时出发 · 每道 '+cfg.lanes.map(l=>l.n).join(' / ')+' 人 · 每隔 '+cfg.gapSec+' 秒出发一人';
+    return;
+  }
+  const e=tbElapsed(),swim=s.phase==='swim',setdone=s.phase==='setdone',has=tbHas(s.set,s.rep),mx=Math.max(...cfg.lanes.map(l=>l.n));
+  $('avgClock').textContent=fmtTenth(e);
+  let total=0,arrived=0;
+  cfg.lanes.forEach((l,L)=>{total+=l.n;const a=tbData[spKey(s.set,s.rep,L)]||[];for(let k=0;k<l.n;k++)if(a[k]!=null)arrived++});
+  if(swim){
+    const gone=Math.min(mx,Math.floor(e/1000/cfg.gapSec)+1);
+    $('avgMsg').textContent='已到边 '+arrived+' / '+total+(gone<mx?' · '+(gone+1)+' 号 '+Math.ceil(cfg.gapSec-(e/1000)%cfg.gapSec)+' 秒后出发':arrived>=total?' · 全部到边，可以出发下一趟':' · 全部已出发');
+  }
+  const sk=JSON.stringify(allLaneNames());
+  if(force||sk!==tbGridKey){
+    if(sk!==tbGridKey){tbGridKey=sk;buildLaneGrid($('avgBtns'),tbTap)}
+    fitGrid($('avgBox'),$('avgBtns'));
+    $('avgSide').className='avgside'+(swim?' t-swim':setdone?' t-set':'');
+    $('avgPos').textContent=setdone?'第 '+(s.set+1)+' 组完成':'第 '+(s.set+1)+' 组 · 第 '+s.rep+' 趟';
+    $('avgPos2').textContent='共 '+s.sets+' 组 × '+s.reps+' 趟 · 每趟 '+s.dist+' 米';
+    $('avgRep').textContent=setdone?'第 '+(s.set+1)+' 组每人平均':'第 '+(s.set+1)+' 组 · 第 '+s.rep+' 趟';
+    const last=s.set>=s.sets-1;
+    $('avgMain').textContent=setdone?(last?'保存并结束':'第 '+(s.set+2)+' 组出发 · 第 1 趟'):(swim||has)?(s.rep<s.reps?'出发 · 第 '+(s.rep+1)+' 趟':last?'全部结束 · 算平均':'本组结束 · 算平均'):'出发 · 第 '+s.rep+' 趟';
+    if(!swim)$('avgMsg').textContent=setdone?(last?'全部游完了。下面是每个人各组的平均。':'这一组的平均算好了，下一组每一趟都和它比，慢了标红。'):has?'这一趟已停表，成绩保留。':'1 号随哨声出发，之后每隔 '+cfg.gapSec+' 秒一人；各道同时出发。';
+    $('avgStop').disabled=!swim;$('avgRedo').disabled=setdone||!(swim||has);$('avgBack').disabled=swim||(!setdone&&s.set===0&&s.rep===1);
+    $('avgUndo').disabled=!tbLast;
+    tbResults();
+  }
+  $('avgBtns').querySelectorAll('button').forEach(b=>{
+    const L=+b.dataset.l,n=+b.dataset.n,sp=b.querySelector('span'),sm=b.querySelector('small'),bar=tbBar(s.set,L,n-1);
+    let t,main,sub='',wait=false;
+    if(setdone){t=tbAvg(s.set,L,n-1);main=t!=null?fmtSplit(t):'—';sub=t==null?'':bar!=null?'比上组'+fmtDiff(t-bar):'本组平均';wait=t==null}
+    else{
+      t=(tbData[spKey(s.set,s.rep,L)]||[])[n-1];const left=e/1000-(n-1)*cfg.gapSec;
+      main=t!=null?fmtSplit(t):swim?(left>0?'到边':'未出发'):'待出发';
+      sub=bar==null?'':t!=null?'比上组'+fmtDiff(t-bar):'上组 '+fmtSplit(bar);
+      wait=t==null&&!(swim&&left>0);
+    }
+    const slow=t!=null&&bar!=null&&t>bar;
+    b.classList.toggle('got',t!=null);b.classList.toggle('slow',slow);b.classList.toggle('wait',wait);
+    if(sp.textContent!==main)sp.textContent=main;sp.className=t!=null?'':'ph';
+    if(sm.textContent!==sub)sm.textContent=sub;sm.className=t!=null&&bar!=null?(slow?'slow':'fast'):'';
+  });
+}
+// overview: every swimmer's average per set, slower-than-previous in red; plus the per-rep tables
+function tbResults(){
+  const s=tb.sess,box=$('avgTable'),names=allLaneNames(),multi=cfg.lanes.length>1;box.innerHTML='';
+  const upto=s.phase==='setdone'||tbHas(s.set,1)||s.rep>1?s.set:s.set-1;
+  if(upto<0){box.textContent='第 1 组游完第一趟后，这里开始显示每个人的平均。';$('avgDetail').innerHTML='';return}
+  const tbl=document.createElement('table'),hd=tbl.createTHead().insertRow();
+  const th=t=>{const c=document.createElement('th');c.textContent=t;hd.appendChild(c)};
+  th('学生');for(let k=0;k<=upto;k++)th('第 '+(k+1)+' 组平均'+(k===s.set&&s.phase!=='setdone'?'（进行中）':''));
+  const body=tbl.createTBody();
+  cfg.lanes.forEach((l,L)=>{
+    if(multi){const r=body.insertRow();r.className='lh';const c=r.insertCell();c.colSpan=upto+2;c.textContent='第 '+(L+1)+' 道'}
+    for(let k=0;k<l.n;k++){
+      const r=body.insertRow();r.insertCell().textContent=((names[L]||[])[k]||((k+1)+' 号')).replace(/^\d+ 道 (?=\d+ 号$)/,'');
+      for(let st=0;st<=upto;st++){
+        const c=r.insertCell(),a=tbAvg(st,L,k),bar=tbBar(st,L,k);
+        if(a==null){c.textContent='—';continue}
+        const bEl=document.createElement('b');bEl.textContent=fmtSplit(a);c.appendChild(bEl);
+        if(bar!=null){const sm=document.createElement('small');sm.textContent=fmtDiff(a-bar);sm.className=a>bar?'slow':'fast';c.appendChild(sm);if(a>bar)c.className='slowc'}
+      }
+    }
+  });
+  box.appendChild(tbl);
+  const det=$('avgDetail'),rec=tbRec();det.innerHTML='';
+  for(let st=0;st<=upto;st++){
+    const p=document.createElement('p');p.className='laneh';p.textContent='第 '+(st+1)+' 组';det.appendChild(p);
+    det.appendChild(laneTables(rec?rec.plan[st]:null,st,tbData,names));
+  }
+}
+(function(){
+  // setup steppers
+  const host=$('avgSteps');
+  const step=(label,hint,key,lo,hi)=>{
+    const row=document.createElement('div');row.className='stp';
+    row.innerHTML='<div class="stl"><b></b><small></small></div><div class="stc"><button type="button">−</button><output></output><button type="button">+</button></div>';
+    row.querySelector('b').textContent=label;row.querySelector('small').textContent=hint;
+    const [m,p]=row.querySelectorAll('button'),out=row.querySelector('output');
+    const show=()=>{out.textContent=tb[key];m.disabled=tb[key]<=lo;p.disabled=tb[key]>=hi};
+    m.setAttribute('aria-label',label+'减 1');p.setAttribute('aria-label',label+'加 1');
+    m.onclick=()=>{tb[key]=Math.max(lo,tb[key]-1);show();saveTb()};p.onclick=()=>{tb[key]=Math.min(hi,tb[key]+1);show();saveTb()};
+    show();host.appendChild(row);
+  };
+  step('组数','每组结束算一次平均','sets',1,20);
+  step('每组趟数','例：6×25 米就填 6','reps',1,30);
+  const row=document.createElement('div');row.className='stp';
+  row.innerHTML='<div class="stl"><b>每趟距离</b><small>只用来标注成绩</small></div><div class="stc"></div>';
+  const sl=document.createElement('select');sl.setAttribute('aria-label','每趟距离');
+  [15,25,50,75,100,150,200,300,400].forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d+' 米';if(d===tb.dist)o.selected=true;sl.appendChild(o)});
+  sl.onchange=()=>{tb.dist=+sl.value;saveTb()};row.querySelector('.stc').appendChild(sl);host.appendChild(row);
+  $('avgStart').onclick=tbStartSession;
+  $('avgLanes').onclick=$('avgLanes2').onclick=()=>openLu(true);
+  $('avgMain').onclick=tbMain;$('avgUndo').onclick=tbUndo;$('avgStop').onclick=tbStop;$('avgRedo').onclick=tbRedo;$('avgBack').onclick=tbBack;
+  $('avgSound').onclick=toggleSound;
+  $('avgEnd').onclick=e=>{const b=e.currentTarget;
+    if(!b.dataset.armed){b.dataset.armed='1';b.textContent='再点一次：结束并保存';setTimeout(()=>{delete b.dataset.armed;b.textContent='结束测试'},3000);return}
+    delete b.dataset.armed;b.textContent='结束测试';tbFinish()};
+  $('avgCopy').onclick=()=>{
+    const r=tbRec();if(!r||!hasSplits(tbData)){toast('还没有成绩');return}
+    copyText(splitsText(r.plan,tbData,allLaneNames(),'分组平均成绩 · '+dstr(r.at)+' · '+tb.sess.sets+' 组 × '+tb.sess.reps+' 趟 × '+tb.sess.dist+' 米'),'成绩已复制，可以直接粘贴到微信');
+  };
+  document.querySelectorAll('input[name=tooltab]').forEach(r=>{r.checked=r.value===tb.tab;r.onchange=()=>{tb.tab=r.value;saveTb();tbRender(true);lapRender(true)}});
+  // resume an unfinished test after a reload: the clock is not kept, the recorded times are
+  if(tb.sess){const r=tbRec();if(r){tbData=r.splits||(r.splits={});if(tb.sess.phase==='swim')tb.sess.phase='idle'}else tb.sess=null;saveTb()}
+})();
+
+/* Split (lap) stopwatch: keeps running across a reload (wall-clock based) */
+const lap=tb.lap;let lapSeg=now(),lapRAF=0;
+if(lap.run){lap.acc=Math.max(0,Date.now()-lap.wall);lapSeg=now()}
+const lapE=()=>lap.acc+(lap.run?now()-lapSeg:0);
+const fmtCs=ms=>{const c=Math.floor(Math.max(0,ms)/10);return Math.floor(c/6000)+':'+pad2(Math.floor(c/100)%60)+'.'+pad2(c%100)};
+function lapToggle(){
+  if(lap.run){lap.acc=lapE();lap.run=false;releaseWake()}
+  else{lapSeg=now();lap.wall=Date.now()-lap.acc;lap.run=true;holdWake()}
+  saveTb();lapRender(true);
+}
+function lapMark(){
+  if(lap.run){lap.laps.push(Math.round(lapE()));saveTb();lapRender(true)}
+  else if(lap.acc>0||lap.laps.length){lap.acc=0;lap.laps=[];saveTb();lapRender(true)}
+}
+function lapRender(force){
+  if($('view-tools').hidden||tb.tab!=='lap')return;
+  const e=lapE(),prev=lap.laps.length?lap.laps[lap.laps.length-1]:0;
+  $('lapClock').textContent=fmtCs(e);
+  $('lapCur').textContent=lap.laps.length?'第 '+(lap.laps.length+1)+' 段  '+fmtCs(e-prev):' ';
+  if(force){
+    $('lapGo').textContent=lap.run?'暂停':lap.acc>0?'继续':'开始';$('lapGo').classList.toggle('on',lap.run);
+    $('lapMark').textContent=lap.run?'分段':'复位';$('lapMark').disabled=!lap.run&&!(lap.acc>0||lap.laps.length);
+    const box=$('lapTable');box.innerHTML='';
+    if(!lap.laps.length){box.textContent='开始后点「分段」，每点一次记一段。';}
+    else{
+      const segs=lap.laps.map((t,i)=>t-(i?lap.laps[i-1]:0)),mn=Math.min(...segs),mx=Math.max(...segs);
+      const tbl=document.createElement('table');tbl.innerHTML='<thead><tr><th>段</th><th>分段时间</th><th>累计</th></tr></thead>';
+      const body=tbl.createTBody();
+      for(let i=segs.length-1;i>=0;i--){const r=body.insertRow();if(segs.length>1&&mn!==mx)r.className=segs[i]===mn?'best':segs[i]===mx?'worst':'';
+        r.insertCell().textContent='第 '+(i+1)+' 段'+(r.className==='best'?' · 最快':r.className==='worst'?' · 最慢':'');
+        const c=r.insertCell(),bEl=document.createElement('b');bEl.textContent=fmtCs(segs[i]);c.appendChild(bEl);
+        r.insertCell().textContent=fmtCs(lap.laps[i])}
+      box.appendChild(tbl);
+    }
+    cancelAnimationFrame(lapRAF);
+    if(lap.run){const loop=()=>{lapRender(false);if(lap.run&&!$('view-tools').hidden&&tb.tab==='lap')lapRAF=requestAnimationFrame(loop)};lapRAF=requestAnimationFrame(loop)}
+  }
+}
+$('lapGo').onclick=lapToggle;$('lapMark').onclick=lapMark;
+$('lapCopy').onclick=()=>{
+  if(!lap.laps.length){toast('还没有分段记录');return}
+  copyText(['分段秒表 · '+dstr(Date.now(),true),...lap.laps.map((t,i)=>'第 '+(i+1)+' 段  '+fmtCs(t-(i?lap.laps[i-1]:0))+'   累计 '+fmtCs(t))].join('\n'),'分段记录已复制');
+};
 
 /* ---------- Boot ---------- */
 try{$('bulk').value=localStorage.getItem(TKEY)||SAMPLE_TEXT}catch(e){$('bulk').value=SAMPLE_TEXT}
