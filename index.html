@@ -643,6 +643,20 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 .fitgrid.arranging .splane button:not([data-empty]){border-style:solid;background:color-mix(in srgb,var(--accent) 12%,transparent)}
 .fitgrid .splane button.over{background:color-mix(in srgb,var(--accent) 30%,transparent);border-color:var(--accent)}
 .dragghost{position:fixed;z-index:80;pointer-events:none;transform:translate(-50%,-60%) scale(1.06);padding:8px 14px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:15px;box-shadow:0 10px 26px rgba(0,0,0,.35);white-space:nowrap}
+/* Add / remove right in the grid: a dashed "+" cell after the last name of a lane adds a swimmer, a dashed "+" bar
+   under the lanes adds a lane; "减人" in the header row turns on remove mode (tap a swimmer, or a lane label). */
+.fitgrid .addcell,.fitgrid .addlane{display:none;align-items:center;justify-content:center;border:1.5px dashed var(--boardmuted);border-radius:clamp(6px,calc(var(--bh)*.16),12px);color:var(--boardmuted);font-family:var(--f-num);font-weight:700;line-height:1;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.fitgrid.plus .addcell{display:flex;font-size:clamp(16px,calc(var(--bh)*.5),34px)}
+.fitgrid.plus .addlane{display:flex;gap:6px;height:var(--bar,30px);margin-top:var(--barmt,0px);font-size:13px;font-family:var(--f-body)}
+.fitgrid .addlane b{font-family:var(--f-num);font-size:20px;line-height:1}
+.fitgrid .addcell:hover,.fitgrid .addlane:hover,.fitgrid .addcell:focus-visible,.fitgrid .addlane:focus-visible{color:var(--accent);border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.fitgrid.removing .splane button{border:1.5px dashed var(--danger);background:color-mix(in srgb,var(--danger) 7%,transparent);opacity:1;cursor:pointer}
+.fitgrid.removing .splane button::after{content:"−";position:absolute;top:1px;right:5px;font-family:var(--f-num);font-weight:800;font-size:clamp(13px,calc(var(--bh)*.3),20px);line-height:1;color:var(--danger)}
+.fitgrid.removing .splh{border:1.5px dashed var(--danger);color:var(--danger);cursor:pointer}
+.fitgrid.removing .splh::after{content:"−";display:block;font-size:16px;line-height:1}
+.fitgrid.removing .addcell,.fitgrid.removing .addlane{visibility:hidden}
+.spact button.on{background:var(--danger);border-color:transparent;color:#fff}
+.spact button[hidden]{display:none}
 /* lane head-count steppers inside the tray; toolbox: the tray is always there and locks while the clock runs */
 .traylanes{display:inline-flex;flex-wrap:wrap;gap:5px}
 .traybar .tl{display:inline-flex;align-items:center;border:1px solid var(--boardline);border-radius:999px;overflow:hidden;flex:none}
@@ -723,7 +737,7 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 .fitgrid .splh{grid-column:1;display:grid;place-items:center;padding:0;font-size:12px;font-weight:700;line-height:1.1;letter-spacing:0;text-align:center;color:var(--boardmuted);background:var(--boardtint);border-radius:8px}
 .fitgrid .splane button{min-height:0;height:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:2px 4px;overflow:hidden;border-radius:clamp(6px,calc(var(--bh)*.16),12px)}
 .fitgrid .splane button b{font-size:clamp(11px,calc(var(--bh)*.2),15px);line-height:1.15}
-.fitgrid .splane button span{font-size:clamp(13px,calc(var(--bh)*.34),26px);line-height:1.05}
+.fitgrid .splane button span{font-size:clamp(13px,min(calc(var(--bh)*.34),calc(var(--bw,120px)*.27)),26px);line-height:1.05;white-space:nowrap}
 .fitgrid .splane button small{font-size:clamp(10px,calc(var(--bh)*.15),13px);line-height:1.15;min-height:0}
 .fitgrid.compact .splane button small{display:none}
 /* small buttons: name and time side by side when the button is wide enough, otherwise two small lines */
@@ -895,7 +909,7 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
           <section class="arrive" id="avgBox" aria-label="到边">
             <div class="sphead">
               <div class="spt"><b>到边</b><small id="avgRep"></small></div>
-              <div class="spact"><button type="button" id="avgUndo">撤销</button><button type="button" id="avgArr" aria-pressed="true" title="显示 / 收起名字卡片和人数调整">名字卡片</button></div>
+              <div class="spact"><button type="button" id="avgUndo">撤销</button><button type="button" id="avgRm" title="点一下，再点要减掉的人（或左边的「N道」减掉整条道）">减人</button><button type="button" id="avgArr" aria-pressed="true" title="显示 / 收起名字卡片和人数调整">名字卡片</button></div>
             </div>
             <div class="tray" id="avgTray" hidden></div>
             <div class="splanes fitgrid" id="avgBtns"></div>
@@ -1013,7 +1027,7 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
         <section class="arrive" id="splits" hidden aria-label="到边计时">
           <div class="sphead">
             <div class="spt"><b>到边计时</b><small id="spRep"></small></div>
-            <div class="spact"><button type="button" id="spUndo">撤销</button><button type="button" id="spTable">成绩表</button><button type="button" id="spArr">排人</button><button type="button" id="spOrder">顺序</button></div>
+            <div class="spact"><button type="button" id="spUndo">撤销</button><button type="button" id="spTable">成绩表</button><button type="button" id="spRm" title="点一下，再点要减掉的人（或左边的「N道」减掉整条道）" hidden>减人</button><button type="button" id="spArr">排人</button><button type="button" id="spOrder">顺序</button></div>
           </div>
           <div class="tray" id="spTray" hidden></div>
           <div class="splanes fitgrid" id="spBtns"></div>
@@ -2018,9 +2032,12 @@ function laneKeyOf(e){
 // one grid per lane: [lane label] + the lane's buttons (name, big value, small line), sized by fitGrid()
 function buildLaneGrid(wrap,onTap){
   const multi=cfg.lanes.length>1;wrap.innerHTML='';wrap.classList.toggle('multi',multi);
+  const act=(el,label,fn)=>{el.setAttribute('role','button');el.tabIndex=0;el.setAttribute('aria-label',label);el.title=label;
+    el.onclick=fn;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();fn()}}};
   cfg.lanes.forEach((l,L)=>{
     const sec=document.createElement('div');sec.className='splane spbtns';
-    if(multi){const h=document.createElement('div');h.className='splh';h.textContent=(L+1)+'道';h.title='第 '+(L+1)+' 道 · '+l.n+' 人';sec.appendChild(h)}
+    if(multi){const h=document.createElement('div');h.className='splh';h.textContent=(L+1)+'道';h.title='第 '+(L+1)+' 道 · '+l.n+' 人';
+      h.onclick=()=>{if(rmOn===wrap.id)removeLane(wrap.id,L,h)};sec.appendChild(h)}
     laneNames(L).forEach((nm,k)=>{const b=document.createElement('button');b.type='button';b.dataset.l=L;b.dataset.n=k+1;
       b.innerHTML='<b></b><span></span><small></small>';b.querySelector('b').textContent=multi&&!l.lineup[k]?(k+1)+' 号':nm;
       if(!l.lineup[k])b.dataset.empty='1';
@@ -2032,13 +2049,84 @@ function buildLaneGrid(wrap,onTap){
       b.addEventListener('pointercancel',()=>{b._pd=null});
       b.addEventListener('pointerup',e=>{
         const d=b._pd;b._pd=null;
-        if(!d||d.id!==e.pointerId||Math.hypot(e.clientX-d.x,e.clientY-d.y)>14||arrLive(wrap.id))return;   // moved = a scroll; arranging = the arranger's
+        if(!d||d.id!==e.pointerId||Math.hypot(e.clientX-d.x,e.clientY-d.y)>14||rmOn===wrap.id||arrLive(wrap.id))return;   // moved = a scroll; removing / arranging have their own handling
         b._done=now();onTap(L,k+1,false,d.t);
       });
-      b.onclick=()=>{if(now()-(b._done||0)<700)return;if(arrLive(wrap.id))arrClickSlot(wrap.id,L,k);else onTap(L,k+1)};sec.appendChild(b)});
+      b.onclick=()=>{
+        if(rmOn===wrap.id){removeSlot(wrap.id,L,k);return}
+        if(now()-(b._done||0)<700)return;
+        if(arrLive(wrap.id))arrClickSlot(wrap.id,L,k);else onTap(L,k+1);
+      };sec.appendChild(b)});
+    // dashed "+" after the last name: one more swimmer in this lane
+    if(l.n<10){const a=document.createElement('div');a.className='addcell';a.textContent='+';
+      act(a,'第 '+(L+1)+' 道加 1 人',()=>{if(!wrap.classList.contains('plus')||l.n>=10)return;l.n++;lineupChanged()});sec.appendChild(a)}
     wrap.appendChild(sec);
   });
+  // dashed "+" under the lanes: one more lane (same head count as the last one)
+  if(cfg.lanes.length<8){const a=document.createElement('div');a.className='addlane';a.innerHTML='<b>+</b><span></span>';a.querySelector('span').textContent='加一条泳道';
+    act(a,'增加一条泳道',()=>{if(!wrap.classList.contains('plus')||cfg.lanes.length>=8)return;cfg.lanes.push({n:cfg.lanes[cfg.lanes.length-1].n,lineup:[]});lineupChanged()});wrap.appendChild(a)}
+  wrap.classList.toggle('removing',rmOn===wrap.id);
 }
+/* ---------- Remove mode ("减人"): tap a swimmer to take that position out, tap a lane label to take the lane out ----------
+   Times already recorded in the set / group that is under way move with the people, so nobody inherits another
+   swimmer's times; finished sets keep their own record of who stood where. Each removal can be undone. */
+let rmOn=null;
+const RM={spBtns:'spRm',avgBtns:'avgRm'};
+function rmSet(id){
+  rmOn=id;
+  Object.keys(RM).forEach(w=>{const on=rmOn===w,b=$(RM[w]);b.classList.toggle('on',on);b.textContent=on?'减好了':'减人';$(w).classList.toggle('removing',on)});
+  if(id)toast('点要减掉的人；点左边的「N道」减掉整条道。减完点「减好了」');
+}
+// the recorded data that belongs to what is under way on this grid: [data object, key prefix] or null
+function rmScope(id){
+  if(id==='avgBtns'){const s=tb.sess;return s&&s.phase!=='setdone'?[tbData,String(s.set)]:null}
+  const st=steps[si];return st&&st.i>=0&&curRec?[splitsData,String(st.i)]:null;
+}
+function rmSnapshot(id){
+  const sc=rmScope(id),snap={lanes:clone(cfg.lanes),sc,data:null,lineup:null};
+  if(sc){snap.data={};Object.keys(sc[0]).forEach(k=>{if(k.startsWith(sc[1]+'-'))snap.data[k]=sc[0][k].slice()})}
+  if(id==='avgBtns'&&sc&&tb.sess.lineups[tb.sess.set])snap.lineup=clone(tb.sess.lineups[tb.sess.set]);
+  return snap;
+}
+function rmRestore(id,snap){
+  cfg.lanes=snap.lanes;
+  if(snap.sc){const [d,p]=snap.sc;Object.keys(d).forEach(k=>{if(k.startsWith(p+'-'))delete d[k]});Object.assign(d,snap.data)}
+  if(snap.lineup&&tb.sess)tb.sess.lineups[tb.sess.set]=snap.lineup;
+  rmAfter(id);toast('已恢复');
+}
+function rmAfter(id){
+  spLast=[];tbLast=[];tbAuto=null;      // positions moved: older taps can no longer be undone one by one
+  const r=id==='avgBtns'?tbRec():recOf(),sc=rmScope(id);
+  if(r&&sc)(r.setNames||(r.setNames={}))[+sc[1]]=allLaneNames();
+  saveLib();if(tb.sess)saveTb();lineupChanged();
+}
+function removeSlot(id,L,k){
+  const l=cfg.lanes[L];if(!l||k>=l.n)return;
+  if(l.n<=1){toast(cfg.lanes.length>1?'这条道只剩 1 人。要去掉整条道，点左边的「'+(L+1)+'道」':'至少留 1 个人');return}
+  const snap=rmSnapshot(id),nm=slotName(L,k),sc=snap.sc;
+  slotFill(l,l.n-1);l.lineup.splice(k,1);l.n--;
+  if(sc)Object.keys(sc[0]).forEach(key=>{if(key.startsWith(sc[1]+'-')&&keyLane(key)===L)sc[0][key].splice(k,1)});
+  if(snap.lineup&&tb.sess.lineups[tb.sess.set][L])tb.sess.lineups[tb.sess.set][L].splice(k,1);
+  rmAfter(id);
+  toast('已减掉 '+nm+'，后面的人往前补',{label:'撤销',fn:()=>rmRestore(id,snap)});
+}
+function removeLane(id,L,el){
+  if(cfg.lanes.length<=1){toast('至少留一条泳道');return}
+  if(!el.dataset.armed){el.dataset.armed='1';toast('再点一次「'+(L+1)+'道」：去掉整条道（'+cfg.lanes[L].n+' 人）');setTimeout(()=>{delete el.dataset.armed},3000);return}
+  const snap=rmSnapshot(id),sc=snap.sc;
+  cfg.lanes.splice(L,1);
+  if(sc){   // this lane's times go, the lanes after it move up one
+    const d=sc[0],moved={};
+    Object.keys(d).forEach(key=>{if(!key.startsWith(sc[1]+'-'))return;const ln=keyLane(key);if(ln<L)return;
+      if(ln>L){const base=key.replace(/@\d+$/,'');moved[ln-1?base+'@'+(ln-1):base]=d[key]}delete d[key]});
+    Object.assign(d,moved);
+  }
+  if(snap.lineup)tb.sess.lineups[tb.sess.set].splice(L,1);
+  rmAfter(id);
+  toast('已去掉第 '+(L+1)+' 道',{label:'撤销',fn:()=>rmRestore(id,snap)});
+}
+$('avgRm').onclick=()=>rmSet(rmOn==='avgBtns'?null:'avgBtns');
+$('spRm').onclick=()=>rmSet(rmOn==='spBtns'?null:'spBtns');
 function renderSplits(force){
   const box=$('splits');const c=cfg.stagger?repContext():null;
   box.hidden=!c;if(!c)return;
@@ -2064,13 +2152,14 @@ function fitSplits(){fitGrid($('splits'),$('spBtns'))}
 function fitGrid(box,wrap){
   if(box.hidden)return;
   const W=wrap.clientWidth,H=wrap.clientHeight;if(!W||!H)return;
-  const ns=cfg.lanes.map(l=>l.n),nl=ns.length,lab=nl>1?30:0,maxN=Math.max(...ns);
+  const plus=wrap.classList.contains('plus'),bar=plus&&cfg.lanes.length<8?30:0;
+  const ns=cfg.lanes.map(l=>l.n+(plus&&l.n<10?1:0)),nl=ns.length,lab=nl>1?30:0,maxN=Math.max(...ns);
   let best=null;
   for(let c=1;c<=Math.min(maxN,6);c++){
     const rows=ns.reduce((a,n)=>a+Math.ceil(n/c),0);
     for(const g of [8,5,3]){
       const lg=nl>1?g+4:0;
-      const h=(H-(rows-nl)*g-(nl-1)*lg)/rows,w=(W-(lab?lab+g:0)-(c-1)*g)/c;
+      const h=(H-(bar?bar+Math.max(g,lg):0)-(rows-nl)*g-(nl-1)*lg)/rows,w=(W-(lab?lab+g:0)-(c-1)*g)/c;
       const sc=Math.min(h,w*.8)+g*.4;
       if(!best||sc>best.sc)best={sc,c,g,lg,h};
     }
@@ -2078,7 +2167,8 @@ function fitGrid(box,wrap){
   // never taller than needed: a small group keeps comfortable, not giant, buttons
   const h=Math.max(12,Math.min(Math.floor(best.h),130));
   const st=wrap.style;st.setProperty('--cols',best.c);st.setProperty('--bh',h+'px');st.setProperty('--g',best.g+'px');st.setProperty('--lg',best.lg+'px');st.setProperty('--lab',lab+'px');
-  const bw=(W-(lab?lab+best.g:0)-(best.c-1)*best.g)/best.c;
+  st.setProperty('--bar',bar+'px');st.setProperty('--barmt',Math.max(0,best.g-best.lg)+'px');
+  const bw=(W-(lab?lab+best.g:0)-(best.c-1)*best.g)/best.c;st.setProperty('--bw',Math.floor(bw)+'px');
   wrap.classList.toggle('compact',h<64);wrap.classList.toggle('tiny',h<42);wrap.classList.toggle('micro',h<30);wrap.classList.toggle('wide',bw>=118);
   wrap.querySelectorAll('.splh').forEach((el,L)=>{el.style.gridRow='span '+Math.ceil(ns[L]/best.c)});
 }
@@ -2526,19 +2616,6 @@ function arrRefresh(id){
   const bar=document.createElement('div');bar.className='traybar';
   const mk=(t,fn,cls,label)=>{const b=document.createElement('button');b.type='button';b.textContent=t;if(cls)b.className=cls;if(label)b.setAttribute('aria-label',label);b.onclick=fn;return b};
   if(!a.tool){const tip=document.createElement('span');tip.textContent='把名字拖到位置上；位置拖回这里 = 拿下来。变淡的是已经排上的。';bar.appendChild(tip)}
-  // head count of every lane, and the number of lanes, right here
-  const lanesEl=document.createElement('span');lanesEl.className='traylanes';
-  cfg.lanes.forEach((l,L)=>{
-    const d=document.createElement('span');d.className='tl';
-    const m=mk('−',()=>{if(l.n>1){l.n--;lineupChanged()}},'','第 '+(L+1)+' 道减 1 人'),p=mk('+',()=>{if(l.n<10){l.n++;lineupChanged()}},'','第 '+(L+1)+' 道加 1 人');
-    m.disabled=l.n<=1;p.disabled=l.n>=10;
-    const t=document.createElement('i');t.textContent=(L+1)+'道 '+l.n+'人';
-    d.append(m,t,p);lanesEl.appendChild(d);
-  });
-  const ld=document.createElement('span');ld.className='tl';
-  const lm=mk('−道',()=>{if(cfg.lanes.length>1){cfg.lanes.pop();lineupChanged()}},'','减少一条泳道'),lp=mk('+道',()=>{if(cfg.lanes.length<8){cfg.lanes.push({n:cfg.lanes[cfg.lanes.length-1].n,lineup:[]});lineupChanged()}},'','增加一条泳道');
-  lm.disabled=cfg.lanes.length<=1;lp.disabled=cfg.lanes.length>=8;ld.append(lm,lp);lanesEl.appendChild(ld);
-  bar.appendChild(lanesEl);
   if(a.tool){
     const seg=document.createElement('span');seg.className='trayseg';seg.style.flex='none';
     seg.append(mk('固定',()=>{tb.perSet=false;saveTb();arrRefresh(id)},tb.perSet?'':'on'),mk('每组重排',()=>{tb.perSet=true;saveTb();arrRefresh(id);toast('每一组结束后会提醒你重新排人，拖好再出发')},tb.perSet?'on':''));
@@ -2569,6 +2646,7 @@ function arrRefresh(id){
 function arrOpen(){
   const id='spBtns',box=$(ARR[id].box);
   arrOn=id;arrSel=null;box.classList.add('arr');$(ARR[id].tray).hidden=false;$(ARR[id].btn).textContent='排好了';
+  $(id).classList.add('plus');$('spRm').hidden=false;
   try{
     if(innerWidth<1024)box.scrollIntoView({block:'start'});
     else{const r=box.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)box.scrollIntoView({block:'nearest'})}   // wide screens: only if part of the card is off screen
@@ -2577,7 +2655,8 @@ function arrOpen(){
 }
 function arrClose(){
   if(!arrOn)return;const id=arrOn,a=ARR[id];arrOn=null;arrSel=null;
-  $(a.tray).hidden=true;$(id).classList.remove('arranging');$(a.btn).textContent='排人';
+  $(a.tray).hidden=true;$(id).classList.remove('arranging','plus');$(a.btn).textContent='排人';
+  $('spRm').hidden=true;if(rmOn===id)rmSet(null);
   $(a.box).classList.remove('arr');
   $(id).querySelectorAll('.sel,.over').forEach(x=>x.classList.remove('sel','over'));
   fitGrid($(a.box),$(id));
@@ -2590,7 +2669,7 @@ const arrTarget=(x,y,id)=>{
   const t=el.closest('.tray');return t&&t.id===ARR[id].tray?{el:t,tray:true}:null;
 };
 document.addEventListener('pointerdown',e=>{
-  if(e.button>0)return;
+  if(e.button>0||rmOn)return;
   const t=e.target.closest('.stu,button[data-l]');if(!t)return;
   const id=Object.keys(ARR).find(i=>arrLive(i)&&$(ARR[i].box).contains(t));if(!id)return;
   const src=t.classList.contains('stu')?{name:t.dataset.name}:{L:+t.dataset.l,k:+t.dataset.n-1,name:cfg.lanes[+t.dataset.l].lineup[+t.dataset.n-1]||''};
@@ -2693,6 +2772,7 @@ function tbBeginRep(){
 // send off: the whole lane line-up at the set gap, or (gap 0) the batch s.wave
 function tbGo(){
   const s=tb.sess;tbT0=now();tbStag=1;tbLast=[];tbAuto=null;tbFrozen=0;s.phase='swim';arrSel=null;
+  if(rmOn==='avgBtns')rmSet(null);
   if(tbWaves())tbWaveT[s.wave]=tbT0;
   notify(()=>beep(1320,600),(tbWaves()?Math.min(s.wave,10):1)+' 号出发');holdWake();saveTb();tbRender(true);
 }
@@ -2759,6 +2839,7 @@ function tbSkipWave(){
 }
 function tbFinish(){
   const r=tbRec();if(r&&!r.end){r.end=Date.now();saveLib()}
+  if(rmOn==='avgBtns')rmSet(null);
   tb.sess=null;tbLast=[];releaseWake();saveTb();tbRender(true);
   toast('成绩已保存到「计划库 → 训练记录」');
 }
@@ -2837,6 +2918,8 @@ function tbRender(force){
     tray.hidden=!shown;tray.classList.toggle('locked',swim);
     $('avgArr').setAttribute('aria-pressed',want);$('avgArr').textContent=phone?(want?'排好了':'排人'):'名字卡片';
     $('avgBtns').classList.toggle('dragok',shown&&!swim);
+    // "+" cells to add a swimmer / a lane, and 减人, whenever the clock is not running
+    $('avgBtns').classList.toggle('plus',!swim);$('avgRm').disabled=swim;
     // phone: while the cards are out the card is one screen tall, so cards and slots are all visible together
     const tall=shown&&phone,wasTall=box.classList.contains('arr');box.classList.toggle('arr',tall);
     if(tall&&!wasTall)try{box.scrollIntoView({block:'start'})}catch(err){}
