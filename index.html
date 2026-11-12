@@ -612,17 +612,21 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 /* current batch when swimmers are sent off one batch at a time (start gap 0) */
 .spbtns button.cur{border-color:var(--ph);box-shadow:inset 0 0 0 1px var(--ph)}
 /* Arrange mode: student cards are dragged (or tapped, then a slot tapped) onto the arrival slots */
-.tray{flex:none;display:grid;gap:8px;background:var(--boardtint);border:1px dashed var(--boardmuted);border-radius:12px;padding:8px}
+.tray{flex:none;display:grid;gap:6px;align-content:start;overflow:hidden auto;overscroll-behavior:contain;background:var(--boardtint);border:1px dashed var(--boardmuted);border-radius:12px;padding:6px 8px}
+/* while arranging, the whole thing (student cards + every slot) stays on one screen: on small screens the card becomes one screen tall */
+@media (max-width:1023px){#splits.arr,#avgBox.arr{height:calc(100dvh - var(--tabh) - 20px - env(safe-area-inset-bottom,0px));scroll-margin-top:8px}}
 .tray.over{background:color-mix(in srgb,var(--accent) 20%,transparent);border-color:var(--accent)}
-.traybar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12px;color:var(--boardmuted)}
-.traybar span{flex:1 1 100%;line-height:1.4}
-.traybar button{font-size:12px;padding:6px 11px;border-radius:999px;background:transparent;border:1px solid var(--boardline);color:var(--boardfg);white-space:nowrap}
+.traybar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:12px;color:var(--boardmuted)}
+.traybar>span:first-child{flex:1 1 180px;line-height:1.35;min-width:0}
+@media (max-width:759px){.traybar>span:first-child{display:none}}
+.traybar button{font-size:12px;padding:5px 9px;border-radius:999px;background:transparent;border:1px solid var(--boardline);color:var(--boardfg);white-space:nowrap}
 .traybar button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 .traybar .trayseg{display:inline-flex;border:1px solid var(--boardline);border-radius:999px;overflow:hidden}
 .traybar .trayseg button{border:0;border-radius:0}
-.chipsbox{display:flex;flex-wrap:wrap;gap:6px}
+.chipsbox{--cs:15px;display:flex;flex-wrap:wrap;gap:calc(var(--cs)*.34)}
 .chipsbox em{font-style:normal;color:var(--boardmuted);font-size:13px}
-.stu{touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab;padding:7px 12px;border-radius:10px;background:var(--surface);color:var(--fg);border:1px solid var(--line);font-weight:700;font-size:14px;box-shadow:var(--shadow)}
+.stu{touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab;padding:calc(var(--cs)*.36) calc(var(--cs)*.7);border-radius:calc(var(--cs)*.6);background:var(--surface);color:var(--fg);border:1px solid var(--line);font-weight:700;font-size:var(--cs);line-height:1.15;white-space:nowrap}
+.stu.placed{opacity:.38;background:transparent;border-style:dashed;color:var(--boardfg)}
 .stu.sel,.fitgrid.arranging .splane button.sel{outline:3px solid var(--accent);outline-offset:1px}
 .fitgrid.arranging .splane button{touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab;border-style:dashed;opacity:1}
 .fitgrid.arranging .splane button span,.fitgrid.arranging .splane button small{display:none!important}
@@ -2005,6 +2009,7 @@ function fitGrid(box,wrap){
   wrap.querySelectorAll('.splh').forEach((el,L)=>{el.style.gridRow='span '+Math.ceil(ns[L]/best.c)});
 }
 try{const ro=new ResizeObserver(()=>{fitSplits();fitGrid($('avgBox'),$('avgBtns'))});ro.observe($('spBtns'));ro.observe($('avgBtns'))}catch(e){}
+window.addEventListener('resize',()=>{if(arrOn)arrRefresh()});
 // names: array of strings for one lane
 function splitTable(it,gi,data,names,L=0){
   const ks=Object.keys(data).filter(k=>+k.split('-')[0]===gi&&keyLane(k)===L);
@@ -2435,39 +2440,46 @@ function arrRefresh(){
   const placed=new Set();cfg.lanes.forEach(l=>{for(let j=0;j<l.n;j++)if(l.lineup[j])placed.add(l.lineup[j])});
   tray.innerHTML='';
   const bar=document.createElement('div');bar.className='traybar';
-  const tip=document.createElement('span');tip.textContent='把学员拖到下面的位置上，拖回这里 = 拿下来。每条道同一个号的人一起出发。';bar.appendChild(tip);
+  const tip=document.createElement('span');tip.textContent='把学员拖到位置上；位置拖回这里 = 拿下来。变淡的是已经排上的。';bar.appendChild(tip);
   const mk=(t,fn,cls)=>{const b=document.createElement('button');b.type='button';b.textContent=t;if(cls)b.className=cls;b.onclick=fn;return b};
   if(a.tool){
     const seg=document.createElement('span');seg.className='trayseg';seg.style.flex='none';
-    seg.append(mk('顺序固定',()=>{tb.perSet=false;saveTb();arrRefresh()},tb.perSet?'':'on'),mk('每组重排',()=>{tb.perSet=true;saveTb();arrRefresh();toast('每一组结束后会自动打开排人，重新拖一遍再出发')},tb.perSet?'on':''));
+    seg.append(mk('固定',()=>{tb.perSet=false;saveTb();arrRefresh()},tb.perSet?'':'on'),mk('每组重排',()=>{tb.perSet=true;saveTb();arrRefresh();toast('每一组结束后会自动打开排人，重新拖一遍再出发')},tb.perSet?'on':''));
+    seg.title='固定：各组都用这个排法。每组重排：每一组结束后自动打开排人。';
     bar.appendChild(seg);
   }
-  bar.append(mk('学员名单',()=>$('luRoster').onclick()),mk('按名单填入',()=>$('luFill').onclick()),mk('清空',()=>{cfg.lanes.forEach(l=>{l.lineup=[]});arrSel=null;lineupChanged()}),mk('排好了',arrClose,'on'));
+  bar.append(mk('名单',()=>$('luRoster').onclick()),mk('按名单填',()=>$('luFill').onclick()),mk('清空',()=>{cfg.lanes.forEach(l=>{l.lineup=[]});arrSel=null;lineupChanged()}));
   tray.appendChild(bar);
+  // every student keeps a card here (placed ones are dimmed), so the tray never changes size while dragging
   const box=document.createElement('div');box.className='chipsbox';
-  const free=cfg.roster.filter(n=>!placed.has(n));
-  if(!cfg.roster.length){const e=document.createElement('em');e.textContent='还没有学员。点「学员名单」，一行一个名字加进来。';box.appendChild(e)}
-  else if(!free.length){const e=document.createElement('em');e.textContent='名单里的学员都排上了。想换位置，直接把一个位置拖到另一个位置上。';box.appendChild(e)}
-  free.forEach(n=>{const c=document.createElement('div');c.className='stu'+(arrSel&&arrSel.L==null&&arrSel.name===n?' sel':'');c.dataset.name=n;c.textContent=n;
+  if(!cfg.roster.length){const e=document.createElement('em');e.textContent='还没有学员。点「名单」把名字加进来。';box.appendChild(e)}
+  cfg.roster.forEach(n=>{const c=document.createElement('div');c.className='stu'+(placed.has(n)?' placed':'')+(arrSel&&arrSel.L==null&&arrSel.name===n?' sel':'');c.dataset.name=n;c.textContent=n;
     c.onclick=()=>{if(now()-arrSkip>=80)arrChipPick(n)};box.appendChild(c)});
   tray.appendChild(box);
+  // the cards shrink with the size of the roster so that cards and slots share one screen
+  const H=$(a.box).clientHeight;
+  for(const share of [.42,.55]){
+    tray.style.maxHeight=Math.floor(H*share)+'px';
+    let fit=false;
+    for(let cs=15;cs>=10;cs--){box.style.setProperty('--cs',cs+'px');if(tray.scrollHeight<=tray.clientHeight+1){fit=true;break}}
+    if(fit)break;
+  }
   tray.onclick=e=>{if(e.target.closest('button,.stu')||now()-arrSkip<80)return;if(arrSel&&arrSel.L!=null)arrClear(arrSel.L,arrSel.k)};
   wrap.querySelectorAll('button[data-l]').forEach(b=>b.classList.toggle('sel',!!arrSel&&arrSel.L===+b.dataset.l&&arrSel.k===+b.dataset.n-1));
   fitGrid($(a.box),wrap);
 }
 function arrOpen(id){
   if(arrOn&&arrOn!==id)arrClose();
-  const wrap=$(id),box=$(ARR[id].box);
-  // arranging is not timing: the card may grow so every student card shows without scrolling; the slots keep their size
-  wrap.style.height=Math.max(180,wrap.clientHeight)+'px';wrap.style.flex='none';box.style.height='auto';box.style.maxHeight='none';
-  arrOn=id;arrSel=null;$(ARR[id].tray).hidden=false;$(ARR[id].btn).textContent='排好了';arrRefresh();
-  // small screens: bring the cards and the slots onto one screen
+  const box=$(ARR[id].box);
+  arrOn=id;arrSel=null;box.classList.add('arr');$(ARR[id].tray).hidden=false;$(ARR[id].btn).textContent='排好了';
+  // small screens: the card is one screen tall while arranging; put it exactly on screen
   if(innerWidth<1024)try{box.scrollIntoView({block:'start'})}catch(e){}
+  arrRefresh();
 }
 function arrClose(){
   if(!arrOn)return;const id=arrOn,a=ARR[id];arrOn=null;arrSel=null;
   $(a.tray).hidden=true;$(id).classList.remove('arranging');$(a.btn).textContent='排人';
-  $(id).style.height='';$(id).style.flex='';$(a.box).style.height='';$(a.box).style.maxHeight='';
+  $(a.box).classList.remove('arr');
   $(id).querySelectorAll('.sel,.over').forEach(x=>x.classList.remove('sel','over'));
   fitGrid($(a.box),$(id));
 }
