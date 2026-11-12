@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#f1f5fa">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -53,6 +53,12 @@ img{max-width:100%}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;min-height:100%;-webkit-tap-highlight-color:transparent}
+/* Fast tapping must never zoom the page. Three causes, three fixes:
+   1 double-tap zoom and 2 two fingers landing together (read as a pinch): scrolling stays, zoom gestures are off;
+   3 iOS zooms into a text field whose text is under 16px when it gets the focus: fields are 16px on touch screens. */
+html{touch-action:manipulation;touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+button,a,label,summary,select,input,textarea{touch-action:manipulation}
+button,.nav a,.seg span{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:10px 16px;font-weight:600;font-size:15px;transition:background .15s,border-color .15s,transform .05s}
 button:hover{border-color:var(--muted)}
@@ -741,6 +747,10 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
   .cardsHead .row button{padding:9px 12px;font-size:14px}
   .isum{padding:10px 10px 10px 14px;gap:10px}
   .ibody{padding:10px 10px 12px 14px}
+}
+/* touch screens: a field under 16px makes iOS zoom in when it gets the focus (kept last so it wins over the size rules above) */
+@media (hover:none),(pointer:coarse){
+  select,input[type=text],textarea,.item select,.item input[type=text],.luslots select,#libSearch,#spGroup,#qeGroup{font-size:16px}
 }
 </style>
 </head>
@@ -1542,6 +1552,12 @@ function scrollProg(){
   if(a.top<b.top+8)side.scrollTop-=b.top+8-a.top;else if(a.bottom>b.bottom-8)side.scrollTop+=a.bottom-b.bottom+8;
 }
 
+/* ---------- No zooming while tapping fast ----------
+   CSS (touch-action) covers current browsers; these cover Safari's own pinch gesture and browsers that ignore the CSS.
+   Scrolling with one finger is untouched. */
+['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{if(e.touches.length>1&&e.cancelable)e.preventDefault()},{passive:false});
+
 /* ---------- Version label and update check ----------
    The page is one cached file, so a browser can keep showing an old copy after a new one is published.
    The label (the file's own publish time) shows which copy is open; on load and when the page comes back to the
@@ -1969,11 +1985,13 @@ function repContext(){
 // swim-time format with hundredths: 29″60, 1:35″33
 const fmtSplit=t=>{const cs=Math.round(t*100),m=Math.floor(cs/6000),sec=Math.floor(cs%6000/100),h=String(cs%100).padStart(2,'0');return m?m+':'+String(sec).padStart(2,'0')+'″'+h:sec+'″'+h};
 const fmtDiff=d=>(d<=0?'快 ':'慢 ')+fmtSplit(Math.abs(d));
-function tapSplit(L,n){
+// at (optional) = performance time of the finger-down that this tap came from
+function tapSplit(L,n,fromKey,at){
   if(arrLive('spBtns'))return;
   if(!cfg.stagger||!cfg.lanes[L]||n<1||n>cfg.lanes[L].n)return;
   const c=repContext();if(!c)return;
-  const t=Math.round((c.ms/1000-(n-1)*cfg.gapSec)*100)/100;
+  const lag=at?Math.max(0,Math.min(2000,now()-at)):0;
+  const t=Math.round(((c.ms-lag)/1000-(n-1)*cfg.gapSec)*100)/100;
   if(t<=0){toast(slotName(L,n-1)+' 还没出发');return}
   const key=spKey(c.i,c.rep,L);const arr=splitsData[key]||(splitsData[key]=[]);
   // a time that is in is never replaced by another tap (a second touch, a neighbouring key): undo first
@@ -2008,7 +2026,16 @@ function buildLaneGrid(wrap,onTap){
       if(!l.lineup[k])b.dataset.empty='1';
       // the lane's shortcut key sits right in front of the name
       if(L<LANE_KEYS.length&&k<10){const kb=document.createElement('kbd');kb.textContent=LANE_KEY_TXT[L][k];kb.setAttribute('aria-hidden','true');b.querySelector('b').prepend(kb)}
-      b.onclick=()=>{if(arrLive(wrap.id))arrClickSlot(wrap.id,L,k);else onTap(L,k+1)};sec.appendChild(b)});
+      // Each finger is its own tap: two swimmers touching together are taken with two fingers, which browsers do not
+      // turn into clicks. The time is the moment the finger (or mouse button) went down, not when it lifted.
+      b.addEventListener('pointerdown',e=>{if(e.button>0)return;b._pd={id:e.pointerId,x:e.clientX,y:e.clientY,t:now()}});
+      b.addEventListener('pointercancel',()=>{b._pd=null});
+      b.addEventListener('pointerup',e=>{
+        const d=b._pd;b._pd=null;
+        if(!d||d.id!==e.pointerId||Math.hypot(e.clientX-d.x,e.clientY-d.y)>14||arrLive(wrap.id))return;   // moved = a scroll; arranging = the arranger's
+        b._done=now();onTap(L,k+1,false,d.t);
+      });
+      b.onclick=()=>{if(now()-(b._done||0)<700)return;if(arrLive(wrap.id))arrClickSlot(wrap.id,L,k);else onTap(L,k+1)};sec.appendChild(b)});
     wrap.appendChild(sec);
   });
 }
@@ -2745,7 +2772,7 @@ function tbExpected(){
 // Guarding against wrong touches: only what is in the water can be recorded, and a time that is in is never
 // overwritten. No confirmation dialog after each batch: it would be answered a hundred times a session and
 // stop being read; refusing the wrong input on the spot, plus a multi-step undo, protects better.
-function tbTap(L,n,fromKey){
+function tbTap(L,n,fromKey,at){
   const s=tb.sess;if(!s||!cfg.lanes[L])return;
   const waves=tbWaves();
   // gap 0, keyboard: every key of a lane's row means "this lane's swimmer of the batch in the water",
@@ -2758,7 +2785,8 @@ function tbTap(L,n,fromKey){
   if(s.phase!=='swim'&&!late){toast(s.phase==='setdone'?'这一组已结束':'先点「出发」，再记到边');return}
   if(waves&&s.phase==='swim'&&n!==s.wave){toast('现在只记第 '+s.wave+' 批。'+(n<s.wave?'第 '+n+' 批已经过去了':'第 '+n+' 批还没出发'));return}
   if(arr[n-1]!=null){toast(slotName(L,n-1)+' 这一趟已经记了 '+fmtSplit(arr[n-1])+'，要改先点「撤销」');return}
-  const t=waves?(tbWaveT[n]==null?0:Math.round((now()-tbWaveT[n])/10)/100):Math.round((tbElapsed()/1000-(n-1)*cfg.gapSec)*100)/100;
+  const lag=at?Math.max(0,Math.min(2000,now()-at)):0;   // time counts from the finger going down
+  const t=waves?(tbWaveT[n]==null?0:Math.round((now()-lag-tbWaveT[n])/10)/100):Math.round(((tbElapsed()-lag)/1000-(n-1)*cfg.gapSec)*100)/100;
   if(t<=0){toast(waves?'第 '+n+' 批还没出发，先按「出发」':slotName(L,n-1)+' 还没出发');return}
   if(!tbData[key])tbData[key]=arr;
   tbLast.push({key,n});arr[n-1]=t;saveLib();
