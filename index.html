@@ -603,8 +603,8 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 @media (min-width:760px){.toast{bottom:auto;top:calc(64px + env(safe-area-inset-top,0px))}}
 /* keyboard hint on each arrival button (devices with a keyboard): one keyboard row per lane */
 .fitgrid .splane button{position:relative}
-.fitgrid kbd{display:none;position:absolute;top:2px;left:5px;font-family:var(--f-num);font-size:clamp(8px,calc(var(--bh)*.2),11px);font-weight:700;line-height:1;color:var(--boardmuted);opacity:.85}
-@media (hover:hover) and (pointer:fine){.fitgrid kbd{display:block}}
+.fitgrid kbd{display:none;font-family:var(--f-num);font-size:.82em;font-weight:800;line-height:1.25;color:var(--accent);background:var(--boardtint);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);border-radius:4px;padding:0 .38em;margin-right:.4em;vertical-align:baseline}
+@media (hover:hover) and (pointer:fine){.fitgrid kbd{display:inline-block}}
 /* slower than the bar (previous set's average) */
 .spbtns button.got.slow{background:color-mix(in srgb,var(--danger) 13%,transparent);border-color:color-mix(in srgb,var(--danger) 60%,transparent)}
 .spbtns button.got.slow span{color:var(--danger)}
@@ -627,14 +627,22 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 .chipsbox em{font-style:normal;color:var(--boardmuted);font-size:13px}
 .stu{touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab;padding:calc(var(--cs)*.36) calc(var(--cs)*.7);border-radius:calc(var(--cs)*.6);background:var(--surface);color:var(--fg);border:1px solid var(--line);font-weight:700;font-size:var(--cs);line-height:1.15;white-space:nowrap}
 .stu.placed{opacity:.38;background:transparent;border-style:dashed;color:var(--boardfg)}
-.stu.sel,.fitgrid.arranging .splane button.sel{outline:3px solid var(--accent);outline-offset:1px}
+.stu.sel,.fitgrid .splane button.sel{outline:3px solid var(--accent);outline-offset:-2px}
 .fitgrid.arranging .splane button{touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab;border-style:dashed;opacity:1}
 .fitgrid.arranging .splane button span,.fitgrid.arranging .splane button small{display:none!important}
 .fitgrid.arranging .splane button b{display:block!important;font-size:clamp(11px,calc(var(--bh)*.3),18px)}
 .fitgrid.arranging .splane button[data-empty] b{color:var(--boardmuted);font-weight:500}
 .fitgrid.arranging .splane button:not([data-empty]){border-style:solid;background:color-mix(in srgb,var(--accent) 12%,transparent)}
-.fitgrid.arranging .splane button.over{background:color-mix(in srgb,var(--accent) 30%,transparent);border-color:var(--accent)}
+.fitgrid .splane button.over{background:color-mix(in srgb,var(--accent) 30%,transparent);border-color:var(--accent)}
 .dragghost{position:fixed;z-index:80;pointer-events:none;transform:translate(-50%,-60%) scale(1.06);padding:8px 14px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:15px;box-shadow:0 10px 26px rgba(0,0,0,.35);white-space:nowrap}
+/* lane head-count steppers inside the tray; toolbox: the tray is always there and locks while the clock runs */
+.traylanes{display:inline-flex;flex-wrap:wrap;gap:5px}
+.traybar .tl{display:inline-flex;align-items:center;border:1px solid var(--boardline);border-radius:999px;overflow:hidden;flex:none}
+.traybar .tl button{border:0;border-radius:0;padding:5px 9px;font-size:13px;font-weight:800}
+.traybar .tl i{font-style:normal;padding:0 5px;color:var(--boardfg);font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tray.locked{opacity:.45;pointer-events:none}
+.fitgrid.dragok .splane button{touch-action:none;-webkit-user-select:none;user-select:none}
+.avgsub button[hidden]{display:none}
 /* toolbox setup: lanes, swimmers per lane and start gap are set right in the card */
 .tlanes{display:flex;flex-wrap:wrap;gap:6px}
 .tlanes .lus{grid-template-columns:auto 38px 34px 38px;padding:4px 6px 4px 10px;gap:4px}
@@ -860,8 +868,8 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
         <div class="tsteps" id="avgSteps2"></div>
         <div class="tsub">每条道几个人</div>
         <div class="tlanes" id="avgLaneN"></div>
-        <div class="tlane"><div><b id="avgLaneSum"></b><small>谁在哪条道、第几个出发：开始后在到边区点「排人」，把学员卡片拖到位置上（也可以先点学员、再点位置）</small></div><button type="button" id="avgRoster">学员名单</button></div>
-        <p class="tip">电脑键盘：每条道用一排键记到边——第 1 道 <code>1</code>–<code>0</code>，第 2 道 <code>Q</code>–<code>P</code>，第 3 道 <code>A</code>–<code>;</code>，第 4 道 <code>Z</code>–<code>/</code>；<code>空格</code> 出发 / 下一趟，<code>退格</code> 撤销。</p>
+        <div class="tlane"><div><b id="avgLaneSum"></b><small>谁在哪条道、第几个出发：开始后，名字卡片就在到边区上方，直接拖到位置上（也可以先点名字、再点位置）；每道人数在那里也能加减</small></div><button type="button" id="avgRoster">学员名单</button></div>
+        <p class="tip">电脑键盘：每条道用一排键记到边——第 1 道 <code>1</code>–<code>0</code>，第 2 道 <code>Q</code>–<code>P</code>，第 3 道 <code>A</code>–<code>;</code>，第 4 道 <code>Z</code>–<code>/</code>；<code>空格</code> 出发，<code>退格</code> 撤销。键名会显示在每个人的名字前面。</p>
         <button type="button" class="primary tgo" id="avgStart">开始</button>
       </div>
       <div id="avgLive" hidden>
@@ -875,7 +883,7 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
           <section class="arrive" id="avgBox" aria-label="到边">
             <div class="sphead">
               <div class="spt"><b>到边</b><small id="avgRep"></small></div>
-              <div class="spact"><button type="button" id="avgUndo">撤销</button><button type="button" id="avgArr">排人</button></div>
+              <div class="spact"><button type="button" id="avgUndo">撤销</button><button type="button" id="avgArr" aria-pressed="true" title="显示 / 收起名字卡片和人数调整">名字卡片</button></div>
             </div>
             <div class="tray" id="avgTray" hidden></div>
             <div class="splanes fitgrid" id="avgBtns"></div>
@@ -884,6 +892,8 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
             <button type="button" id="avgStop">停表</button>
             <button type="button" id="avgRedo">重来这一趟</button>
             <button type="button" id="avgBack">上一趟</button>
+            <button type="button" id="avgNext" title="这一趟不游，直接到下一趟">下一趟</button>
+            <button type="button" id="avgSkipW" title="这一批这一趟不游" hidden>跳过这一批</button>
             <button type="button" id="avgSound" aria-pressed="true">声音：开</button>
             <button type="button" id="avgEnd" class="warn">结束测试</button>
           </div>
@@ -1958,7 +1968,7 @@ function repContext(){
 const fmtSplit=t=>{const cs=Math.round(t*100),m=Math.floor(cs/6000),sec=Math.floor(cs%6000/100),h=String(cs%100).padStart(2,'0');return m?m+':'+String(sec).padStart(2,'0')+'″'+h:sec+'″'+h};
 const fmtDiff=d=>(d<=0?'快 ':'慢 ')+fmtSplit(Math.abs(d));
 function tapSplit(L,n){
-  if(arrOn==='spBtns')return;
+  if(arrLive('spBtns'))return;
   if(!cfg.stagger||!cfg.lanes[L]||n<1||n>cfg.lanes[L].n)return;
   const c=repContext();if(!c)return;
   const t=Math.round((c.ms/1000-(n-1)*cfg.gapSec)*100)/100;
@@ -1992,8 +2002,9 @@ function buildLaneGrid(wrap,onTap){
     laneNames(L).forEach((nm,k)=>{const b=document.createElement('button');b.type='button';b.dataset.l=L;b.dataset.n=k+1;
       b.innerHTML='<b></b><span></span><small></small>';b.querySelector('b').textContent=multi&&!l.lineup[k]?(k+1)+' 号':nm;
       if(!l.lineup[k])b.dataset.empty='1';
-      if(L<LANE_KEYS.length&&k<10){const kb=document.createElement('kbd');kb.textContent=LANE_KEY_TXT[L][k];kb.setAttribute('aria-hidden','true');b.appendChild(kb)}
-      b.onclick=()=>{if(arrOn===wrap.id)arrClickSlot(L,k);else onTap(L,k+1)};sec.appendChild(b)});
+      // the lane's shortcut key sits right in front of the name
+      if(L<LANE_KEYS.length&&k<10){const kb=document.createElement('kbd');kb.textContent=LANE_KEY_TXT[L][k];kb.setAttribute('aria-hidden','true');b.querySelector('b').prepend(kb)}
+      b.onclick=()=>{if(arrLive(wrap.id))arrClickSlot(wrap.id,L,k);else onTap(L,k+1)};sec.appendChild(b)});
     wrap.appendChild(sec);
   });
 }
@@ -2041,7 +2052,7 @@ function fitGrid(box,wrap){
   wrap.querySelectorAll('.splh').forEach((el,L)=>{el.style.gridRow='span '+Math.ceil(ns[L]/best.c)});
 }
 try{const ro=new ResizeObserver(()=>{fitSplits();fitGrid($('avgBox'),$('avgBtns'))});ro.observe($('spBtns'));ro.observe($('avgBtns'))}catch(e){}
-window.addEventListener('resize',()=>{if(arrOn)arrRefresh()});
+window.addEventListener('resize',()=>arrRefreshAll());
 // names: array of strings for one lane
 function splitTable(it,gi,data,names,L=0){
   const ks=Object.keys(data).filter(k=>+k.split('-')[0]===gi&&keyLane(k)===L);
@@ -2135,7 +2146,7 @@ function renderLineup(){
     card.appendChild(slots);ol.appendChild(card);
   });
 }
-function lineupChanged(){syncSwimmers();saveCfg();lastSpKey='';cfgSummary();renderSplits(true);const r=recOf();if(r&&!r.done){r.names=allLaneNames();saveLib()}tbLanesChanged();arrRefresh()}
+function lineupChanged(){syncSwimmers();saveCfg();lastSpKey='';cfgSummary();renderSplits(true);const r=recOf();if(r&&!r.done){r.names=allLaneNames();saveLib()}tbLanesChanged();arrRefreshAll()}
 $('luOn').onchange=()=>{cfg.stagger=$('luOn').checked;lineupChanged()};
 $('luGapM').onclick=()=>{cfg.gapSec=Math.max(0,cfg.gapSec-1);lineupChanged()};
 $('luGapP').onclick=()=>{cfg.gapSec=Math.min(60,cfg.gapSec+1);lineupChanged()};
@@ -2395,7 +2406,7 @@ document.addEventListener('keydown',e=>{
     else if(e.key==='ArrowRight'){audio();go(si+1)}
     else if(e.key==='ArrowLeft'){audio();go(si-1)}
     else if(e.key==='Backspace'&&cfg.stagger){e.preventDefault();$('spUndo').click()}
-    else if(lk&&cfg.stagger&&!arrOn){e.preventDefault();tapSplit(lk[0],lk[1])}
+    else if(lk&&cfg.stagger&&!arrLive('spBtns')){e.preventDefault();tapSplit(lk[0],lk[1])}
   }else if(location.hash==='#tools'){
     if(tb.tab==='lap'){
       if(e.code==='Space'){e.preventDefault();unfocus();lapToggle()}
@@ -2403,7 +2414,7 @@ document.addEventListener('keydown',e=>{
     }else if(tb.sess){
       if(e.code==='Space'){e.preventDefault();unfocus();tbMain()}
       else if(e.key==='Backspace'){e.preventDefault();tbUndo()}
-      else if(lk&&!arrOn){e.preventDefault();tbTap(lk[0],lk[1])}
+      else if(lk){e.preventDefault();tbTap(lk[0],lk[1])}
     }
   }
 });
@@ -2439,11 +2450,17 @@ $('ivsec').onchange=()=>{const v=Math.round(+$('ivsec').value);if(v>=1){iv.dur=v
 $('ivgo').onclick=()=>{audio();if(iv.run){iv.acc=ivE();iv.run=false}else{iv.seg=now();iv.run=true;holdWake();if(iv.acc===0)notify(()=>beep(1100,300),'开始')}ivTick()};
 $('ivreset').onclick=ivReset;
 
-/* ---------- Arrange swimmers: drag a student card onto an arrival slot ----------
+/* ---------- Arrange swimmers: drag a small name card onto an arrival slot ----------
    Works with mouse and touch (pointer events); tapping a card and then a slot does the same.
-   Slot = lane + start position, so the cards in the same position of each lane swim together. */
+   Slot = lane + start position, so the cards in the same position of each lane swim together.
+   Training page: an explicit mode ("排人"). Toolbox: the cards always sit above the slots and can be dragged
+   whenever the clock is not running, because the order may change from one send-off to the next. */
 const ARR={spBtns:{box:'splits',tray:'spTray',btn:'spArr',tool:false},avgBtns:{box:'avgBox',tray:'avgTray',btn:'avgArr',tool:true}};
 let arrOn=null,arrSel=null,arrDrag=null,arrSkip=0;
+// toolbox: the cards are out by default on tablets and computers; on phones they open as a one-screen "排人" view
+const trayWant=()=>tb.tray==null?innerWidth>=760:!!tb.tray;
+const arrShown=id=>id==='spBtns'?arrOn==='spBtns':!!(tb.sess&&trayWant()&&!$('avgTray').hidden);
+const arrLive=id=>arrShown(id)&&(id==='spBtns'||(tb.sess.phase!=='swim'&&!$('view-tools').hidden));
 const rawLineup=()=>cfg.lanes.map(l=>Array.from({length:l.n},(_,k)=>l.lineup[k]||''));
 const slotFill=(l,k)=>{for(let j=0;j<=k;j++)if(l.lineup[j]==null)l.lineup[j]=''};
 // put a student into a slot; if they already stood somewhere else, the two slots swap
@@ -2457,59 +2474,72 @@ function arrSwap(a,b){
   const x=A.lineup[a.k]||'',y=B.lineup[b.k]||'';slotFill(A,a.k);slotFill(B,b.k);A.lineup[a.k]=y;B.lineup[b.k]=x;arrSel=null;lineupChanged();
 }
 function arrClear(L,k){const l=cfg.lanes[L];if(!l)return;slotFill(l,k);l.lineup[k]='';arrSel=null;lineupChanged()}
-function arrClickSlot(L,k){if(now()-arrSkip>=80)arrSlotPick(L,k)}
-function arrChipPick(n){arrSel=arrSel&&arrSel.L==null&&arrSel.name===n?null:{name:n};arrRefresh()}
-function arrSlotPick(L,k){
+function arrClickSlot(id,L,k){if(now()-arrSkip>=80)arrSlotPick(id,L,k)}
+function arrChipPick(id,n){arrSel=arrSel&&arrSel.L==null&&arrSel.name===n?null:{name:n};arrRefresh(id)}
+function arrSlotPick(id,L,k){
   const nm=cfg.lanes[L].lineup[k]||'';
   if(arrSel&&arrSel.name!=null&&arrSel.L==null){arrPlace(arrSel.name,L,k);return}
-  if(arrSel&&arrSel.L!=null){if(arrSel.L===L&&arrSel.k===k){arrSel=null;arrRefresh()}else arrSwap(arrSel,{L,k});return}
-  if(nm){arrSel={L,k,name:nm};arrRefresh()}else toast('先点一个学员，再点这个位置；或者直接把学员卡片拖过来');
+  if(arrSel&&arrSel.L!=null){if(arrSel.L===L&&arrSel.k===k){arrSel=null;arrRefresh(id)}else arrSwap(arrSel,{L,k});return}
+  if(nm){arrSel={L,k,name:nm};arrRefresh(id)}else toast(ARR[id].tool&&!cfg.roster.length?'先点「出发」再记到边；要排人，先在「名单」里加学员':'先点一个名字，再点这个位置；或者直接把名字卡片拖过来');
 }
-function arrRefresh(){
-  if(!arrOn)return;
-  const a=ARR[arrOn],tray=$(a.tray),wrap=$(arrOn);
-  wrap.classList.add('arranging');
+function arrRefreshAll(){Object.keys(ARR).forEach(arrRefresh)}
+function arrRefresh(id){
+  if(!arrShown(id))return;
+  const a=ARR[id],tray=$(a.tray),wrap=$(id);
+  if(!a.tool)wrap.classList.add('arranging');
   const placed=new Set();cfg.lanes.forEach(l=>{for(let j=0;j<l.n;j++)if(l.lineup[j])placed.add(l.lineup[j])});
   tray.innerHTML='';
   const bar=document.createElement('div');bar.className='traybar';
-  const tip=document.createElement('span');tip.textContent='把学员拖到位置上；位置拖回这里 = 拿下来。变淡的是已经排上的。';bar.appendChild(tip);
-  const mk=(t,fn,cls)=>{const b=document.createElement('button');b.type='button';b.textContent=t;if(cls)b.className=cls;b.onclick=fn;return b};
+  const mk=(t,fn,cls,label)=>{const b=document.createElement('button');b.type='button';b.textContent=t;if(cls)b.className=cls;if(label)b.setAttribute('aria-label',label);b.onclick=fn;return b};
+  if(!a.tool){const tip=document.createElement('span');tip.textContent='把名字拖到位置上；位置拖回这里 = 拿下来。变淡的是已经排上的。';bar.appendChild(tip)}
+  // head count of every lane, and the number of lanes, right here
+  const lanesEl=document.createElement('span');lanesEl.className='traylanes';
+  cfg.lanes.forEach((l,L)=>{
+    const d=document.createElement('span');d.className='tl';
+    const m=mk('−',()=>{if(l.n>1){l.n--;lineupChanged()}},'','第 '+(L+1)+' 道减 1 人'),p=mk('+',()=>{if(l.n<10){l.n++;lineupChanged()}},'','第 '+(L+1)+' 道加 1 人');
+    m.disabled=l.n<=1;p.disabled=l.n>=10;
+    const t=document.createElement('i');t.textContent=(L+1)+'道 '+l.n+'人';
+    d.append(m,t,p);lanesEl.appendChild(d);
+  });
+  const ld=document.createElement('span');ld.className='tl';
+  const lm=mk('−道',()=>{if(cfg.lanes.length>1){cfg.lanes.pop();lineupChanged()}},'','减少一条泳道'),lp=mk('+道',()=>{if(cfg.lanes.length<8){cfg.lanes.push({n:cfg.lanes[cfg.lanes.length-1].n,lineup:[]});lineupChanged()}},'','增加一条泳道');
+  lm.disabled=cfg.lanes.length<=1;lp.disabled=cfg.lanes.length>=8;ld.append(lm,lp);lanesEl.appendChild(ld);
+  bar.appendChild(lanesEl);
   if(a.tool){
     const seg=document.createElement('span');seg.className='trayseg';seg.style.flex='none';
-    seg.append(mk('固定',()=>{tb.perSet=false;saveTb();arrRefresh()},tb.perSet?'':'on'),mk('每组重排',()=>{tb.perSet=true;saveTb();arrRefresh();toast('每一组结束后会自动打开排人，重新拖一遍再出发')},tb.perSet?'on':''));
-    seg.title='固定：各组都用这个排法。每组重排：每一组结束后自动打开排人。';
+    seg.append(mk('固定',()=>{tb.perSet=false;saveTb();arrRefresh(id)},tb.perSet?'':'on'),mk('每组重排',()=>{tb.perSet=true;saveTb();arrRefresh(id);toast('每一组结束后会提醒你重新排人，拖好再出发')},tb.perSet?'on':''));
+    seg.title='固定：各组都用这个排法。每组重排：每一组结束后提醒重新排人。';
     bar.appendChild(seg);
   }
   bar.append(mk('名单',()=>$('luRoster').onclick()),mk('按名单填',()=>$('luFill').onclick()),mk('清空',()=>{cfg.lanes.forEach(l=>{l.lineup=[]});arrSel=null;lineupChanged()}));
   tray.appendChild(bar);
   // every student keeps a card here (placed ones are dimmed), so the tray never changes size while dragging
   const box=document.createElement('div');box.className='chipsbox';
-  if(!cfg.roster.length){const e=document.createElement('em');e.textContent='还没有学员。点「名单」把名字加进来。';box.appendChild(e)}
+  if(!cfg.roster.length){const e=document.createElement('em');e.textContent='还没有学员。点「名单」把名字加进来，名字卡片就会出现在这里。';box.appendChild(e)}
   cfg.roster.forEach(n=>{const c=document.createElement('div');c.className='stu'+(placed.has(n)?' placed':'')+(arrSel&&arrSel.L==null&&arrSel.name===n?' sel':'');c.dataset.name=n;c.textContent=n;
-    c.onclick=()=>{if(now()-arrSkip>=80)arrChipPick(n)};box.appendChild(c)});
+    c.onclick=()=>{if(now()-arrSkip>=80)arrChipPick(id,n)};box.appendChild(c)});
   tray.appendChild(box);
   // the cards shrink with the size of the roster so that cards and slots share one screen
-  const H=$(a.box).clientHeight;
-  for(const share of [.42,.55]){
+  const tall=!a.tool||$(a.box).classList.contains('arr'),H=$(a.box).clientHeight,top=tall?15:13;
+  for(const share of tall?[.42,.55]:[.34,.5]){
     tray.style.maxHeight=Math.floor(H*share)+'px';
     let fit=false;
-    for(let cs=15;cs>=10;cs--){box.style.setProperty('--cs',cs+'px');if(tray.scrollHeight<=tray.clientHeight+1){fit=true;break}}
+    for(let cs=top;cs>=10;cs--){box.style.setProperty('--cs',cs+'px');if(tray.scrollHeight<=tray.clientHeight+1){fit=true;break}}
     if(fit)break;
   }
   tray.onclick=e=>{if(e.target.closest('button,.stu')||now()-arrSkip<80)return;if(arrSel&&arrSel.L!=null)arrClear(arrSel.L,arrSel.k)};
   wrap.querySelectorAll('button[data-l]').forEach(b=>b.classList.toggle('sel',!!arrSel&&arrSel.L===+b.dataset.l&&arrSel.k===+b.dataset.n-1));
   fitGrid($(a.box),wrap);
 }
-function arrOpen(id){
-  if(arrOn&&arrOn!==id)arrClose();
-  const box=$(ARR[id].box);
+// training page: explicit arrange mode
+function arrOpen(){
+  const id='spBtns',box=$(ARR[id].box);
   arrOn=id;arrSel=null;box.classList.add('arr');$(ARR[id].tray).hidden=false;$(ARR[id].btn).textContent='排好了';
-  // small screens: the card is one screen tall while arranging; put it exactly on screen
   try{
     if(innerWidth<1024)box.scrollIntoView({block:'start'});
     else{const r=box.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)box.scrollIntoView({block:'nearest'})}   // wide screens: only if part of the card is off screen
   }catch(e){}
-  arrRefresh();
+  arrRefresh(id);
 }
 function arrClose(){
   if(!arrOn)return;const id=arrOn,a=ARR[id];arrOn=null;arrSel=null;
@@ -2518,31 +2548,33 @@ function arrClose(){
   $(id).querySelectorAll('.sel,.over').forEach(x=>x.classList.remove('sel','over'));
   fitGrid($(a.box),$(id));
 }
-$('spArr').onclick=()=>arrOn==='spBtns'?arrClose():arrOpen('spBtns');
+$('spArr').onclick=()=>arrOn==='spBtns'?arrClose():arrOpen();
 // dragging
-const arrTarget=(x,y)=>{
-  const el=document.elementFromPoint(x,y);if(!el||!arrOn)return null;
-  const b=el.closest('button[data-l]');if(b&&$(arrOn).contains(b))return{el:b,L:+b.dataset.l,k:+b.dataset.n-1};
-  const t=el.closest('.tray');return t?{el:t,tray:true}:null;
+const arrTarget=(x,y,id)=>{
+  const el=document.elementFromPoint(x,y);if(!el)return null;
+  const b=el.closest('button[data-l]');if(b&&$(id).contains(b))return{el:b,L:+b.dataset.l,k:+b.dataset.n-1};
+  const t=el.closest('.tray');return t&&t.id===ARR[id].tray?{el:t,tray:true}:null;
 };
 document.addEventListener('pointerdown',e=>{
-  if(!arrOn||e.button>0)return;
-  const t=e.target.closest('.stu,button[data-l]');if(!t||!$(ARR[arrOn].box).contains(t))return;
+  if(e.button>0)return;
+  const t=e.target.closest('.stu,button[data-l]');if(!t)return;
+  const id=Object.keys(ARR).find(i=>arrLive(i)&&$(ARR[i].box).contains(t));if(!id)return;
   const src=t.classList.contains('stu')?{name:t.dataset.name}:{L:+t.dataset.l,k:+t.dataset.n-1,name:cfg.lanes[+t.dataset.l].lineup[+t.dataset.n-1]||''};
-  arrDrag={src,x:e.clientX,y:e.clientY,pid:e.pointerId,ghost:null,over:null};
+  arrDrag={id,src,x:e.clientX,y:e.clientY,pid:e.pointerId,ghost:null,over:null};
 });
 document.addEventListener('pointermove',e=>{
   const d=arrDrag;if(!d||e.pointerId!==d.pid)return;
   if(!d.ghost){
     if(!d.src.name||Math.hypot(e.clientX-d.x,e.clientY-d.y)<8)return;
     d.ghost=document.createElement('div');d.ghost.className='dragghost';d.ghost.textContent=d.src.name;document.body.appendChild(d.ghost);
+    try{getSelection().removeAllRanges()}catch(err){}
   }
   e.preventDefault();
   d.ghost.style.left=e.clientX+'px';d.ghost.style.top=e.clientY+'px';
   // dragging near the top or bottom edge scrolls the page, so a slot that is off screen can still be reached
   const bottom=innerHeight-(innerWidth<760?70:0);
   if(e.clientY>bottom-56)scrollBy(0,16);else if(e.clientY<56)scrollBy(0,-16);
-  const tg=arrTarget(e.clientX,e.clientY),el=tg&&tg.el;
+  const tg=arrTarget(e.clientX,e.clientY,d.id),el=tg&&tg.el;
   if(d.over!==el){if(d.over)d.over.classList.remove('over');if(el)el.classList.add('over');d.over=el||null}
 },{passive:false});
 const arrDrop=e=>{
@@ -2551,16 +2583,18 @@ const arrDrop=e=>{
   arrSkip=now();                          // the click that follows this pointerup is ours, not a second action
   if(e.type==='pointercancel'){if(d.ghost)d.ghost.remove();return}
   if(!d.ghost){                           // no movement: a tap. Handled here, not left to the click event, which some touch browsers drop
-    if(Math.hypot(e.clientX-d.x,e.clientY-d.y)<8){if(d.src.L!=null)arrSlotPick(d.src.L,d.src.k);else arrChipPick(d.src.name)}
+    if(Math.hypot(e.clientX-d.x,e.clientY-d.y)<8){if(d.src.L!=null)arrSlotPick(d.id,d.src.L,d.src.k);else arrChipPick(d.id,d.src.name)}
     return;
   }
   d.ghost.remove();
-  const tg=arrTarget(e.clientX,e.clientY);if(!tg)return;
+  const tg=arrTarget(e.clientX,e.clientY,d.id);if(!tg)return;
   if(tg.tray){if(d.src.L!=null)arrClear(d.src.L,d.src.k)}
   else if(d.src.L!=null)arrSwap(d.src,tg);
   else arrPlace(d.src.name,tg.L,tg.k);
 };
 document.addEventListener('pointerup',arrDrop);document.addEventListener('pointercancel',arrDrop);
+// the browser's own drag-and-drop (it starts when some text on the page happens to be selected) would cancel ours
+document.addEventListener('dragstart',e=>{if(arrDrag)e.preventDefault()});
 
 /* ---------- Toolbox ----------
    1) Staggered starts with a per-set average: swimmers in a lane leave one by one (lanes together), every arrival is
@@ -2572,7 +2606,7 @@ const TBKEY='swim-tools-v1';
 const tb=Object.assign({sets:3,reps:6,dist:25,tab:'avg',sess:null,lap:{acc:0,wall:0,run:false,laps:[]}},(()=>{try{return JSON.parse(localStorage.getItem(TBKEY))||{}}catch(e){return{}}})());
 if(!tb.lap||!Array.isArray(tb.lap.laps))tb.lap={acc:0,wall:0,run:false,laps:[]};
 function saveTb(){try{localStorage.setItem(TBKEY,JSON.stringify(tb))}catch(e){}}
-let tbT0=0,tbStag=1,tbLast=null,tbData={},tbGridKey='',tbWaveT=[];
+let tbT0=0,tbStag=1,tbLast=null,tbData={},tbGridKey='',tbWaveT=[],tbFrozen=0,tbAuto=null;
 // start gap 0 = no automatic stagger: the coach sends off one batch (the same start position in every lane) at a time
 const tbWaves=()=>cfg.gapSec===0;
 const tbMaxN=()=>Math.max(...cfg.lanes.map(l=>l.n));
@@ -2605,74 +2639,126 @@ function tbStartSession(){
   const r={id:uid(),at:Date.now(),name:dstr(Date.now(),true)+' 分组平均 '+tb.sets+'×'+tb.reps+'×'+tb.dist+' 米',plan:Array.from({length:tb.sets},item),done:false,splits:{},gap:cfg.gapSec,names:allLaneNames()};
   lib.records.unshift(r);lib.records=lib.records.slice(0,300);saveLib();
   tbData=r.splits;tbLast=null;
-  tb.sess={rec:r.id,set:0,rep:1,phase:'idle',sets:tb.sets,reps:tb.reps,dist:tb.dist,lineups:{},wave:1};
+  tb.sess={rec:r.id,set:0,rep:1,phase:'idle',sets:tb.sets,reps:tb.reps,dist:tb.dist,lineups:{},wave:1,begun:false};tbWaveT=[];tbFrozen=0;tbAuto=null;
+  $('avgTray').innerHTML='';   // rebuilt for this test's roster and lanes
   saveTb();tbRender(true);
+  window.scrollTo(0,0);   // the setup card is taller than the timer: start with the whole timer on screen
 }
-function tbSend(){
+// Position in the test. s.begun = the current rep has had its first send-off.
+// Start gap 0 (batches): s.wave = the batch in the water (phase swim) or the next batch to send (phase idle);
+// s.wave > number of batches means every batch of this rep has gone.
+function tbPoint(set,rep){const s=tb.sess;s.set=set;s.rep=rep;s.wave=1;s.begun=false;s.phase='idle';tbWaveT=[];tbFrozen=0;tbAuto=null;tbLast=null}
+// first send-off of the current rep: whatever was recorded for it before is cleared, and who stands where is remembered
+function tbBeginRep(){
   const s=tb.sess,r=tbRec();
-  if(arrOn==='avgBtns')arrClose();
-  tbRepKeys(s.set,s.rep).forEach(k=>delete tbData[k]);
-  tbT0=now();tbStag=1;tbLast=null;s.phase='swim';s.wave=1;tbWaveT=[];tbWaveT[1]=tbT0;
+  tbRepKeys(s.set,s.rep).forEach(k=>delete tbData[k]);tbWaveT=[];s.begun=true;
   s.lineups[s.set]=rawLineup();
   if(r){r.gap=cfg.gapSec;r.names=allLaneNames();(r.setNames||(r.setNames={}))[s.set]=allLaneNames();saveLib()}
-  notify(()=>beep(1320,600),'1 号出发');holdWake();saveTb();tbRender(true);
+  tbGo();
 }
-function tbNextWave(){
-  const s=tb.sess;s.wave++;tbT0=now();tbWaveT[s.wave]=tbT0;tbLast=null;
-  notify(()=>beep(1320,600),s.wave+' 号出发');saveTb();tbRender(true);
+// send off: the whole lane line-up at the set gap, or (gap 0) the batch s.wave
+function tbGo(){
+  const s=tb.sess;tbT0=now();tbStag=1;tbLast=null;tbAuto=null;tbFrozen=0;s.phase='swim';arrSel=null;
+  if(tbWaves())tbWaveT[s.wave]=tbT0;
+  notify(()=>beep(1320,600),(tbWaves()?Math.min(s.wave,10):1)+' 号出发');holdWake();saveTb();tbRender(true);
 }
 function tbSetDone(){
-  const s=tb.sess;s.phase='setdone';releaseWake();
-  if(tb.perSet&&s.set<s.sets-1)setTimeout(()=>{if(tb.sess&&tb.sess.phase==='setdone'){arrOpen('avgBtns');toast('下一组可以重新排人：拖好之后点「排好了」，再出发')}},0);
+  const s=tb.sess;s.phase='setdone';tbFrozen=0;tbAuto=null;releaseWake();
+  if(tb.perSet&&s.set<s.sets-1){tb.tray=true;$('avgTray').innerHTML='';setTimeout(()=>{if(tb.sess&&tb.sess.phase==='setdone')toast('下一组可以重新排人：直接拖名字卡片，排好再出发')},0)}
   if(s.set>=s.sets-1){const r=tbRec();if(r&&!r.done){r.done=true;r.end=Date.now();saveLib()}notify(()=>beep(990,200,3,100),'训练完成')}
   else notify(()=>beep(900,140,2,80),'');
   saveTb();tbRender(true);
 }
+// to the next rep (send = also send it off) or, after the last rep, close the set
+function tbNextRep(send){
+  const s=tb.sess;
+  if(s.rep>=s.reps){tbSetDone();return}
+  tbPoint(s.set,s.rep+1);
+  if(send)tbBeginRep();else{releaseWake();saveTb();tbRender(true)}
+}
 // the big button always moves forward to the next thing that has not been timed
 function tbMain(){
   const s=tb.sess;if(!s)return;audio();
-  if(s.phase==='setdone'){if(s.set<s.sets-1){s.set++;s.rep=1;tbSend()}else tbFinish();return}
+  if(s.phase==='setdone'){if(s.set<s.sets-1){tbPoint(s.set+1,1);tbBeginRep()}else tbFinish();return}
   if(s.phase==='swim'&&now()-tbT0<3000){toast('刚出发，3 秒内不会再出发（防止连按）');return}
-  if(s.phase==='swim'&&tbWaves()&&s.wave<tbMaxN()){tbNextWave();return}
-  if(s.phase==='swim'||tbHas(s.set,s.rep)){if(s.rep<s.reps){s.rep++;tbSend()}else tbSetDone()}
-  else tbSend();
+  const waves=tbWaves(),mx=tbMaxN();
+  if(s.phase==='swim'){if(waves&&s.wave<mx){s.wave++;tbGo();return}}
+  else if(waves?s.wave<=mx:!s.begun){if(!s.begun)tbBeginRep();else tbGo();return}
+  tbNextRep(true);
 }
-function tbStop(){const s=tb.sess;if(!s||s.phase!=='swim')return;s.phase='idle';releaseWake();saveTb();tbRender(true);toast('已停表，这一趟的成绩保留')}
+// the clock stops; in batches the pointer moves to the next batch
+function tbHalt(auto){
+  const s=tb.sess,fr=tbElapsed();
+  tbAuto=auto?{set:s.set,rep:s.rep,wave:s.wave}:null;
+  s.phase='idle';if(tbWaves())s.wave++;tbFrozen=fr;releaseWake();saveTb();
+}
+function tbStop(){const s=tb.sess;if(!s||s.phase!=='swim')return;tbHalt(false);tbRender(true);toast('已停表，成绩保留')}
 function tbRedo(){
   const s=tb.sess;if(!s||s.phase==='setdone')return;
-  tbRepKeys(s.set,s.rep).forEach(k=>delete tbData[k]);tbLast=null;s.phase='idle';releaseWake();saveLib();saveTb();tbRender(true);
+  tbRepKeys(s.set,s.rep).forEach(k=>delete tbData[k]);tbPoint(s.set,s.rep);releaseWake();saveLib();saveTb();tbRender(true);
   toast('第 '+s.rep+' 趟已清空，按「出发」重新计');
 }
 function tbBack(){
   const s=tb.sess;if(!s||s.phase==='swim')return;
-  if(s.phase==='setdone')s.phase='idle';
-  else if(s.rep>1)s.rep--;
-  else if(s.set>0){s.set--;s.rep=s.reps}
+  let set=s.set,rep=s.rep;
+  if(s.phase==='setdone'){}
+  else if(rep>1)rep--;
+  else if(set>0){set--;rep=s.reps}
   else return;
-  tbLast=null;saveTb();
+  tbPoint(set,rep);s.begun=true;s.wave=tbMaxN()+1;     // an earlier rep is shown as finished; "重来这一趟" re-times it
+  saveTb();
   if(s.lineups[s.set])applyLineup(s.lineups[s.set]);   // show who actually swam that set
   tbRender(true);
+}
+// this rep is not swum (a rest round): straight to the next rep without timing
+function tbSkipRep(){
+  const s=tb.sess;if(!s||s.phase==='setdone')return;
+  if(s.phase==='swim'&&now()-tbT0<3000){toast('刚出发，3 秒内不会跳走（防止误按）');return}
+  const was=s.rep,last=s.rep>=s.reps;
+  tbNextRep(false);
+  toast(last?'第 '+was+' 趟没游，这一组结束':'已到第 '+(was+1)+' 趟。第 '+was+' 趟没记成绩的不算进平均');
+}
+// gap 0: this batch sits this rep out
+function tbSkipWave(){
+  const s=tb.sess;if(!s||s.phase!=='idle'||!tbWaves()||s.wave>tbMaxN())return;
+  s.wave++;saveTb();tbRender(true);toast('第 '+(s.wave-1)+' 批这一趟不游');
 }
 function tbFinish(){
   const r=tbRec();if(r&&!r.end){r.end=Date.now();saveLib()}
   tb.sess=null;tbLast=null;releaseWake();saveTb();tbRender(true);
   toast('成绩已保存到「计划库 → 训练记录」');
 }
+// the swimmers who are expected in right now: the batch in the water (gap 0) or everyone.
+// Once names are being used, a slot without a name is nobody.
+function tbExpected(){
+  const s=tb.sess,waves=tbWaves(),ln=rawLineup(),named=ln.some(a=>a.some(Boolean)),out=[];
+  cfg.lanes.forEach((l,L)=>{for(let k=0;k<l.n;k++){if(waves&&k!==s.wave-1)continue;if(named&&!ln[L][k])continue;out.push([L,k])}});
+  return out;
+}
 function tbTap(L,n){
   const s=tb.sess;if(!s||!cfg.lanes[L]||n<1||n>cfg.lanes[L].n)return;
-  if(arrOn==='avgBtns')return;
-  if(s.phase!=='swim'){toast(s.phase==='setdone'?'这一组已结束':'先点「出发」，再记到边');return}
-  const t=tbWaves()?(tbWaveT[n]==null?0:Math.round((now()-tbWaveT[n])/10)/100):Math.round((tbElapsed()/1000-(n-1)*cfg.gapSec)*100)/100;
-  if(t<=0){toast(tbWaves()?'第 '+n+' 批还没出发，先按「出发」':slotName(L,n-1)+' 还没出发');return}
-  const key=spKey(s.set,s.rep,L),arr=tbData[key]||(tbData[key]=[]);
+  const waves=tbWaves(),key=spKey(s.set,s.rep,L),arr=tbData[key]||[];
+  // clock already stopped: a late swimmer of a batch that did leave can still be taken
+  const late=waves&&s.phase==='idle'&&s.begun&&tbWaveT[n]!=null&&arr[n-1]==null;
+  if(s.phase!=='swim'&&!late){toast(s.phase==='setdone'?'这一组已结束':'先点「出发」，再记到边');return}
+  const t=waves?(tbWaveT[n]==null?0:Math.round((now()-tbWaveT[n])/10)/100):Math.round((tbElapsed()/1000-(n-1)*cfg.gapSec)*100)/100;
+  if(t<=0){toast(waves?'第 '+n+' 批还没出发，先按「出发」':slotName(L,n-1)+' 还没出发');return}
+  if(!tbData[key])tbData[key]=arr;
   tbLast={key,n,prev:arr[n-1]};arr[n-1]=t;saveLib();
   try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}
+  // everyone of this send-off is in: stop the clock by itself
+  if(s.phase==='swim'){
+    const ex=tbExpected();
+    if(ex.length&&ex.every(([l,k])=>(tbData[spKey(s.set,s.rep,l)]||[])[k]!=null)){tbHalt(true);notify(()=>beep(900,140,2,80),'')}
+  }
   tbRender(true);
 }
 function tbUndo(){
-  if(!tbLast)return;const a=tbData[tbLast.key];
+  if(!tbLast)return;const a=tbData[tbLast.key],s=tb.sess;
   if(a){if(tbLast.prev==null)delete a[tbLast.n-1];else a[tbLast.n-1]=tbLast.prev}
-  tbLast=null;saveLib();tbRender(true);toast('已撤销');
+  // undoing the tap that stopped the clock starts it again, still counting from the same send-off
+  if(tbAuto&&s.phase==='idle'&&s.set===tbAuto.set&&s.rep===tbAuto.rep){s.phase='swim';s.wave=tbAuto.wave;tbFrozen=0;holdWake()}
+  tbAuto=null;tbLast=null;saveLib();saveTb();tbRender(true);toast('已撤销');
 }
 function tbLanesChanged(){tbGridKey='';if(!$('view-tools').hidden)tbRender(true)}
 function tbTick(){
@@ -2689,30 +2775,47 @@ function tbRender(force){
   $('avgSetup').hidden=!!s;$('avgLive').hidden=!s;
   if(!s){if(force)tbSetupSync();return}
   const e=tbElapsed(),swim=s.phase==='swim',setdone=s.phase==='setdone',has=tbHas(s.set,s.rep),mx=tbMaxN(),waves=tbWaves(),live=rawLineup();
-  $('avgClock').textContent=fmtTenth(e);
+  const repDone=!swim&&!setdone&&(waves?s.wave>mx:!!s.begun);     // nothing left to send in this rep
+  $('avgClock').textContent=fmtTenth(swim?e:tbFrozen);
   if(swim){
-    let total=0,arrived=0;
-    cfg.lanes.forEach((l,L)=>{const a=tbData[spKey(s.set,s.rep,L)]||[];for(let k=0;k<l.n;k++){if(waves&&k!==s.wave-1)continue;total++;if(a[k]!=null)arrived++}});
-    if(waves)$('avgMsg').textContent='第 '+s.wave+' 批 / 共 '+mx+' 批 · 这一批已到边 '+arrived+' / '+total+(arrived>=total?(s.wave<mx?' · 可以放下一批':' · 这一趟游完了'):'');
+    const ex=tbExpected(),total=ex.length,arrived=ex.filter(([l,k])=>(tbData[spKey(s.set,s.rep,l)]||[])[k]!=null).length;
+    if(waves)$('avgMsg').textContent='第 '+s.wave+' 批 / 共 '+mx+' 批 · 这一批已到边 '+arrived+' / '+total+' · 都到边后自动停表';
     else{const gone=Math.min(mx,Math.floor(e/1000/cfg.gapSec)+1);
-      $('avgMsg').textContent='已到边 '+arrived+' / '+total+(gone<mx?' · '+(gone+1)+' 号 '+Math.ceil(cfg.gapSec-(e/1000)%cfg.gapSec)+' 秒后出发':arrived>=total?' · 全部到边，可以出发下一趟':' · 全部已出发')}
+      $('avgMsg').textContent='已到边 '+arrived+' / '+total+(gone<mx?' · '+(gone+1)+' 号 '+Math.ceil(cfg.gapSec-(e/1000)%cfg.gapSec)+' 秒后出发':' · 都到边后自动停表')}
   }
   const sk=JSON.stringify(allLaneNames());
   if(force||sk!==tbGridKey){
-    if(sk!==tbGridKey){tbGridKey=sk;buildLaneGrid($('avgBtns'),tbTap);if(arrOn==='avgBtns')arrRefresh()}
+    if(sk!==tbGridKey){tbGridKey=sk;buildLaneGrid($('avgBtns'),tbTap)}
+    // name cards + head counts sit above the slots; they lock while the clock runs
+    // (on phones they fold away while the clock runs, so the arrival buttons get the room)
+    const phone=innerWidth<760,want=trayWant(),shown=want&&!(swim&&phone),tray=$('avgTray'),was=tray.hidden,box=$('avgBox');
+    tray.hidden=!shown;tray.classList.toggle('locked',swim);
+    $('avgArr').setAttribute('aria-pressed',want);$('avgArr').textContent=phone?(want?'排好了':'排人'):'名字卡片';
+    $('avgBtns').classList.toggle('dragok',shown&&!swim);
+    // phone: while the cards are out the card is one screen tall, so cards and slots are all visible together
+    const tall=shown&&phone,wasTall=box.classList.contains('arr');box.classList.toggle('arr',tall);
+    if(tall&&!wasTall)try{box.scrollIntoView({block:'start'})}catch(err){}
+    if(!tall&&wasTall)window.scrollTo(0,0);
+    if(shown&&(was||!tray.firstChild||tall!==wasTall))arrRefresh('avgBtns');
+    if(swim&&arrSel){arrSel=null;$('avgBtns').querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'))}
     fitGrid($('avgBox'),$('avgBtns'));
     $('avgSide').className='avgside'+(swim?' t-swim':setdone?' t-set':'');
     $('avgPos').textContent=setdone?'第 '+(s.set+1)+' 组完成':'第 '+(s.set+1)+' 组 · 第 '+s.rep+' 趟';
     $('avgPos2').textContent='共 '+s.sets+' 组 × '+s.reps+' 趟 · 每趟 '+s.dist+' 米';
-    $('avgRep').textContent=setdone?(arrOn==='avgBtns'?'排下一组的人':'第 '+(s.set+1)+' 组每人平均'):'第 '+(s.set+1)+' 组 · 第 '+s.rep+' 趟'+(waves&&swim?' · 第 '+s.wave+' 批':'');
+    $('avgRep').textContent=setdone?'第 '+(s.set+1)+' 组每人平均':'第 '+(s.set+1)+' 组 · 第 '+s.rep+' 趟'+(waves&&swim?' · 第 '+s.wave+' 批':'');
     const last=s.set>=s.sets-1,w1=waves?' 第 1 批':'';
+    const nextTxt=s.rep<s.reps?'出发 · 第 '+(s.rep+1)+' 趟'+w1:last?'全部结束 · 算平均':'本组结束 · 算平均';
     $('avgMain').textContent=setdone?(last?'保存并结束':'第 '+(s.set+2)+' 组出发 · 第 1 趟'+w1)
-      :swim&&waves&&s.wave<mx?'出发 · 第 '+(s.wave+1)+' 批'
-      :(swim||has)?(s.rep<s.reps?'出发 · 第 '+(s.rep+1)+' 趟'+w1:last?'全部结束 · 算平均':'本组结束 · 算平均'):'出发 · 第 '+s.rep+' 趟'+w1;
-    if(!swim)$('avgMsg').textContent=setdone?(last?'全部游完了。下面是每个人各组的平均。':'这一组的平均算好了，下一组每一趟都和它比，慢了标红。'):has?'这一趟已停表，成绩保留。'
-      :waves?'间隔 0 秒：一批一批出发。每条道的 1 号是第 1 批，这一批到边后再按「出发」放第 2 批。':'1 号随哨声出发，之后每隔 '+cfg.gapSec+' 秒一人；各道同时出发。';
-    $('avgStop').disabled=!swim;$('avgRedo').disabled=setdone||!(swim||has);$('avgBack').disabled=swim||(!setdone&&s.set===0&&s.rep===1);
-    $('avgUndo').disabled=!tbLast;$('avgArr').disabled=swim;
+      :swim?(waves&&s.wave<mx?'出发 · 第 '+(s.wave+1)+' 批':nextTxt)
+      :repDone?nextTxt
+      :waves?(s.begun?'出发 · 第 '+s.wave+' 批':'出发 · 第 '+s.rep+' 趟 第 '+s.wave+' 批'):'出发 · 第 '+s.rep+' 趟';
+    if(!swim)$('avgMsg').textContent=setdone?(last?'全部游完了。下面是每个人各组的平均。':'这一组的平均算好了，下一组每一趟都和它比，慢了标红。')
+      :repDone?(waves?'这一趟每一批都游完了，已停表。':'这一趟已停表，成绩保留。')
+      :waves&&s.begun?'第 '+(s.wave-1)+' 批已停表。按「出发」放第 '+s.wave+' 批。'
+      :waves?'间隔 0 秒：一批一批出发。每条道的 1 号是第 1 批；这一批都到边会自动停表，再按「出发」放下一批。':'1 号随哨声出发，之后每隔 '+cfg.gapSec+' 秒一人；各道同时出发，都到边后自动停表。';
+    $('avgStop').disabled=!swim;$('avgRedo').disabled=setdone||!(swim||s.begun||has);$('avgBack').disabled=swim||(!setdone&&s.set===0&&s.rep===1);
+    $('avgNext').disabled=setdone;$('avgSkipW').hidden=!waves;$('avgSkipW').disabled=swim||setdone||s.wave>mx;
+    $('avgUndo').disabled=!tbLast;
     tbResults();
   }
   $('avgBtns').querySelectorAll('button').forEach(b=>{
@@ -2734,7 +2837,7 @@ function tbRender(force){
       const slow=t!=null&&bar!=null&&t>bar;
       b.classList.toggle('slow',slow);sm.className=t!=null&&bar!=null?(slow?'slow':'fast'):'';
     }
-    b.classList.toggle('got',t!=null);b.classList.toggle('wait',wait);b.classList.toggle('cur',swim&&waves&&n===s.wave&&t==null);
+    b.classList.toggle('got',t!=null);b.classList.toggle('wait',wait);b.classList.toggle('cur',!setdone&&waves&&n===s.wave&&t==null);
     if(sp.textContent!==main)sp.textContent=main;sp.className=t!=null?'':'ph';
     if(sm.textContent!==sub)sm.textContent=sub;
   });
@@ -2810,7 +2913,8 @@ function tbSetupSync(){
     cfg.lanes.length=v;lineupChanged()},1,8);
   step(h2,'出发间隔','0 = 一批一批，按一次出发一批',()=>cfg.gapSec,v=>{cfg.gapSec=v;lineupChanged()},0,60,v=>v+' 秒');
   $('avgRoster').onclick=()=>$('luRoster').onclick();
-  $('avgArr').onclick=()=>arrOn==='avgBtns'?arrClose():arrOpen('avgBtns');
+  $('avgArr').onclick=()=>{tb.tray=!trayWant();saveTb();arrSel=null;tbRender(true)};
+  $('avgNext').onclick=tbSkipRep;$('avgSkipW').onclick=tbSkipWave;
   $('avgStart').onclick=tbStartSession;
   $('avgMain').onclick=tbMain;$('avgUndo').onclick=tbUndo;$('avgStop').onclick=tbStop;$('avgRedo').onclick=tbRedo;$('avgBack').onclick=tbBack;
   $('avgSound').onclick=toggleSound;
@@ -2823,7 +2927,11 @@ function tbSetupSync(){
   };
   document.querySelectorAll('input[name=tooltab]').forEach(r=>{r.checked=r.value===tb.tab;r.onchange=()=>{tb.tab=r.value;saveTb();tbRender(true);lapRender(true)}});
   // resume an unfinished test after a reload: the clock is not kept, the recorded times are
-  if(tb.sess){const r=tbRec();if(r){tbData=r.splits||(r.splits={});if(!tb.sess.lineups)tb.sess.lineups={};if(tb.sess.phase==='swim')tb.sess.phase='idle'}else tb.sess=null;saveTb()}
+  if(tb.sess){const r=tbRec();if(r){tbData=r.splits||(r.splits={});const q=tb.sess;if(!q.lineups)q.lineups={};
+      // the clock is not kept across a reload: a rep that was under way counts as stopped, with its times kept
+      if(q.begun==null)q.begun=tbHas(q.set,q.rep);
+      if(q.phase==='swim'){q.phase='idle';if(tbWaves())q.wave=(q.wave||1)+1}
+      if(q.wave==null)q.wave=q.begun?99:1}else tb.sess=null;saveTb()}
 })();
 
 /* Split (lap) stopwatch: keeps running across a reload (wall-clock based) */
