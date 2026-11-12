@@ -609,6 +609,8 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 .spbtns button.got.slow{background:color-mix(in srgb,var(--danger) 13%,transparent);border-color:color-mix(in srgb,var(--danger) 60%,transparent)}
 .spbtns button.got.slow span{color:var(--danger)}
 
+/* a slot that will not take a touch right now (not in the water, or already recorded) */
+.spbtns button.lock{cursor:not-allowed}
 /* current batch when swimmers are sent off one batch at a time (start gap 0) */
 .spbtns button.cur{border-color:var(--ph);box-shadow:inset 0 0 0 1px var(--ph)}
 /* Arrange mode: student cards are dragged (or tapped, then a slot tapped) onto the arrival slots */
@@ -869,7 +871,7 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
         <div class="tsub">每条道几个人</div>
         <div class="tlanes" id="avgLaneN"></div>
         <div class="tlane"><div><b id="avgLaneSum"></b><small>谁在哪条道、第几个出发：开始后，名字卡片就在到边区上方，直接拖到位置上（也可以先点名字、再点位置）；每道人数在那里也能加减</small></div><button type="button" id="avgRoster">学员名单</button></div>
-        <p class="tip">电脑键盘：每条道用一排键记到边——第 1 道 <code>1</code>–<code>0</code>，第 2 道 <code>Q</code>–<code>P</code>，第 3 道 <code>A</code>–<code>;</code>，第 4 道 <code>Z</code>–<code>/</code>；<code>空格</code> 出发，<code>退格</code> 撤销。键名会显示在每个人的名字前面。</p>
+        <p class="tip">电脑键盘：每条道用一排键记到边——第 1 道 <code>1</code>–<code>0</code>，第 2 道 <code>Q</code>–<code>P</code>，第 3 道 <code>A</code>–<code>;</code>，第 4 道 <code>Z</code>–<code>/</code>；<code>空格</code> 出发，<code>退格</code> 撤销。键名会显示在每个人的名字前面。间隔 0 秒时，一条道的整排键都记正在游的这一批，按到旁边的键也不会记错人。</p>
         <button type="button" class="primary tgo" id="avgStart">开始</button>
       </div>
       <div id="avgLive" hidden>
@@ -1800,7 +1802,7 @@ const recOf=()=>curRec?lib.records.find(x=>x.id===curRec)||null:null;
 const hasSplits=d=>!!d&&Object.keys(d).some(k=>Array.isArray(d[k])&&d[k].some(t=>t!=null));
 function startRecord(){
   if(curRec||!plan.length)return;
-  spLast=null;
+  spLast=[];
   const r={id:uid(),at:Date.now(),name:dstr(Date.now(),true)+' 训练',plan:clone(plan),done:false,splits:{},gap:cfg.gapSec,names:allLaneNames()};
   splitsData=r.splits;
   lib.records.unshift(r);lib.records=lib.records.slice(0,300);curRec=r.id;saveLib();
@@ -1949,7 +1951,7 @@ $('bkFile').onchange=()=>{
 };
 
 /* ---------- Arrival (到边) timing for staggered starts, several lanes starting together ---------- */
-let lastSwimMs=0,splitsData={},spLast=null,lastSpKey='';
+let lastSwimMs=0,splitsData={},spLast=[],lastSpKey='';   // spLast: taps that can still be undone, newest last
 const lanes=()=>cfg.lanes;
 const syncSwimmers=()=>{cfg.swimmers=Math.max(1,...cfg.lanes.map(l=>l.n))};
 function slotName(L,k){const l=cfg.lanes[L];return (l&&l.lineup[k])||(cfg.lanes.length>1?(L+1)+' 道 '+(k+1)+' 号':(k+1)+' 号')}
@@ -1974,7 +1976,9 @@ function tapSplit(L,n){
   const t=Math.round((c.ms/1000-(n-1)*cfg.gapSec)*100)/100;
   if(t<=0){toast(slotName(L,n-1)+' 还没出发');return}
   const key=spKey(c.i,c.rep,L);const arr=splitsData[key]||(splitsData[key]=[]);
-  spLast={key,n,prev:arr[n-1]};arr[n-1]=t;
+  // a time that is in is never replaced by another tap (a second touch, a neighbouring key): undo first
+  if(arr[n-1]!=null){toast(slotName(L,n-1)+' 这一趟已经记了 '+fmtSplit(arr[n-1])+'，要改先点「撤销」');return}
+  spLast.push({key,n});if(spLast.length>40)spLast.shift();arr[n-1]=t;
   // remember who was where for this group, so dragging people around later does not relabel it
   const rr=recOf();if(rr)(rr.setNames||(rr.setNames={}))[c.i]=allLaneNames();
   if(curRec)saveLib();
@@ -2025,7 +2029,7 @@ function renderSplits(force){
     const sm=b.querySelector('small');const df=t!=null&&it&&it.target>0?t-it.target:null;sm.textContent=df!=null?'比目标'+fmtDiff(df):'';sm.className=df==null?'':df>0?'slow':'fast';
     b.setAttribute('aria-label',slotName(L,n-1)+(t!=null?' 成绩 '+fmtSplit(t):' 到边'));
   });
-  $('spUndo').disabled=!spLast;
+  $('spUndo').disabled=!spLast.length;
 }
 // Fit every arrival button into the fixed card: try 1..6 columns and a few gap sizes, keep the layout
 // whose buttons are largest (height, or width for very narrow columns). Lanes stack; a narrow label column marks each lane.
@@ -2103,7 +2107,7 @@ const laneSummary=()=>cfg.lanes.length>1?cfg.lanes.length+' 道（'+cfg.lanes.ma
 $('spTable').onclick=()=>openSpTable();
 const closeSp=()=>{const d=$('spDlg');try{d.close()}catch(e){d.removeAttribute('open')}};
 $('spClose').onclick=closeSp;$('spDone').onclick=closeSp;$('spDlg').addEventListener('click',e=>{if(e.target===$('spDlg'))closeSp()});
-$('spUndo').onclick=()=>{if(!spLast)return;const a=splitsData[spLast.key];if(a){if(spLast.prev==null)delete a[spLast.n-1];else a[spLast.n-1]=spLast.prev}spLast=null;if(curRec)saveLib();renderSplits(true);toast('已撤销')};
+$('spUndo').onclick=()=>{const u=spLast.pop();if(!u)return;const a=splitsData[u.key];if(a)delete a[u.n-1];if(curRec)saveLib();renderSplits(true);toast('已撤销'+(spLast.length?'（还能再撤 '+spLast.length+' 次）':''))};
 
 /* ---------- Lineup dialog: lanes, order per lane, roster ---------- */
 let luForce=false; // opened from the toolbox: staggered starts are always on there
@@ -2337,7 +2341,7 @@ $('restart').onclick=()=>{
   const st=steps[si];
   acc=0;segStart=now();lastCue=null;stagDone=1;
   // restarting a swim also wipes the arrival times already tapped for this rep
-  if(st&&(st.phase==='swim'||st.phase==='free')){Object.keys(splitsData).forEach(k=>{if(k.replace(/@\d+$/,'')===st.i+'-'+st.rep)delete splitsData[k]});spLast=null;if(curRec)saveLib()}
+  if(st&&(st.phase==='swim'||st.phase==='free')){Object.keys(splitsData).forEach(k=>{if(k.replace(/@\d+$/,'')===st.i+'-'+st.rep)delete splitsData[k]});spLast=[];if(curRec)saveLib()}
   if(st&&st.adj){st.dur=Math.max(1,st.dur-st.adj);st.adj=0}
   if(running&&st)cue(st.phase);
   render(true);renderSplits(true);saveSession();toast('本步已重新开始计时');
@@ -2414,7 +2418,7 @@ document.addEventListener('keydown',e=>{
     }else if(tb.sess){
       if(e.code==='Space'){e.preventDefault();unfocus();tbMain()}
       else if(e.key==='Backspace'){e.preventDefault();tbUndo()}
-      else if(lk){e.preventDefault();tbTap(lk[0],lk[1])}
+      else if(lk){e.preventDefault();tbTap(lk[0],lk[1],true)}
     }
   }
 });
@@ -2478,6 +2482,9 @@ function arrClickSlot(id,L,k){if(now()-arrSkip>=80)arrSlotPick(id,L,k)}
 function arrChipPick(id,n){arrSel=arrSel&&arrSel.L==null&&arrSel.name===n?null:{name:n};arrRefresh(id)}
 function arrSlotPick(id,L,k){
   const nm=cfg.lanes[L].lineup[k]||'';
+  // In the timer itself (name cards always out) a bare tap on a slot must not start moving people: two stray taps
+  // would swap two swimmers. There, people move only by dragging, or by picking a name card first.
+  if(ARR[id].tool&&!$(ARR[id].box).classList.contains('arr')&&!(arrSel&&arrSel.name!=null&&arrSel.L==null)){arrSel=null;tbTap(L,k+1);return}
   if(arrSel&&arrSel.name!=null&&arrSel.L==null){arrPlace(arrSel.name,L,k);return}
   if(arrSel&&arrSel.L!=null){if(arrSel.L===L&&arrSel.k===k){arrSel=null;arrRefresh(id)}else arrSwap(arrSel,{L,k});return}
   if(nm){arrSel={L,k,name:nm};arrRefresh(id)}else toast(ARR[id].tool&&!cfg.roster.length?'先点「出发」再记到边；要排人，先在「名单」里加学员':'先点一个名字，再点这个位置；或者直接把名字卡片拖过来');
@@ -2606,7 +2613,7 @@ const TBKEY='swim-tools-v1';
 const tb=Object.assign({sets:3,reps:6,dist:25,tab:'avg',sess:null,lap:{acc:0,wall:0,run:false,laps:[]}},(()=>{try{return JSON.parse(localStorage.getItem(TBKEY))||{}}catch(e){return{}}})());
 if(!tb.lap||!Array.isArray(tb.lap.laps))tb.lap={acc:0,wall:0,run:false,laps:[]};
 function saveTb(){try{localStorage.setItem(TBKEY,JSON.stringify(tb))}catch(e){}}
-let tbT0=0,tbStag=1,tbLast=null,tbData={},tbGridKey='',tbWaveT=[],tbFrozen=0,tbAuto=null;
+let tbT0=0,tbStag=1,tbLast=[],tbData={},tbGridKey='',tbWaveT=[],tbFrozen=0,tbAuto=null;
 // start gap 0 = no automatic stagger: the coach sends off one batch (the same start position in every lane) at a time
 const tbWaves=()=>cfg.gapSec===0;
 const tbMaxN=()=>Math.max(...cfg.lanes.map(l=>l.n));
@@ -2638,7 +2645,7 @@ function tbStartSession(){
   const item=()=>({custom:true,title:'依次出发',reps:tb.reps,dist:tb.dist,stroke:'自由泳',kind:'完整配合',target:0,rest:0,groupRest:0,note:''});
   const r={id:uid(),at:Date.now(),name:dstr(Date.now(),true)+' 分组平均 '+tb.sets+'×'+tb.reps+'×'+tb.dist+' 米',plan:Array.from({length:tb.sets},item),done:false,splits:{},gap:cfg.gapSec,names:allLaneNames()};
   lib.records.unshift(r);lib.records=lib.records.slice(0,300);saveLib();
-  tbData=r.splits;tbLast=null;
+  tbData=r.splits;tbLast=[];
   tb.sess={rec:r.id,set:0,rep:1,phase:'idle',sets:tb.sets,reps:tb.reps,dist:tb.dist,lineups:{},wave:1,begun:false};tbWaveT=[];tbFrozen=0;tbAuto=null;
   $('avgTray').innerHTML='';   // rebuilt for this test's roster and lanes
   saveTb();tbRender(true);
@@ -2647,7 +2654,7 @@ function tbStartSession(){
 // Position in the test. s.begun = the current rep has had its first send-off.
 // Start gap 0 (batches): s.wave = the batch in the water (phase swim) or the next batch to send (phase idle);
 // s.wave > number of batches means every batch of this rep has gone.
-function tbPoint(set,rep){const s=tb.sess;s.set=set;s.rep=rep;s.wave=1;s.begun=false;s.phase='idle';tbWaveT=[];tbFrozen=0;tbAuto=null;tbLast=null}
+function tbPoint(set,rep){const s=tb.sess;s.set=set;s.rep=rep;s.wave=1;s.begun=false;s.phase='idle';tbWaveT=[];tbFrozen=0;tbAuto=null;tbLast=[]}
 // first send-off of the current rep: whatever was recorded for it before is cleared, and who stands where is remembered
 function tbBeginRep(){
   const s=tb.sess,r=tbRec();
@@ -2658,7 +2665,7 @@ function tbBeginRep(){
 }
 // send off: the whole lane line-up at the set gap, or (gap 0) the batch s.wave
 function tbGo(){
-  const s=tb.sess;tbT0=now();tbStag=1;tbLast=null;tbAuto=null;tbFrozen=0;s.phase='swim';arrSel=null;
+  const s=tb.sess;tbT0=now();tbStag=1;tbLast=[];tbAuto=null;tbFrozen=0;s.phase='swim';arrSel=null;
   if(tbWaves())tbWaveT[s.wave]=tbT0;
   notify(()=>beep(1320,600),(tbWaves()?Math.min(s.wave,10):1)+' 号出发');holdWake();saveTb();tbRender(true);
 }
@@ -2725,7 +2732,7 @@ function tbSkipWave(){
 }
 function tbFinish(){
   const r=tbRec();if(r&&!r.end){r.end=Date.now();saveLib()}
-  tb.sess=null;tbLast=null;releaseWake();saveTb();tbRender(true);
+  tb.sess=null;tbLast=[];releaseWake();saveTb();tbRender(true);
   toast('成绩已保存到「计划库 → 训练记录」');
 }
 // the swimmers who are expected in right now: the batch in the water (gap 0) or everyone.
@@ -2735,16 +2742,26 @@ function tbExpected(){
   cfg.lanes.forEach((l,L)=>{for(let k=0;k<l.n;k++){if(waves&&k!==s.wave-1)continue;if(named&&!ln[L][k])continue;out.push([L,k])}});
   return out;
 }
-function tbTap(L,n){
-  const s=tb.sess;if(!s||!cfg.lanes[L]||n<1||n>cfg.lanes[L].n)return;
-  const waves=tbWaves(),key=spKey(s.set,s.rep,L),arr=tbData[key]||[];
-  // clock already stopped: a late swimmer of a batch that did leave can still be taken
-  const late=waves&&s.phase==='idle'&&s.begun&&tbWaveT[n]!=null&&arr[n-1]==null;
+// Guarding against wrong touches: only what is in the water can be recorded, and a time that is in is never
+// overwritten. No confirmation dialog after each batch: it would be answered a hundred times a session and
+// stop being read; refusing the wrong input on the spot, plus a multi-step undo, protects better.
+function tbTap(L,n,fromKey){
+  const s=tb.sess;if(!s||!cfg.lanes[L])return;
+  const waves=tbWaves();
+  // gap 0, keyboard: every key of a lane's row means "this lane's swimmer of the batch in the water",
+  // so hitting the key next to the right one cannot land on somebody else
+  if(waves&&fromKey&&s.phase==='swim')n=s.wave;
+  if(n<1||n>cfg.lanes[L].n){if(waves&&fromKey&&s.phase==='swim')toast('第 '+(L+1)+' 道这一批没有人');return}
+  const key=spKey(s.set,s.rep,L),arr=tbData[key]||[];
+  // clock already stopped: a late swimmer of the batch that just went can still be taken
+  const late=waves&&s.phase==='idle'&&s.begun&&n===s.wave-1&&tbWaveT[n]!=null&&arr[n-1]==null;
   if(s.phase!=='swim'&&!late){toast(s.phase==='setdone'?'这一组已结束':'先点「出发」，再记到边');return}
+  if(waves&&s.phase==='swim'&&n!==s.wave){toast('现在只记第 '+s.wave+' 批。'+(n<s.wave?'第 '+n+' 批已经过去了':'第 '+n+' 批还没出发'));return}
+  if(arr[n-1]!=null){toast(slotName(L,n-1)+' 这一趟已经记了 '+fmtSplit(arr[n-1])+'，要改先点「撤销」');return}
   const t=waves?(tbWaveT[n]==null?0:Math.round((now()-tbWaveT[n])/10)/100):Math.round((tbElapsed()/1000-(n-1)*cfg.gapSec)*100)/100;
   if(t<=0){toast(waves?'第 '+n+' 批还没出发，先按「出发」':slotName(L,n-1)+' 还没出发');return}
   if(!tbData[key])tbData[key]=arr;
-  tbLast={key,n,prev:arr[n-1]};arr[n-1]=t;saveLib();
+  tbLast.push({key,n});arr[n-1]=t;saveLib();
   try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}
   // everyone of this send-off is in: stop the clock by itself
   if(s.phase==='swim'){
@@ -2754,11 +2771,11 @@ function tbTap(L,n){
   tbRender(true);
 }
 function tbUndo(){
-  if(!tbLast)return;const a=tbData[tbLast.key],s=tb.sess;
-  if(a){if(tbLast.prev==null)delete a[tbLast.n-1];else a[tbLast.n-1]=tbLast.prev}
+  const u=tbLast.pop(),s=tb.sess;if(!u)return;
+  const a=tbData[u.key];if(a)delete a[u.n-1];
   // undoing the tap that stopped the clock starts it again, still counting from the same send-off
   if(tbAuto&&s.phase==='idle'&&s.set===tbAuto.set&&s.rep===tbAuto.rep){s.phase='swim';s.wave=tbAuto.wave;tbFrozen=0;holdWake()}
-  tbAuto=null;tbLast=null;saveLib();saveTb();tbRender(true);toast('已撤销');
+  tbAuto=null;saveLib();saveTb();tbRender(true);toast('已撤销'+(tbLast.length?'（还能再撤 '+tbLast.length+' 次）':''));
 }
 function tbLanesChanged(){tbGridKey='';if(!$('view-tools').hidden)tbRender(true)}
 function tbTick(){
@@ -2812,10 +2829,10 @@ function tbRender(force){
     if(!swim)$('avgMsg').textContent=setdone?(last?'全部游完了。下面是每个人各组的平均。':'这一组的平均算好了，下一组每一趟都和它比，慢了标红。')
       :repDone?(waves?'这一趟每一批都游完了，已停表。':'这一趟已停表，成绩保留。')
       :waves&&s.begun?'第 '+(s.wave-1)+' 批已停表。按「出发」放第 '+s.wave+' 批。'
-      :waves?'间隔 0 秒：一批一批出发。每条道的 1 号是第 1 批；这一批都到边会自动停表，再按「出发」放下一批。':'1 号随哨声出发，之后每隔 '+cfg.gapSec+' 秒一人；各道同时出发，都到边后自动停表。';
+      :waves?'间隔 0 秒：一批一批出发。出发后只能记这一批的人，都到边自动停表，再按「出发」放下一批。':'1 号随哨声出发，之后每隔 '+cfg.gapSec+' 秒一人；各道同时出发，都到边后自动停表。';
     $('avgStop').disabled=!swim;$('avgRedo').disabled=setdone||!(swim||s.begun||has);$('avgBack').disabled=swim||(!setdone&&s.set===0&&s.rep===1);
     $('avgNext').disabled=setdone;$('avgSkipW').hidden=!waves;$('avgSkipW').disabled=swim||setdone||s.wave>mx;
-    $('avgUndo').disabled=!tbLast;
+    $('avgUndo').disabled=!tbLast.length;
     tbResults();
   }
   $('avgBtns').querySelectorAll('button').forEach(b=>{
@@ -2838,6 +2855,7 @@ function tbRender(force){
       b.classList.toggle('slow',slow);sm.className=t!=null&&bar!=null?(slow?'slow':'fast'):'';
     }
     b.classList.toggle('got',t!=null);b.classList.toggle('wait',wait);b.classList.toggle('cur',!setdone&&waves&&n===s.wave&&t==null);
+    b.classList.toggle('lock',swim&&(t!=null||(waves&&n!==s.wave)));
     if(sp.textContent!==main)sp.textContent=main;sp.className=t!=null?'':'ph';
     if(sm.textContent!==sub)sm.textContent=sub;
   });
