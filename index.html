@@ -756,10 +756,10 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 </dialog>
 <dialog class="sheet" id="rosterDlg" aria-labelledby="rosterTitle">
   <header>
-    <div><h2 id="rosterTitle">学员名单</h2><p>一行一个名字。保存后在「出发顺序」里用下拉框选每个位置排谁。</p></div>
+    <div><h2 id="rosterTitle">学员名单</h2><p>把名字打进来或整段粘贴进来，名字之间用换行、空格、逗号、顿号、句号、分号随便哪种隔开都行。</p></div>
     <button type="button" class="x" id="rosterClose" aria-label="关闭">✕</button>
   </header>
-  <div class="cfgbody"><textarea id="rosterText" rows="10" placeholder="小明&#10;小红&#10;小刚"></textarea></div>
+  <div class="cfgbody"><textarea id="rosterText" rows="10" placeholder="小明 小红 小刚&#10;李一、王二，张三。赵四"></textarea></div>
   <footer><span class="spnote" id="rosterCount"></span><button type="button" class="primary" id="rosterSave">保存名单</button></footer>
 </dialog>
 <dialog class="sheet wide" id="spDlg" aria-labelledby="spTitle">
@@ -2106,12 +2106,15 @@ $('luAddLane').onclick=()=>{if(cfg.lanes.length>=8)return;const last=cfg.lanes[c
   const cards=document.querySelectorAll('#luSlots .lanecard');cards[cards.length-1].scrollIntoView({behavior:'smooth',block:'nearest'})};
 $('luFill').onclick=()=>{if(!cfg.roster.length){toast('名单是空的，先点「管理学员名单」');return}
   let p=0;cfg.lanes.forEach(l=>{l.lineup=cfg.roster.slice(p,p+l.n);p+=l.n});lineupChanged();toast('已按名单顺序填入'+(cfg.lanes.length>1?'各泳道':''))};
-const rosterCount=()=>{const n=$('rosterText').value.split(/\n/).map(x=>x.trim()).filter(Boolean).length;$('rosterCount').textContent='共 '+n+' 人'};
+// names may be separated by line breaks, spaces (half or full width), commas, 、, full stops, semicolons, slashes or |
+// (the middle dot · is kept: it is part of some names)
+const rosterNames=()=>[...new Set($('rosterText').value.split(/[\s\u3000,，、。.;；\/／|｜]+/).filter(Boolean))];
+const rosterCount=()=>{const n=rosterNames().length;$('rosterCount').textContent='共 '+n+' 人'+(n>60?'（最多 60 人，后面的不会保存）':'')};
 $('luRoster').onclick=()=>{$('rosterText').value=cfg.roster.join('\n');rosterCount();const d=$('rosterDlg');try{d.showModal()}catch(e){d.setAttribute('open','')}};
 $('rosterText').oninput=rosterCount;
 const closeRoster=()=>{const d=$('rosterDlg');try{d.close()}catch(e){d.removeAttribute('open')}};
 $('rosterClose').onclick=closeRoster;$('rosterDlg').addEventListener('click',e=>{if(e.target===$('rosterDlg'))closeRoster()});
-$('rosterSave').onclick=()=>{cfg.roster=[...new Set($('rosterText').value.split(/\n/).map(x=>x.trim()).filter(Boolean))].slice(0,60);closeRoster();lineupChanged();toast('名单已保存，共 '+cfg.roster.length+' 人')};
+$('rosterSave').onclick=()=>{cfg.roster=rosterNames().slice(0,60);closeRoster();lineupChanged();toast('名单已保存，共 '+cfg.roster.length+' 人')};
 renderLineup();
 const openLu=force=>{luForce=force===true;const d=$('luDlg');renderLineup();if(!d.open){try{d.showModal()}catch(e){d.setAttribute('open','')}}};
 const closeLu=()=>{const d=$('luDlg');try{d.close()}catch(e){d.removeAttribute('open')}};
