@@ -928,7 +928,7 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
     </div>
     <ol class="liblist" id="liblist"></ol>
     <div class="libfoot">
-      <p class="libnote">计划库只保存在这台设备的浏览器里，清除浏览器数据会一起清掉。换设备或想留底，用「导出备份」存成文件，在另一台设备上「导入备份」。</p>
+      <p class="libnote">计划库只保存在这台设备的浏览器里，清除浏览器数据会一起清掉。换设备或想留底，用「导出备份」存成文件，在另一台设备上「导入备份」。<span id="verLib"></span></p>
       <button type="button" id="bkExport">导出备份</button>
       <button type="button" id="bkImport">导入备份</button>
       <input type="file" id="bkFile" accept=".json,application/json" hidden>
@@ -1530,6 +1530,38 @@ function scrollProg(){
   if(a.top<b.top+8)side.scrollTop-=b.top+8-a.top;else if(a.bottom>b.bottom-8)side.scrollTop+=a.bottom-b.bottom+8;
 }
 
+/* ---------- Version label and update check ----------
+   The page is one cached file, so a browser can keep showing an old copy after a new one is published.
+   The label (the file's own publish time) shows which copy is open; on load and when the page comes back to the
+   front, the server is asked for the current publish time and a newer copy is fetched and shown. */
+// document.lastModified is local time by the standard, but some environments report it in UTC: keep both readings
+let VER_AT=(()=>{const d=new Date(document.lastModified);return isNaN(d)?0:d.getTime()})();
+const VER_ALT=(()=>{const d=new Date(document.lastModified+' UTC');return isNaN(d)?0:d.getTime()})();
+let APP_VER=VER_AT&&/^http/.test(location.protocol)?'版本 '+dstrV(VER_AT):'';
+function verLabel(){if(!APP_VER)return;$('verLib').textContent=' 当前'+APP_VER+'。';renderMeta()}
+function dstrV(t){const d=new Date(t);return (d.getMonth()+1)+'月'+d.getDate()+'日 '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0')}
+let updAt=0;
+function checkUpdate(auto){
+  if(!VER_AT||!/^http/.test(location.protocol)||Date.now()-updAt<5*60e3)return;
+  updAt=Date.now();
+  const url=location.href.split('#')[0];
+  fetch(url,{method:'HEAD',cache:'no-store'}).then(r=>{
+    const lm=new Date(r.headers.get('Last-Modified')||'').getTime();
+    if(!r.ok||!lm)return;
+    // same copy as the server's (under either reading of the page's own time): up to date
+    if(Math.abs(lm-VER_AT)<2000)return;
+    if(VER_ALT&&Math.abs(lm-VER_ALT)<2000){VER_AT=VER_ALT;APP_VER='版本 '+dstrV(VER_AT);verLabel();return}
+    if(lm<Math.min(VER_AT,VER_ALT||VER_AT))return;
+    const apply=()=>fetch(url,{cache:'reload'}).then(()=>location.reload(),()=>location.reload());
+    let tried='';try{tried=sessionStorage.getItem('swim-upd')||''}catch(e){}
+    const busy=running||iv.run||tb.lap.run||(tb.sess&&tb.sess.phase==='swim')||!!topDialog();
+    // right after opening, with nothing running, just switch to the new copy; otherwise offer it (and never loop)
+    if(auto&&!busy&&tried!==String(lm)){try{sessionStorage.setItem('swim-upd',String(lm))}catch(e){}apply()}
+    else toast('有新版本（'+dstrV(lm)+'）',{label:'更新',fn:apply});
+  }).catch(()=>{});
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate(false)});
+
 /* ---------- Summaries ---------- */
 function totalDist(){return plan.reduce((s,it)=>s+it.reps*it.dist,0)}
 function timedSeconds(){return plan.reduce((s,it,i)=>s+(it.target>0?it.reps*it.target+(it.reps-1)*it.rest:0)+(i<plan.length-1?it.groupRest:0),0)}
@@ -1540,7 +1572,7 @@ function renderMeta(){
   $('planstats').innerHTML=st.map(([v,l])=>'<div class="stat"><b>'+v+'</b><span>'+l+'</span></div>').join('');
   $('actionmeta').innerHTML=plan.length?plan.length+' 组 · '+totalDist()+' 米<span class="wide"> · 准备好了就开始</span>':'先输入计划';
   goLabel();
-  $('railsum').innerHTML='<b>'+totalDist()+'</b> 米 · '+plan.length+' 组<br>'+new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'short'});
+  $('railsum').innerHTML='<b>'+totalDist()+'</b> 米 · '+plan.length+' 组<br>'+new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'short'})+(APP_VER?'<br><span style="opacity:.6">'+APP_VER+'</span>':'');
 }
 function goLabel(){const st=steps[si];$('goRunTxt').textContent=st&&st.phase!=='done'&&(si>0||elapsed()>0)?'回到训练':'开始训练'}
 function renderProg(){
@@ -2473,7 +2505,10 @@ function arrOpen(id){
   const box=$(ARR[id].box);
   arrOn=id;arrSel=null;box.classList.add('arr');$(ARR[id].tray).hidden=false;$(ARR[id].btn).textContent='排好了';
   // small screens: the card is one screen tall while arranging; put it exactly on screen
-  if(innerWidth<1024)try{box.scrollIntoView({block:'start'})}catch(e){}
+  try{
+    if(innerWidth<1024)box.scrollIntoView({block:'start'});
+    else{const r=box.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)box.scrollIntoView({block:'nearest'})}   // wide screens: only if part of the card is off screen
+  }catch(e){}
   arrRefresh();
 }
 function arrClose(){
@@ -2838,6 +2873,8 @@ $('lapCopy').onclick=()=>{
 /* ---------- Boot ---------- */
 try{$('bulk').value=localStorage.getItem(TKEY)||SAMPLE_TEXT}catch(e){$('bulk').value=SAMPLE_TEXT}
 build();renderCards();renderProg();renderMeta();go(0);restoreSession();booted=true;route();
+verLabel();
+setTimeout(()=>checkUpdate(true),800);
 setInterval(tick,100);
 </script>
 </body>
