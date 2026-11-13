@@ -675,7 +675,46 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 .tlanes .lus output{font-size:20px}
 .tsub{font-size:12px;letter-spacing:.1em;color:var(--muted);font-weight:600;margin:2px 0 -6px}
 /* ===== Toolbox ===== */
-.thead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-bottom:14px}
+.thead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin-bottom:14px}
+.tbback{color:var(--muted);text-decoration:none;font-weight:600;font-size:15px;padding:4px 0}
+.tbback:hover{color:var(--fg)}
+/* toolbox home: one card per tool, with a small picture of what the tool looks like and its current state */
+.tbhome{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));max-width:1000px}
+.tbcard{display:grid;grid-template-rows:auto 1fr;text-decoration:none;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.tbcard:hover{border-color:var(--fg)}
+.tbcard:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.tbthumb{height:132px;background:var(--board);border-bottom:1px solid var(--line);display:grid;place-items:center;padding:14px;overflow:hidden}
+.tbtext{padding:12px 14px 14px;display:grid;gap:4px;align-content:start}
+.tbtext b{font-size:17px}
+.tbtext span{color:var(--muted);font-size:13px;line-height:1.55}
+.tbtext em{font-style:normal;font-size:13px;font-weight:700;color:var(--accent)}
+.tbtext em:empty{display:none}
+/* thumbnails, drawn with the app's own pieces */
+.th-pads{display:grid;grid-template-columns:18px repeat(4,1fr);gap:4px;width:100%;max-width:220px}
+.th-pads i{height:30px;border-radius:3px;background:var(--boardtint);border:1px solid var(--boardline);border-bottom:3px solid var(--pad)}
+.th-pads i.g{background:var(--got-bg);border-color:var(--got-bg)}
+.th-pads i.r{background:var(--danger);border-color:var(--danger)}
+.th-pads b{grid-row:span 1;background:var(--boardfg);border-radius:3px}
+.th-lap{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:46px;line-height:1;color:var(--p-swim);font-variant-numeric:tabular-nums}
+.th-lap small{display:block;font-size:13px;font-style:normal;font-weight:600;color:var(--boardmuted);text-align:center;margin-top:6px}
+.th-css{display:grid;grid-template-columns:auto auto;gap:3px 18px;font-variant-numeric:tabular-nums;font-size:13px;color:var(--boardmuted)}
+.th-css b{font-family:var(--f-num);font-style:italic;font-size:20px;color:var(--boardfg);text-align:right}
+/* rail: the toolbox opens into its tools */
+.navgrp{display:grid;gap:2px}
+.navrow{display:flex;align-items:stretch;gap:2px}
+.navrow>a{flex:1;min-width:0}
+.navtog{flex:none;width:34px;padding:0;border:0;border-radius:8px;background:transparent;color:var(--railfg);display:grid;place-items:center}
+.navtog:hover{background:var(--railhover);color:var(--railstrong)}
+.navtog svg{width:16px;height:16px;transition:transform .2s}
+.navgrp.open .navtog svg{transform:rotate(180deg)}
+.navsub{display:none;gap:1px;padding:2px 0 4px 44px}
+.navgrp.open .navsub{display:grid}
+.navsub a{color:var(--railfg);text-decoration:none;font-size:14px;font-weight:600;padding:7px 10px;border-radius:7px;position:relative}
+.navsub a:hover{background:var(--railhover);color:var(--railstrong)}
+.navsub a[aria-current="page"]{color:#fff;background:var(--railcur)}
+.navsub a[aria-current="page"]::before{content:"";position:absolute;left:-10px;top:50%;width:5px;height:5px;margin-top:-2.5px;border-radius:50%;background:var(--railmark)}
+@media (min-width:760px){.collapsed .navtog,.collapsed .navsub{display:none!important}}
+@media (max-width:759px){.navtog,.navsub{display:none!important}.navgrp,.navrow{display:contents}}
 .thead h1{margin:0;font-size:28px;font-weight:700}
 .tooltabs{grid-template-columns:repeat(3,minmax(0,1fr));min-width:min(100%,480px)}
 /* CSS (critical swim speed) tool */
@@ -702,7 +741,7 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 .cssnote{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
 .csstbl .mlast{display:none}
 @media (max-width:759px){.tooltabs span{font-size:12px;padding:9px 2px}.csstbl input{width:100%;min-width:56px;font-size:17px;padding:5px 6px}.csstbl th,.csstbl td{padding:6px 3px}.csstbl th{white-space:normal}.csstbl td.nm{white-space:normal;min-width:4em}.csstbl .pace{font-size:18px}
-  .csstbl .opt{display:none}.csstbl .mlast{display:block}.csszones span{font-size:12px;padding:9px 1px}.csstbl .big{font-size:20px}}
+  .csstbl .cso{display:none}.csstbl .mlast{display:block}.csszones span{font-size:12px;padding:9px 1px}.csstbl .big{font-size:20px}}
 .tcard{padding:18px;display:grid;gap:14px;max-width:780px}
 .tcard .tip{margin:0;color:var(--muted);font-size:14px;line-height:1.65}
 .tcard .tip code{font-family:inherit;background:var(--sunk);border:1px solid var(--line2);border-radius:6px;padding:0 5px;color:var(--fg);white-space:nowrap}
@@ -752,7 +791,7 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 .lapboard .kbd{margin:0}
 .laplist{padding:14px}
 .sptable tr.best td b{color:var(--ok)}.sptable tr.worst td b{color:var(--danger)}
-@media (max-width:759px){.thead h1{display:none}.thead{margin-bottom:10px}.tooltabs{width:100%}.tcard{padding:14px}}
+@media (max-width:759px){.thead h1{font-size:22px}.thead{margin-bottom:10px}.tcard{padding:14px}.tbthumb{height:110px}}
 /* Arrivals: one fixed-size card that never scrolls. fitSplits() picks the column count and button height
    so every swimmer in every lane is on screen at once; buttons shrink as swimmers are added. */
 .arrive{display:flex;flex-direction:column;overflow:hidden}
@@ -905,7 +944,17 @@ dialog.sheet{border-radius:16px}
       <a href="#plan" id="nav-plan" title="制定计划"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h10a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9"/><path d="M4 4l5 5M9 4v5H4"/><path d="M9 14h7M9 17h5"/></svg><span class="txt">制定计划</span><span class="step">01</span></a>
       <a href="#run" id="nav-run" title="训练计时"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M10 2h4"/></svg><span class="txt">训练计时</span><span class="step">02</span></a>
       <a href="#lib" id="nav-lib" title="计划库"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h11l3 3v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 3v5h7V3M8 13h8M8 17h5"/></svg><span class="txt">计划库</span><span class="step">03</span></a>
-      <a href="#tools" id="nav-tools" title="工具箱"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><circle cx="17.5" cy="17.5" r="3.5"/></svg><span class="txt">工具箱</span><span class="step">04</span></a>
+      <div class="navgrp" id="navTools">
+        <div class="navrow">
+          <a href="#tools" id="nav-tools" title="工具箱"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><circle cx="17.5" cy="17.5" r="3.5"/></svg><span class="txt">工具箱</span><span class="step">04</span></a>
+          <button type="button" class="navtog" id="navToolsTog" aria-expanded="false" aria-controls="navToolsSub" title="展开工具列表"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        </div>
+        <div class="navsub" id="navToolsSub">
+          <a href="#tools/avg" data-tool="avg">依次出发 · 分组平均</a>
+          <a href="#tools/lap" data-tool="lap">分段秒表</a>
+          <a href="#tools/css" data-tool="css">CSS 配速</a>
+        </div>
+      </div>
     </div>
     <div class="sum" id="railsum"></div>
     <div class="themesw" role="group" aria-label="配色模式"><button type="button" data-t="light" title="日间模式" aria-label="日间模式"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span class="txt">日间</span></button><button type="button" data-t="dark" title="夜间模式" aria-label="夜间模式"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><span class="txt">夜间</span></button></div>
@@ -958,12 +1007,23 @@ dialog.sheet{border-radius:16px}
   <!-- TOOLBOX VIEW -->
   <section class="view" id="view-tools" aria-label="工具箱" hidden>
     <div class="thead">
-      <h1>工具箱</h1>
-      <div class="seg tooltabs" role="tablist" aria-label="选择工具">
-        <label><input type="radio" name="tooltab" value="avg" checked><span>依次出发 · 分组平均</span></label>
-        <label><input type="radio" name="tooltab" value="lap"><span>分段秒表</span></label>
-        <label><input type="radio" name="tooltab" value="css"><span>CSS 配速</span></label>
-      </div>
+      <a href="#tools" class="tbback" id="tbBack" hidden>‹ 工具箱</a>
+      <h1 id="tbTitle">工具箱</h1>
+    </div>
+
+    <div class="tbhome" id="tool-home" hidden>
+      <a class="tbcard" href="#tools/avg">
+        <div class="tbthumb" aria-hidden="true"><div class="th-pads"><b></b><i class="g"></i><i class="g"></i><i class="r"></i><i></i><b></b><i class="g"></i><i></i><i></i><i></i></div></div>
+        <div class="tbtext"><b>依次出发 · 分组平均</b><span>几条道同时、一个一个或一批一批出发，到边记成绩，每组算每人平均，下一组比平均或比个人目标。</span><em id="tbStAvg"></em></div>
+      </a>
+      <a class="tbcard" href="#tools/lap">
+        <div class="tbthumb" aria-hidden="true"><div class="th-lap">0:41.27<small>第 3 段 0:13.80</small></div></div>
+        <div class="tbtext"><b>分段秒表</b><span>一块表，按一下记一段，列出每段时间和累计，标出最快、最慢。</span><em id="tbStLap"></em></div>
+      </a>
+      <a class="tbcard" href="#tools/css">
+        <div class="tbthumb" aria-hidden="true"><div class="th-css"><span>EN1 有氧</span><b>1:30″00</b><span>EN2 阈值</span><b>1:24″00</b><span>EN3 最大摄氧</span><b>1:20″00</b></div></div>
+        <div class="tbtext"><b>CSS 配速</b><span>测 400 + 200，算出每个人的临界游速，按强度区给出个人目标时间和出发间隔。</span><em id="tbStCss"></em></div>
+      </a>
     </div>
 
     <div id="tool-avg">
@@ -2497,13 +2557,15 @@ $('qeDel').onclick=e=>{const b=e.currentTarget;if(!b.dataset.armed){b.dataset.ar
   delete b.dataset.armed;b.textContent='删除这一组';const at=qeI,wasCur=steps[si].i===at;plan.splice(at,1);qeI=Math.min(qeI,plan.length-1);changed(false,wasCur?-1:at+1,-1);renderQE()};
 
 function route(){
-  const v=location.hash==='#run'?'run':location.hash==='#lib'?'lib':location.hash==='#tools'?'tools':'plan';
+  const h=location.hash,v=h==='#run'?'run':h==='#lib'?'lib':/^#tools(\/|$)/.test(h)?'tools':'plan';
+  if(v==='tools'){const m=h.match(/^#tools\/(avg|lap|css)$/);tb.tab=m?m[1]:'home';if(m)saveTb()}
   ['plan','run','lib','tools'].forEach(k=>{$('view-'+k).hidden=v!==k;$('nav-'+k).removeAttribute('aria-current')});
   if(v==='lib')renderLib();
   if(v==='run')fitSoon();
   if(v==='plan')goLabel();
   if(v==='tools'){tbRender(true);lapRender(true)}
   $('nav-'+v).setAttribute('aria-current','page');
+  navToolsSync(v);
   window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',route);
@@ -2647,7 +2709,7 @@ document.addEventListener('keydown',e=>{
     else if(e.key==='ArrowLeft'){audio();go(si-1)}
     else if(e.key==='Backspace'&&cfg.stagger){e.preventDefault();$('spUndo').click()}
     else if(lk&&cfg.stagger&&!arrLive('spBtns')){e.preventDefault();tapSplit(lk[0],lk[1])}
-  }else if(location.hash==='#tools'){
+  }else if(location.hash.startsWith('#tools')){
     if(tb.tab==='lap'){
       if(e.code==='Space'){e.preventDefault();unfocus();lapToggle()}
       else if(e.key==='Enter'){e.preventDefault();unfocus();lapMark()}
@@ -3014,9 +3076,28 @@ function tbTick(){
   }
   if(!$('view-tools').hidden&&tb.tab==='avg')tbRender(false);
 }
+const TOOL_NAMES={avg:'依次出发 · 分组平均',lap:'分段秒表',css:'CSS 配速'};
+// home cards show where each tool stands, so a test that is under way is easy to get back to
+function tbHomeSync(){
+  const s=tb.sess;
+  $('tbStAvg').textContent=s?'进行中：'+(s.phase==='setdone'?'第 '+(s.set+1)+' 组已完成':'第 '+(s.set+1)+' 组 · 第 '+s.rep+' 趟'):'';
+  $('tbStLap').textContent=tb.lap.run?'正在走表':tb.lap.laps.length?'已记 '+tb.lap.laps.length+' 段':'';
+  const n=typeof cssPaceOf==='function'?cfg.roster.filter(x=>cssPaceOf(x)!=null).length:0;
+  $('tbStCss').textContent=n?'已测 '+n+' 人':'';
+}
+// rail: the toolbox entry opens into the list of tools
+function navToolsSync(v){
+  const g=$('navTools');let open=v==='tools';
+  try{const k=localStorage.getItem('swim-navtools');if(k!==null&&v!=='tools')open=k==='1'}catch(e){}
+  g.classList.toggle('open',open);$('navToolsTog').setAttribute('aria-expanded',open);
+  document.querySelectorAll('#navToolsSub a').forEach(a=>{if(v==='tools'&&a.dataset.tool===tb.tab)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+}
+$('navToolsTog').onclick=()=>{const g=$('navTools'),o=!g.classList.contains('open');g.classList.toggle('open',o);$('navToolsTog').setAttribute('aria-expanded',o);try{localStorage.setItem('swim-navtools',o?'1':'0')}catch(e){}};
 function tbRender(force){
   const s=tb.sess;
-  $('tool-avg').hidden=tb.tab!=='avg';$('tool-lap').hidden=tb.tab!=='lap';$('tool-css').hidden=tb.tab!=='css';
+  $('tool-avg').hidden=tb.tab!=='avg';$('tool-lap').hidden=tb.tab!=='lap';$('tool-css').hidden=tb.tab!=='css';$('tool-home').hidden=tb.tab!=='home';
+  $('tbBack').hidden=tb.tab==='home';$('tbTitle').textContent=TOOL_NAMES[tb.tab]||'工具箱';
+  if(tb.tab==='home'){if(force)tbHomeSync();return}
   if(force&&tb.tab==='css'&&typeof cssRender==='function')cssRender();
   $('avgSetup').hidden=!!s;$('avgLive').hidden=!s;
   if(!s){if(force)tbSetupSync();return}
@@ -3176,7 +3257,7 @@ function tbSetupSync(){
     const r=tbRec();if(!r||!hasSplits(tbData)){toast('还没有成绩');return}
     copyText(splitsText(r.plan,tbData,allLaneNames(),'分组平均成绩 · '+dstr(r.at)+' · '+tb.sess.sets+' 组 × '+tb.sess.reps+' 趟 × '+tb.sess.dist+' 米',r.setNames),'成绩已复制，可以直接粘贴到微信');
   };
-  document.querySelectorAll('input[name=tooltab]').forEach(r=>{r.checked=r.value===tb.tab;r.onchange=()=>{tb.tab=r.value;saveTb();tbRender(true);lapRender(true)}});
+
   // resume an unfinished test after a reload: the clock is not kept, the recorded times are
   if(tb.sess){const r=tbRec();if(r){tbData=r.splits||(r.splits={});const q=tb.sess;if(!q.lineups)q.lineups={};
       // the clock is not kept across a reload: a rep that was under way counts as stopped, with its times kept
@@ -3242,7 +3323,7 @@ function cssRender(){
   const box=$('cssIn');box.innerHTML='';
   if(!cfg.roster.length){box.innerHTML='<p class="cssnote">还没有学员。先点下面的「学员名单」把名字加进来。</p>'}
   else{
-    const t=document.createElement('table');t.innerHTML='<thead><tr><th>学生</th><th>'+d1+' 米</th><th>'+d2+' 米</th><th>CSS 每 100 米</th><th class="opt">上次</th></tr></thead>';
+    const t=document.createElement('table');t.innerHTML='<thead><tr><th>学生</th><th>'+d1+' 米</th><th>'+d2+' 米</th><th>CSS 每 100 米</th><th class="cso">上次</th></tr></thead>';
     const tb_=t.createTBody();
     cfg.roster.forEach(n=>{
       const r=tb_.insertRow(),dr=cssDraft[n]||(cssDraft[n]={a:'',b:''}),last=cssLatest(n);
@@ -3251,7 +3332,7 @@ function cssRender(){
       const mk=(k,lab)=>{const c=r.insertCell(),i=document.createElement('input');i.type='text';i.inputMode='decimal';i.autocomplete='off';i.value=dr[k];i.placeholder='—';i.setAttribute('aria-label',n+' '+lab+' 成绩');
         i.oninput=()=>{dr[k]=i.value;upd()};i.onkeydown=e=>{if(e.key==='Enter'){const all=[...box.querySelectorAll('input')],j=all.indexOf(i);if(all[j+1])all[j+1].focus();else $('cssSave').focus()}};c.appendChild(i);return i};
       const ia=mk('a',d1+' 米'),ib=mk('b',d2+' 米');
-      const cp=r.insertCell(),cl=r.insertCell();cl.className='opt';
+      const cp=r.insertCell(),cl=r.insertCell();cl.className='cso';
       if(last){const p=cssPaceOf(n);cl.innerHTML='';const b=document.createElement('span');b.className='pace';b.textContent=p!=null?fmtSplit(p):'—';const s=document.createElement('small');s.textContent=dstr(last.at)+' · '+last.d1+'+'+last.d2;cl.append(b,s)}
       else cl.textContent='—';
       const upd=()=>{
@@ -3280,12 +3361,12 @@ function cssRender(){
   const out=$('cssOut');out.innerHTML='';
   const rows=cfg.roster.filter(n=>cssPaceOf(n)!=null);
   if(!rows.length){out.innerHTML='<p class="cssnote">还没有测试结果。在上面填好成绩、点「保存测试结果」，这里就会列出每个人的目标时间。</p>';return}
-  const t=document.createElement('table');t.innerHTML='<thead><tr><th>学生</th><th class="opt">CSS 每 100 米</th><th class="opt">每 100 米目标</th><th>每趟 '+cssS.dist+' 米目标</th><th>出发间隔</th></tr></thead>';
+  const t=document.createElement('table');t.innerHTML='<thead><tr><th>学生</th><th class="cso">CSS 每 100 米</th><th class="cso">每 100 米目标</th><th>每趟 '+cssS.dist+' 米目标</th><th>出发间隔</th></tr></thead>';
   const b=t.createTBody();
   rows.forEach(n=>{const p=cssPaceOf(n),tg=cssTarget(n,z,cssS.dist),r=b.insertRow();
     r.insertCell().textContent=n;r.cells[0].className='nm';
-    const o1=r.insertCell();o1.className='opt';o1.textContent=fmtSplit(p);
-    const o2=r.insertCell();o2.className='opt';o2.textContent=fmtSplit(p+off);
+    const o1=r.insertCell();o1.className='cso';o1.textContent=fmtSplit(p);
+    const o2=r.insertCell();o2.className='cso';o2.textContent=fmtSplit(p+off);
     const c=r.insertCell();c.className='big';c.textContent=fmtSplit(tg);
     r.insertCell().textContent=fmtShort(cssSendOff(tg,z))});
   out.appendChild(t);
