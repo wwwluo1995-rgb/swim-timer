@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#f1f5fa">
+<meta name="theme-color" content="#10243a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="泳鲨计时台">
@@ -19,36 +19,39 @@ img{max-width:100%}
 [hidden]{display:none!important}
 </style>
 <title>泳鲨训练计时台</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800&family=Barlow:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 <style>
 /* Layout: side rail + deck; the run view is a high-contrast poolside scoreboard,
    the plan view is a two-column worksheet (input left, group rows right) with a sticky action bar.
    Two colour schemes, switched by data-theme on <html>: day (default) and night. */
 :root{
-  /* Day: bright deck. White surfaces, ink text, one clear pool blue; the scoreboard is light with deep, saturated digits. */
-  --bg:#f1f5fa; --surface:#ffffff; --sunk:#f3f6fb; --fg:#0f1c2e; --muted:#5a6a82; --line:#d9e2ee; --line2:#e7edf5;
-  --accent:#0b6fd6; --accent-ink:#ffffff; --accent-soft:#e2eeff;
-  --rail:#ffffff; --rail2:#ffffff; --railfg:#4b5c75; --railstrong:#0f1c2e; --railline:#d9e2ee; --railhover:rgba(15,28,46,.05); --railcur:#e2eeff; --railcurfg:#0b6fd6; --railmark:#0b6fd6;
-  --danger:#d42f42; --ok:#0a8557;
-  --lane:#e5484d;
-  --shadow:0 1px 2px rgba(15,28,46,.05),0 8px 24px rgba(15,28,46,.07);
-  --f-num:"Barlow Condensed","DIN Alternate","Arial Narrow",sans-serif;
+  /* Day: the pool deck in daylight. Tile-white ground, lane-line navy for ink, deep pool water as the one action colour.
+     Touchpad yellow marks the arrival pads; lane-rope red is kept for "slower" and for removing. */
+  --bg:#eef3f2; --surface:#ffffff; --sunk:#e7eeed; --fg:#10243a; --muted:#566776; --line:#cfdad9; --line2:#e1e8e7;
+  --accent:#0a6a82; --accent-ink:#ffffff; --accent-soft:#dbebee;
+  --rail:#10243a; --rail2:#10243a; --railfg:#a9bcc8; --railstrong:#ffffff; --railline:rgba(255,255,255,.1); --railhover:rgba(255,255,255,.07); --railcur:rgba(255,255,255,.1); --railcurfg:#ffffff; --railmark:#f5c400;
+  --danger:#c8282b; --ok:#1d7f48;
+  --lane:#c8282b; --pad:#f5c400;
+  --got-bg:#10243a; --got-fg:#ffffff; --got-num:#f5c400;
+  --shadow:none;
+  --f-num:"Barlow Condensed","DIN Alternate","DIN Condensed","Arial Narrow",sans-serif;
   --f-body:"Barlow","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
-  --board:#ffffff; --board2:#eaf3ff; --boardline:#d3deec; --boardfg:#0f1c2e; --boardmuted:#5a6a82;
-  --boardtint:rgba(15,28,46,.045); --boardtint2:rgba(15,28,46,.09); --boardshadow:0 10px 36px rgba(15,28,46,.10); --ph-ink:#ffffff; --glow:0%;
-  --p-swim:#0a5fcf; --p-rest:#cf5600; --p-group:#087a50; --p-ready:#5b34b8; --p-free:#0b7fae; --p-done:#087a50;
+  --board:#ffffff; --board2:#ffffff; --boardline:#cfdad9; --boardfg:#10243a; --boardmuted:#566776;
+  --boardtint:#eef3f2; --boardtint2:#e1e9e8; --boardshadow:none; --ph-ink:#ffffff; --glow:0%;
+  --p-swim:#0a6a82; --p-rest:#b36a00; --p-group:#1d7f48; --p-ready:#10243a; --p-free:#0a6a82; --p-done:#1d7f48;
   --tabh:0px;
 }
 :root[data-theme="dark"]{
-  /* Night: deep navy, soft-white text, luminous phase colours on a near-black scoreboard. */
-  --bg:#0a0f1a; --surface:#121a29; --sunk:#0d1422; --fg:#e8eef8; --muted:#8c9bb3; --line:#232f44; --line2:#1b2537;
-  --accent:#4da3ff; --accent-ink:#04101f; --accent-soft:#14284a;
-  --rail:#070b14; --rail2:#0b1120; --railfg:#9fb0c9; --railstrong:#ffffff; --railline:rgba(255,255,255,.09); --railhover:rgba(255,255,255,.06); --railcur:rgba(77,163,255,.16); --railcurfg:#ffffff; --railmark:#4da3ff;
-  --danger:#ff6b78; --ok:#3ddc97; --lane:#ff5d6c;
-  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
-  --board:#060a12; --board2:#101a2c; --boardline:#1f2a3f; --boardfg:#eef4fc; --boardmuted:#8c9bb3;
-  --boardtint:rgba(255,255,255,.055); --boardtint2:rgba(255,255,255,.11); --boardshadow:0 10px 40px rgba(0,0,0,.45); --ph-ink:#04101c; --glow:35%;
-  --p-swim:#4cc2ff; --p-rest:#ffb829; --p-group:#3ddc97; --p-ready:#b3a4ff; --p-free:#8ad8ff; --p-done:#3ddc97;
+  /* Night: the pool after dark, a black results board with lit digits; touchpad yellow becomes the board's amber. */
+  --bg:#061219; --surface:#0b1d26; --sunk:#08171f; --fg:#e6f0f2; --muted:#86a0aa; --line:#1a3540; --line2:#122830;
+  --accent:#3cc6dc; --accent-ink:#03151b; --accent-soft:#0d2f38;
+  --rail:#030c11; --rail2:#030c11; --railfg:#86a0aa; --railstrong:#ffffff; --railline:rgba(255,255,255,.08); --railhover:rgba(255,255,255,.06); --railcur:rgba(255,255,255,.08); --railcurfg:#ffffff; --railmark:#ffc21a;
+  --danger:#ff5d5d; --ok:#3fd98a; --lane:#ff5d5d; --pad:#ffc21a;
+  --got-bg:#ffc21a; --got-fg:#02080b; --got-num:#02080b;
+  --shadow:none;
+  --board:#02080b; --board2:#02080b; --boardline:#173039; --boardfg:#eef6f7; --boardmuted:#86a0aa;
+  --boardtint:#0a1a21; --boardtint2:#11262f; --boardshadow:none; --ph-ink:#02080b; --glow:30%;
+  --p-swim:#45d0e6; --p-rest:#ffc21a; --p-group:#3fd98a; --p-ready:#e6f0f2; --p-free:#8fe0ee; --p-done:#3fd98a;
   color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -762,6 +765,59 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
   .isum{padding:10px 10px 10px 14px;gap:10px}
   .ibody{padding:10px 10px 12px 14px}
 }
+/* ===== Design layer: the pool deck =====
+   One loud thing: the timing board's slanted scoreboard digits. Everything around it is flat and quiet:
+   no shadows or gradient washes, smaller radii, colour only where it means phase or status.
+   Arrival buttons are drawn as wall touchpads (yellow trim); a finished swimmer's pad becomes a results-board line. */
+.nav a .step{display:none}
+.nav a{border-radius:8px}
+.nav a[aria-current="page"]{background:var(--railcur);color:#fff}
+.brand .mark{border-radius:9px}
+.card,.item,.scard,.stat,.libitem,.lanecard{box-shadow:none}
+.card,.scard{border-radius:14px}
+.item,.libitem{border-radius:10px}
+.stat{border-radius:8px}
+.item::before{width:3px}
+.phead h1,.thead h1{font-weight:800;letter-spacing:0}
+.stat b{font-style:italic}
+.seg{border-radius:10px}.seg span{border-radius:7px}
+.primary{box-shadow:none}
+.tbtn{border-radius:8px}
+.tbtn.hl{background:var(--fg);color:var(--bg)}
+.actionbar{box-shadow:none;border-radius:12px}
+/* timing board */
+.board,.arrive,.avgside,.lapboard{background:var(--board);box-shadow:none;border-radius:16px}
+.lanes{height:10px;opacity:1;background:repeating-linear-gradient(90deg,var(--lane) 0 14px,transparent 14px 16px,var(--ph) 16px 30px,transparent 30px 32px)}
+.chip{border-radius:8px;border:0;letter-spacing:.06em;padding:3px 14px 3px 11px}
+.clock,.avgclock,.lapclock,.hr .hrclock,.ivclock,.rep{font-style:italic}
+.clock{padding-right:.06em;letter-spacing:-.02em;text-shadow:none}
+.rep small{font-style:normal}
+.next{border-radius:10px;background:var(--boardtint)}
+.controls button{border-radius:12px;background:var(--boardtint)}
+.btn-main,.avgmain{box-shadow:none!important;border-radius:12px;letter-spacing:.12em}
+.bar{height:8px;border-radius:0;background:var(--boardtint2)}.bar span{border-radius:0}
+.prog li button{border-radius:8px}.prog .pe{border-radius:8px}
+.prog li.active button{background:var(--surface);border-color:var(--fg);box-shadow:inset 3px 0 0 var(--pad)}
+/* arrival touchpads */
+.fitgrid .splane button{background:var(--boardtint);border:1px solid var(--boardline);border-bottom:4px solid var(--pad);border-radius:6px;color:var(--boardfg)}
+.fitgrid .splane button span{color:var(--boardfg)}
+.fitgrid .splane button span.ph{color:var(--boardmuted);font-style:normal}
+.fitgrid .splane button.got{background:var(--got-bg);border-color:var(--got-bg);color:var(--got-fg)}
+.fitgrid .splane button.got span{color:var(--got-num);font-style:italic}
+.fitgrid .splane button.got small,.fitgrid .splane button.got small.fast,.fitgrid .splane button.got small.slow{color:var(--got-fg);opacity:.8}
+.fitgrid .splane button.got.slow{background:var(--danger);border-color:var(--danger);color:#fff}
+.fitgrid .splane button.got.slow span,.fitgrid .splane button.got.slow small{color:#fff}
+.fitgrid .splane button.got kbd{color:inherit;border-color:currentColor;background:transparent;opacity:.7}
+.fitgrid .splane button.wait{opacity:.42;border-bottom-color:var(--boardline)}
+.fitgrid .splane button.cur{box-shadow:inset 0 0 0 2px var(--boardfg);border-color:var(--boardfg)}
+.fitgrid .splh{background:var(--boardfg);color:var(--board);border-radius:6px;font-weight:800;font-size:13px;padding:0 2px}
+.fitgrid.arranging .splane button,.fitgrid.dragok .splane button[data-empty]{border-bottom-width:1px}
+.stu{border-radius:6px;box-shadow:none}
+.toast{border-radius:10px}
+dialog.sheet{border-radius:16px}
+@media (max-width:759px){dialog.sheet{border-radius:16px 16px 0 0}.nav a[aria-current="page"]::before{background:var(--railmark)}}
+/* the lap stopwatch and the toolbox clock share the board's digits */
+.lapclock{color:var(--p-swim)}
 /* touch screens: a field under 16px makes iOS zoom in when it gets the focus (kept last so it wins over the size rules above) */
 @media (hover:none),(pointer:coarse){
   select,input[type=text],textarea,.item select,.item input[type=text],.luslots select,#libSearch,#spGroup,#qeGroup{font-size:16px}
@@ -2426,7 +2482,7 @@ let theme=document.documentElement.getAttribute('data-theme')==='dark'?'dark':'l
 function applyTheme(announce){
   document.documentElement.setAttribute('data-theme',theme);
   document.querySelectorAll('.themesw button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===theme));
-  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=theme==='dark'?'#0a0f1a':'#f1f5fa';
+  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=theme==='dark'?'#030c11':'#10243a';
   if(announce)toast(theme==='dark'?'已切换到夜间模式':'已切换到日间模式');
 }
 document.querySelectorAll('.themesw button').forEach(b=>b.onclick=()=>{
