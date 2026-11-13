@@ -947,6 +947,19 @@ dialog.sheet{border-radius:16px}
   <div class="cfgbody"><select id="spGroup" aria-label="选择组"></select><div class="sptable" id="spBody"></div></div>
   <footer><span class="spnote">成绩 = 点「到边」的时刻 − 这个学生的出发时刻；小字是和这一组目标时间比：「快」= 比目标快多少，「慢」= 比目标慢多少。</span><div class="row"><button type="button" id="spCopy">复制全部成绩</button><button type="button" class="primary" id="spDone">关闭</button></div></footer>
 </dialog>
+    <dialog class="sheet" id="repDlg" aria-labelledby="repTitle">
+      <header>
+        <div><h2 id="repTitle">整份计划重复几遍</h2><p>把现在的所有组按顺序再复制几遍接在后面，每一遍都一样。复制出来的组可以单独再改。</p></div>
+        <button type="button" class="x" id="repClose" aria-label="关闭">✕</button>
+      </header>
+      <div class="cfgbody">
+        <div class="stp"><div class="stl"><b>一共游几遍</b><small id="repNow"></small></div>
+          <div class="stc"><button type="button" id="repM" aria-label="少一遍">−</button><output id="repN">2</output><button type="button" id="repP" aria-label="多一遍">+</button></div></div>
+        <p class="cssnote" id="repAfter"></p>
+        <p class="cssnote">整段输入时也可以在最后写一行「以上重复 3 遍」。</p>
+      </div>
+      <footer><span></span><button type="button" class="primary" id="repOk">重复</button></footer>
+    </dialog>
     <dialog class="sheet" id="saveDlg" aria-labelledby="saveTitle">
       <header>
         <div><h2 id="saveTitle">保存到计划库</h2><p id="saveSub"></p></div>
@@ -1008,6 +1021,7 @@ dialog.sheet{border-radius:16px}
           <div class="row">
             <button type="button" class="add" id="addItem">＋ 添加一组</button>
             <button type="button" class="add" id="addCustom">＋ 自定义项</button>
+            <button type="button" class="ghost" id="repeatPlan">整份重复…</button>
             <button type="button" class="ghost" id="toggleAll">全部展开</button>
             <button type="button" class="ghost" id="clearPlan">清空计划</button>
           </div>
@@ -1340,13 +1354,15 @@ function kind(s){if(/单臂|单手/.test(s))return'单臂撸手';if(/双臂|双�
 function cleanNote(n){
   for(let k=0;k<3;k++){
     n=n.replace(/^[\s，,；;。、·:：\-—]+/,'');
-    n=n.replace(/^(混合泳|混合|自由泳|自由|自|蛙泳|蛙|仰泳|仰|蝶泳|蝶)(?=[腿单双橹撸配完划]|$|[\s，,])/,'');
+    n=n.replace(/^(混合泳|混合|混|自由泳|自由|自|蛙泳|蛙|仰泳|仰|蝶泳|蝶)(?=[腿单双橹撸配完划]|$|[\s，,])/,'');
     n=n.replace(/^(打腿|腿|单臂[橹撸]手|双臂[橹撸]手|单臂|双臂|[橹撸]手|完整配合|配合)/,'');
     n=n.replace(/^(米|m)/,'');
   }
   return n.replace(/[，,；;。、]{2,}/g,'，').replace(/^[\s，,；;。、·]+|[\s，,；;。、·]+$/g,'');
 }
 function linkBlock(block){const n=block.items.length;if(n>1){const p=block.items[n-2];if(!p.groupRest)p.groupRest=120}}
+// rest after the group: "组间2分", "组间休息 2分", "组后休息30秒", "组后30"
+const GR='(?:组间|组后)\\s*(?:休息|间歇)?\\s*[:：]?\\s*';
 function parsePlan(text){
   const items=[],skipped=[];let block=null,last=null;
   text.split(/\r?\n/).forEach(raw=>{
@@ -1355,7 +1371,11 @@ function parsePlan(text){
     s=s.replace(/^\s*(?:第\s*[\d一二三四五六七八九十]+\s*组\s*[.、:：·\-]?|\d+\s*[.、．:：)）]|[-*•])\s*/,'');
     let m=s.match(/^(\d+)\s*组\s*(\d+)\s*(?:[x×X*✕乘]|个)\s*(\d+)/);
     if(m){block={reps:+m[2],dist:+m[3],items:[]};return}
-    const gm=s.match(new RegExp('组间\\s*(?:休息)?\\s*[:：]?\\s*'+TIME));
+    // "以上重复 3 遍" / "整个计划重复3次" / "×3遍": everything so far, this many times in all
+    const rp=s.match(/^(?:以上|上面|全部|整个计划|整份计划|整组)?\s*(?:重复|循环|再来|共)\s*(\d+)\s*[遍次轮]$|^[x×X*]\s*(\d+)\s*[遍次轮]?$/);
+    if(rp){const n=Math.max(1,Math.min(10,+(rp[1]||rp[2])));if(!items.length){skipped.push(raw.trim());return}
+      const base=items.slice();for(let k=1;k<n;k++)base.forEach(x=>items.push(clone(x)));last=items[items.length-1];block=null;return}
+    const gm=s.match(new RegExp(GR+TIME));
     const cm=s.match(/^(?:自定义|\+)\s*[:：]?\s*(.+)$/);
     if(cm){const it={custom:true,title:cm[1].trim(),reps:1,dist:0,stroke:'自由泳',kind:'完整配合',target:0,rest:0,groupRest:0,note:''};items.push(it);last=it;return}
     if(/^同上/.test(s)){
@@ -1377,11 +1397,14 @@ function parsePlan(text){
     let tail=rest_, target=0, rest=0, groupRest=0;
     const cut=re=>{const r=tail.match(re);if(r){tail=tail.slice(0,r.index)+tail.slice(r.index+r[0].length);return toSec(r[1])}return null};
     let v;
-    if((v=cut(new RegExp('组间\\s*(?:休息)?\\s*[:：]?\\s*'+TIME)))!==null)groupRest=v;
+    if((v=cut(new RegExp(GR+TIME+'\\s*(?:秒|s)?')))!==null)groupRest=v;
     if((v=cut(new RegExp(TIME+'\\s*(?:秒|s)?\\s*(?:标准?|目标)')))!==null)target=v;
-    else if((v=cut(new RegExp('(?:目标|标准|标)\\s*[:：]?\\s*'+TIME)))!==null)target=v;
+    else if((v=cut(new RegExp('(?:目标|标准|标)\\s*[:：]?\\s*'+TIME+'\\s*(?:秒|s)?\\s*(?:以?内)?')))!==null)target=v;
     if((v=cut(new RegExp(TIME+'\\s*(?:秒|s)?\\s*(?:间歇|休息|间隔)')))!==null)rest=v;
-    else if((v=cut(new RegExp('(?:间歇|休息|间隔|rest)\\s*[:：]?\\s*'+TIME,'i')))!==null)rest=v;
+    else if((v=cut(new RegExp('(?:间歇|休息|间隔|rest)\\s*[:：]?\\s*'+TIME+'\\s*(?:秒|s)?','i')))!==null)rest=v;
+    // "(1分30)" after a target = the send-off cycle: for repeats with no rest written, rest = cycle - target
+    if(reps>1&&target>0&&!rest){const so=tail.match(new RegExp('[（(]\\s*'+TIME+'\\s*(?:秒|s)?\\s*(?:出发)?\\s*[)）]'));
+      if(so){const c=toSec(so[1]);if(c>target){rest=c-target;tail=tail.slice(0,so.index)+tail.slice(so.index+so[0].length)}}}
     const it={reps,dist,stroke:stroke(main),kind:kind(main),target,rest,groupRest,note:cleanNote(tail)};
     items.push(it);last=it;if(block){block.items.push(it);linkBlock(block)}
   });
@@ -2741,6 +2764,16 @@ $('clearPlan').onclick=()=>{
   const snap=snapshot();plan=[];running=false;releaseWake();curRec=null;build();si=0;acc=0;changed();
   toast('已清空计划',{label:'撤销',fn:()=>undoTo(snap,'已恢复原来的计划')});
 };
+// repeat the whole plan: copies of every group appended in order (undoable)
+let repN=2;
+function repSync(){const g=plan.length,m=totalDist();$('repN').textContent=repN;$('repM').disabled=repN<=2;$('repP').disabled=repN>=10;
+  $('repNow').textContent='现在 '+g+' 组 · '+m+' 米';$('repAfter').textContent='重复后：'+g*repN+' 组 · '+m*repN+' 米'+(plan.length&&!(plan[plan.length-1].groupRest>0)?'。每遍之间没有休息；要休息，先给最后一组设「组后休息」。':'。每遍之间按最后一组的「组后休息」休息。')}
+$('repeatPlan').onclick=()=>{if(!plan.length){toast('计划是空的');return}repN=2;repSync();const d=$('repDlg');try{d.showModal()}catch(e){d.setAttribute('open','')}};
+$('repM').onclick=()=>{repN=Math.max(2,repN-1);repSync()};$('repP').onclick=()=>{repN=Math.min(10,repN+1);repSync()};
+const closeRep=()=>{const d=$('repDlg');try{d.close()}catch(e){d.removeAttribute('open')}};
+$('repClose').onclick=closeRep;$('repDlg').addEventListener('click',e=>{if(e.target===$('repDlg'))closeRep()});
+$('repOk').onclick=()=>{const snap=snapshot(),base=plan.slice(),n=repN;for(let k=1;k<n;k++)base.forEach(x=>plan.push(clone(x)));closeRep();changed();
+  toast('整份计划重复 '+n+' 遍，共 '+plan.length+' 组',{label:'撤销',fn:()=>undoTo(snap,'已恢复原来的计划')})};
 $('toggleAll').onclick=()=>{const all=plan.every(it=>openCards.has(it));plan.forEach(it=>{if(all)openCards.delete(it);else openCards.add(it)});renderCards()};
 $('goRun').onclick=e=>{if(!plan.length){e.preventDefault();toast('先输入计划，再开始训练')}};
 $('addCustom').onclick=()=>{plan.push({custom:true,title:'',reps:1,dist:0,stroke:'自由泳',kind:'完整配合',target:0,rest:0,groupRest:0,note:''});openCards.add(plan[plan.length-1]);changed();
