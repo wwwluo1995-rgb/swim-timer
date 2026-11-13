@@ -172,7 +172,7 @@ select{appearance:none;-webkit-appearance:none;padding-right:28px;background-ima
 .side{display:grid;gap:14px;align-content:start;min-width:0}
 .board{--ph:var(--p-swim);background:radial-gradient(120% 80% at 50% 0%,var(--board2),var(--board) 70%);color:var(--boardfg);border-radius:22px;overflow:hidden;border:1px solid var(--boardline);box-shadow:var(--boardshadow);display:flex;flex-direction:column}
 @media (min-width:1100px){.board{min-height:calc(100dvh - 44px)}}
-.ph-ready{--ph:var(--p-ready)} .ph-swim{--ph:var(--p-swim)} .ph-rest{--ph:var(--p-rest)} .ph-group{--ph:var(--p-group)} .ph-free{--ph:var(--p-free)} .ph-done{--ph:var(--p-done)}
+.ph-tail{--ph:var(--p-swim)} .ph-ready{--ph:var(--p-ready)} .ph-swim{--ph:var(--p-swim)} .ph-rest{--ph:var(--p-rest)} .ph-group{--ph:var(--p-group)} .ph-free{--ph:var(--p-free)} .ph-done{--ph:var(--p-done)}
 .lanes{height:8px;background:repeating-linear-gradient(90deg,var(--ph) 0 24px,#0000 24px 32px,var(--lane) 32px 56px,#0000 56px 64px);opacity:.9;transition:background .3s}
 .inner{flex:1 0 auto;padding:clamp(14px,2.4vh,26px) clamp(16px,3vw,34px);display:flex;flex-direction:column;gap:clamp(8px,1.6vh,16px)}
 .topline{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;color:var(--boardmuted);font-size:14px;font-variant-numeric:tabular-nums}
@@ -1437,13 +1437,20 @@ const shortName=it=>it.custom?(((it.reps>1?it.reps+'×':'')+(it.dist?it.dist+' �
 const mtxt=it=>it.dist?it.reps*it.dist+' 米':'不计距离';
 const nameOf=(it,i)=>'第 '+(i+1)+' 组 · '+shortName(it);
 
+const tailSec=()=>cfg.stagger&&cfg.gapSec>0&&cfg.swimmers>1?(cfg.swimmers-1)*cfg.gapSec:0;
+let tailKey='';
 function build(){
+  tailKey=tailSec()+'';
   steps=[];
   plan.forEach((it,i)=>{
     const prev=plan[i-1];
     if(it.target>0&&!(prev&&prev.groupRest>0))steps.push({i,rep:1,phase:'ready',dur:10});
     for(let r=1;r<=it.reps;r++){
       steps.push(it.target>0?{i,rep:r,phase:'swim',dur:it.target}:{i,rep:r,phase:'free'});
+      // staggered starts: the last swimmer leaves (n-1) gaps after the first, so the group is not over when the
+      // first swimmer's target runs out. A "tail" step keeps the group open until the last swimmer's target is up
+      // (or everyone has touched), before the group rest or the next group.
+      if(r===it.reps&&it.target>0&&tailSec()>0)steps.push({i,rep:r,phase:'tail',dur:tailSec()});
       if(r<it.reps){if(it.rest>0)steps.push({i,rep:r,phase:'rest',dur:it.rest})}
       else if(it.groupRest>0&&i<plan.length-1)steps.push({i,rep:r,phase:'group',dur:it.groupRest});
     }
@@ -1623,6 +1630,7 @@ function cue(phase){
   else if(phase==='rest')notify(()=>beep(900,140,2,80),'间歇'+secText(st.dur));
   else if(phase==='group')notify(()=>beep(900,140,2,80),'组间休息，测心率');
   else if(phase==='done')notify(()=>beep(990,200,3,100),'训练完成');
+  else if(phase==='tail')return;
   else notify(()=>beep(1100,300),'准备');
 }
 const DIGITS=['','一','二','三','四','五'];
@@ -1668,9 +1676,11 @@ function staggerCue(n){notify(()=>beep(1320,350),n+' 号出发')}
 function go(idx,{auto=false,overflow=0}={}){
   const prev=steps[si];
   if(prev&&(prev.phase==='swim'||prev.phase==='free'))lastSwimMs=auto&&prev.dur?prev.dur*1000:elapsed();
+  else if(prev&&prev.phase==='tail')lastSwimMs+=auto&&prev.dur?prev.dur*1000:elapsed();
   si=Math.max(0,Math.min(steps.length-1,idx));
-  acc=auto?overflow:0;segStart=now();lastCue=null;stagDone=1;
+  acc=auto?overflow:0;segStart=now();lastCue=null;
   const st=steps[si];
+  if(st.phase==='swim'||st.phase==='free')stagDone=1;
   if(st.phase==='done'){running=false;finishRecord()}
   if(running||auto)cue(st.phase);
   if(st.phase!=='group')hrEnd=0;
@@ -1682,11 +1692,14 @@ function tick(){
     while(st.dur&&e>=st.dur*1000&&guard++<50){go(si+1,{auto:true,overflow:e-st.dur*1000});st=steps[si];e=elapsed()}
     if(running){
       const sec=st.dur?Math.ceil((st.dur*1000-e)/1000):Math.floor(e/1000);
-      if(sec!==lastCue){lastCue=sec;if(st.dur?sec<st.dur:sec>0)markCue(sec,!!st.dur,(st.phase==='swim'||st.phase==='free')?plan[st.i]:null,st.dur||0)}
-      if(cfg.stagger&&(st.phase==='swim'||st.phase==='free')){
-        const k=Math.floor(e/1000/cfg.gapSec);
-        if(k>=stagDone&&k<cfg.swimmers&&(!st.dur||k*cfg.gapSec<st.dur)){stagDone=k+1;staggerCue(k+1)}
+      if(sec!==lastCue){lastCue=sec;if(st.phase!=='tail'&&(st.dur?sec<st.dur:sec>0))markCue(sec,!!st.dur,(st.phase==='swim'||st.phase==='free')?plan[st.i]:null,st.dur||0)}
+      // later swimmers are called off even once the first swimmer's target has run out
+      if(cfg.stagger&&cfg.gapSec>0&&/^(swim|free|rest|tail)$/.test(st.phase)){
+        const c=repContext(),k=c?Math.floor(c.ms/1000/cfg.gapSec):0;
+        if(c&&k>=stagDone&&k<cfg.swimmers){stagDone=k+1;staggerCue(k+1)}
       }
+      // everyone of this rep has touched: no need to wait out the tail
+      if(st.phase==='tail'&&splitsOn()&&!missingArrivals()){go(si+1,{auto:true})}
     }
   }
   if(hrEnd&&now()>=hrEnd){hrEnd=0;notify(()=>beep(990,500),'停');$('hrclock').textContent='停'}
@@ -1694,7 +1707,7 @@ function tick(){
   render(false);
   if(running&&++tickN%20===0)saveSession();
 }
-const CHIP={ready:'准备',swim:'游进',rest:'间歇',group:'组间休息',free:'游进 · 手动',done:'训练完成'};
+const CHIP={ready:'准备',swim:'游进',rest:'间歇',group:'组间休息',free:'游进 · 手动',tail:'等最后一人',done:'训练完成'};
 function describe(st){
   if(!st)return'';const it=plan[st.i];
   switch(st.phase){
@@ -1703,6 +1716,7 @@ function describe(st){
     case'free':return st.rep===1?'第 '+(st.i+1)+' 组 '+shortName(it):'第 '+st.rep+' 趟 · '+shortName(it);
     case'rest':return '间歇 '+fmtShort(st.dur);
     case'group':return '组间休息 '+fmt(st.dur)+' · 测心率';
+    case'tail':return '等后面出发的人到边（最多 '+fmtShort(st.dur)+'）';
     case'done':return '全部完成';
   }
 }
@@ -1743,18 +1757,18 @@ function render(force){
     const dots=$('dots');dots.innerHTML='';
     if(it&&it.reps>1)for(let r=1;r<=it.reps;r++){
       const b=document.createElement('b');
-      if(r<st.rep||(r===st.rep&&(st.phase==='rest'||st.phase==='group')))b.className='on';else if(r===st.rep)b.className='cur';
+      if(r<st.rep||(r===st.rep&&/^(rest|group|tail)$/.test(st.phase)))b.className='on';else if(r===st.rep)b.className='cur';
       dots.appendChild(b);
     }
     $('next').textContent=describe(steps[si+1])||'—';
-    $('hint').textContent=st.phase==='free'?'学生到边时点「到边」':st.dur?'到点自动切换':'';
+    $('hint').textContent=st.phase==='free'?'学生到边时点「到边」':st.phase==='tail'?'全部到边或时间到，自动进入下一步':st.dur?'到点自动切换':'';
     $('hr').hidden=st.phase!=='group';
     $('adj').hidden=!(st.dur&&(st.phase==='rest'||st.phase==='group'||st.phase==='ready'));
     const fin=st.phase==='done';$('nextBox').hidden=fin;$('doneActs').hidden=!(fin&&plan.length);
     if(fin)$('doneSp').hidden=$('doneCopy').hidden=!hasSplits(splitsData);
     $('skipTxt').textContent=st.phase==='free'?'到边':'下一步';$('skip').setAttribute('aria-label',st.phase==='free'?'到边，进入下一步':'下一步');
     $('skip').classList.toggle('hot',st.phase==='free'&&running);
-    const doneReps=it?(st.rep-1+((st.phase==='rest'||st.phase==='group')?1:0)):0;
+    const doneReps=it?(st.rep-1+(/^(rest|group|tail)$/.test(st.phase)?1:0)):0;
     document.querySelectorAll('#proglist li').forEach((el,k)=>{
       el.classList.toggle('active',k===st.i);
       el.classList.toggle('past',st.phase==='done'||k<st.i);
@@ -2215,7 +2229,7 @@ const keyLane=k=>{const m=k.match(/@(\d+)$/);return m?+m[1]:0};
 function repContext(){
   const st=steps[si];if(!st||st.i<0)return null;
   if(st.phase==='swim'||st.phase==='free')return{i:st.i,rep:st.rep,ms:elapsed()};
-  if(st.phase==='rest'||st.phase==='group')return{i:st.i,rep:st.rep,ms:lastSwimMs+elapsed()};
+  if(st.phase==='rest'||st.phase==='group'||st.phase==='tail')return{i:st.i,rep:st.rep,ms:lastSwimMs+elapsed()};
   return null;
 }
 // swim-time format with hundredths: 29″60, 1:35″33
@@ -2520,7 +2534,7 @@ function renderLineup(){
     card.appendChild(slots);ol.appendChild(card);
   });
 }
-function lineupChanged(){syncSwimmers();saveCfg();lastSpKey='';cfgSummary();renderSplits(true);const r=recOf();if(r&&!r.done){r.names=allLaneNames();r.laneOff=laneOffs();saveLib()}tbLanesChanged();arrRefreshAll()}
+function lineupChanged(){syncSwimmers();if(tailSec()+''!==tailKey&&plan.length)changed(true);saveCfg();lastSpKey='';cfgSummary();renderSplits(true);const r=recOf();if(r&&!r.done){r.names=allLaneNames();r.laneOff=laneOffs();saveLib()}tbLanesChanged();arrRefreshAll()}
 $('luOn').onchange=()=>{cfg.stagger=$('luOn').checked;lineupChanged()};
 $('luArr').onchange=()=>{cfg.arrive=$('luArr').checked;saveCfg();lastSpKey='';renderSplits(true)};
 $('luGapM').onclick=()=>{cfg.gapSec=Math.max(0,cfg.gapSec-1);lineupChanged()};
@@ -2708,7 +2722,20 @@ function toggle(){
   render(true);saveSession();
 }
 $('start').onclick=toggle;
-$('skip').onclick=()=>{audio();go(si+1)};
+// how many swimmers of the current rep have no arrival time yet (0 when arrival timing is off)
+function missingArrivals(){
+  const c=splitsOn()?repContext():null;if(!c)return 0;let m=0;
+  cfg.lanes.forEach((l,L)=>{const a=splitsData[spKey(c.i,c.rep,L)]||[];for(let k=0;k<l.n;k++)if(a[k]==null)m++});
+  return m;
+}
+// leaving a swim by hand while people are still out (staggered starts) asks first
+function nextStep(){
+  audio();const st=steps[si];
+  if(cfg.stagger&&/^(swim|free|tail)$/.test(st.phase)&&running){const m=missingArrivals();
+    if(m){toast('还有 '+m+' 人没到边',{label:'仍然下一步',fn:()=>go(si+1)});return}}
+  go(si+1);
+}
+$('skip').onclick=nextStep;
 $('prev').onclick=()=>{audio();go(si-1)};
 $('restart').onclick=()=>{
   const st=steps[si];
@@ -2790,7 +2817,7 @@ document.addEventListener('keydown',e=>{
   const lk=laneKeyOf(e);
   if(location.hash==='#run'){
     if(e.code==='Space'){e.preventDefault();unfocus();toggle()}
-    else if(e.key==='ArrowRight'){audio();go(si+1)}
+    else if(e.key==='ArrowRight'){nextStep()}
     else if(e.key==='ArrowLeft'){audio();go(si-1)}
     else if(e.key==='Escape'&&spBig){setBig(false)}
     else if(e.key==='Backspace'&&splitsOn()){e.preventDefault();$('spUndo').click()}
