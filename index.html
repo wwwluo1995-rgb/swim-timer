@@ -1699,10 +1699,12 @@ function staggerCue(n){notify(()=>beep(1320,350),n+' 号出发')}
    A tap on a swimmer who is still missing in an open rep is recorded there first (they have not started the new
    rep yet); "不等了" closes an open rep. */
 var liveRep=null,openReps=[];
+function repTimed(o){return cfg.lanes.some((l,L)=>(splitsData[spKey(o.i,o.rep,L)]||[]).some(t=>t!=null))}
 function repMissing(o){let m=0;cfg.lanes.forEach((l,L)=>{const a=splitsData[spKey(o.i,o.rep,L)]||[];for(let k=0;k<l.n;k++)if(a[k]==null)m++});return m}
 function repBegin(st,overflow){
   const nr={i:st.i,rep:st.rep,t0:now()-(overflow||0),gap:gapEff()};
-  if(liveRep&&!(liveRep.i===nr.i&&liveRep.rep===nr.rep)&&splitsOn()&&curRec&&repMissing(liveRep)>0){
+  // only a rep that was being timed (someone already touched) stays open; an untimed rep is simply passed
+  if(liveRep&&!(liveRep.i===nr.i&&liveRep.rep===nr.rep)&&splitsOn()&&curRec&&repMissing(liveRep)>0&&repTimed(liveRep)){
     openReps.push(liveRep);if(openReps.length>4)openReps.shift();
   }
   liveRep=nr;
