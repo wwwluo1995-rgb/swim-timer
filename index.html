@@ -888,6 +888,15 @@ dialog.sheet{border-radius:16px}
 @media (max-width:759px){dialog.sheet{border-radius:16px 16px 0 0}.nav a[aria-current="page"]::before{background:var(--railmark)}}
 /* the lap stopwatch and the toolbox clock share the board's digits */
 .lapclock{color:var(--p-swim)}
+/* earlier reps still timing */
+.spopen{flex:none;display:grid;gap:4px}
+.oprow{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;background:color-mix(in srgb,var(--pad) 22%,var(--board));border:1px solid var(--pad);border-radius:8px;padding:5px 8px;font-size:13px}
+.oprow b{font-size:13px}
+.oprow .opclk{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:18px;font-variant-numeric:tabular-nums}
+.oprow .opwho{flex:1 1 120px;color:var(--boardmuted);min-width:0}
+.oprow button{font-size:12px;padding:4px 10px;border-radius:999px;background:transparent;border:1px solid var(--boardline);color:var(--boardfg)}
+.fitgrid .splane button.carry{border-color:var(--pad);border-width:2px;border-bottom-width:4px}
+.fitgrid .splane button.carry span{color:var(--boardfg);font-style:italic}
 /* enlarged arrival card */
 .shade{position:fixed;inset:0;z-index:44;background:rgba(4,12,18,.55)}
 @media (min-width:760px){
@@ -1235,6 +1244,7 @@ dialog.sheet{border-radius:16px}
             <div class="spt"><b>到边计时</b><small id="spRep"></small></div>
             <div class="spact"><button type="button" id="spBigBtn" title="把到边计时放大到屏幕中间（Esc 缩回）">放大</button><button type="button" id="spHide" title="这次训练不用到边计时；要再打开，点上方「出发顺序」">收起</button><button type="button" id="spUndo">撤销</button><button type="button" id="spTable">成绩表</button><button type="button" id="spRm" title="点一下，再点要减掉的人（或左边的「N道」减掉整条道）" hidden>减人</button><button type="button" id="spArr">排人</button><button type="button" id="spOrder">顺序</button></div>
           </div>
+          <div class="spopen" id="spOpen" hidden></div>
           <div class="tray" id="spTray" hidden></div>
           <div class="splanes fitgrid" id="spBtns"></div>
         </section>
@@ -1684,6 +1694,23 @@ function markCue(sec,down=true,it=null,total=0){
 function staggerCue(n){notify(()=>beep(1320,350),n+' 号出发')}
 
 /* ---------- Timer engine ---------- */
+/* A rep that is not finished when the next one starts keeps its own clock.
+   liveRep = the rep in the water now {i,rep,t0,gap}; openReps = earlier reps still waiting for swimmers.
+   A tap on a swimmer who is still missing in an open rep is recorded there first (they have not started the new
+   rep yet); "不等了" closes an open rep. */
+var liveRep=null,openReps=[];
+function repTimed(o){return cfg.lanes.some((l,L)=>(splitsData[spKey(o.i,o.rep,L)]||[]).some(t=>t!=null))}
+function repMissing(o){let m=0;cfg.lanes.forEach((l,L)=>{const a=splitsData[spKey(o.i,o.rep,L)]||[];for(let k=0;k<l.n;k++)if(a[k]==null)m++});return m}
+function repBegin(st,overflow){
+  const nr={i:st.i,rep:st.rep,t0:now()-(overflow||0),gap:gapEff()};
+  // only a rep that was being timed (someone already touched) stays open; an untimed rep is simply passed
+  if(liveRep&&!(liveRep.i===nr.i&&liveRep.rep===nr.rep)&&splitsOn()&&curRec&&repMissing(liveRep)>0&&repTimed(liveRep)){
+    openReps.push(liveRep);if(openReps.length>4)openReps.shift();
+  }
+  liveRep=nr;
+}
+function openRepFor(L,k){return openReps.find(o=>o.i!==undefined&&!(splitsData[spKey(o.i,o.rep,L)]||[])[k]&&L<cfg.lanes.length&&k<cfg.lanes[L].n)}
+function closeOpenRep(o){openReps=openReps.filter(x=>x!==o);lastSpKey='';renderSplits(true)}
 function go(idx,{auto=false,overflow=0}={}){
   const prev=steps[si];
   if(prev&&(prev.phase==='swim'||prev.phase==='free'))lastSwimMs=auto&&prev.dur?prev.dur*1000:elapsed();
@@ -1691,8 +1718,9 @@ function go(idx,{auto=false,overflow=0}={}){
   si=Math.max(0,Math.min(steps.length-1,idx));
   acc=auto?overflow:0;segStart=now();lastCue=null;
   const st=steps[si];
-  if(st.phase==='swim'||st.phase==='free')stagDone=1;
-  if(st.phase==='done'){running=false;finishRecord()}
+  if(st.phase==='swim'||st.phase==='free'){stagDone=1;if(running||auto)repBegin(st,auto?overflow:0)}
+  else if(!running&&!auto){openReps=[];liveRep=null}   // moved by hand while stopped: start clean
+  if(st.phase==='done'){running=false;finishRecord();openReps=[];liveRep=null}
   if(running||auto)cue(st.phase);
   if(st.phase!=='group')hrEnd=0;
   render(true);saveSession();
@@ -2278,6 +2306,15 @@ function tapSplit(L,n,fromKey,at){
   if(!splitsOn()||!cfg.lanes[L]||n<1||n>cfg.lanes[L].n)return;
   const c=repContext();if(!c)return;
   const lag=at?Math.max(0,Math.min(2000,now()-at)):0;
+  const o=openRepFor(L,n-1);
+  if(o){
+    const ot=Math.round(((now()-lag-o.t0)/1000-(n-1)*o.gap)*100)/100,ok_=spKey(o.i,o.rep,L),oa=splitsData[ok_]||(splitsData[ok_]=[]);
+    oa[n-1]=ot;spLast.push({key:ok_,n,open:o});if(spLast.length>40)spLast.shift();
+    if(!repMissing(o))openReps=openReps.filter(x=>x!==o);
+    if(curRec)saveLib();try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}
+    toast(slotName(L,n-1)+'：记到第 '+(o.i+1)+' 组第 '+o.rep+' 趟 '+fmtSplit(ot));
+    lastSpKey='';renderSplits(true);return;
+  }
   const t=Math.round(((c.ms-lag)/1000-(n-1)*gapEff())*100)/100;
   if(t<=0){toast(slotName(L,n-1)+' 还没出发');return}
   const key=spKey(c.i,c.rep,L);const arr=splitsData[key]||(splitsData[key]=[]);
@@ -2413,11 +2450,26 @@ function renderSplits(force){
     buildLaneGrid($('spBtns'),tapSplit);
     fitSplits();
   }
+  // earlier reps still waiting: one line each with its own running clock
+  openReps=openReps.filter(o=>now()-o.t0<15*60e3&&repMissing(o)>0);
+  const op=$('spOpen'),opk=openReps.map(o=>o.i+'-'+o.rep).join(',');
+  op.hidden=!openReps.length;
+  if(op.dataset.k!==opk){op.dataset.k=opk;op.innerHTML='';
+    openReps.forEach(o=>{const r=document.createElement('div');r.className='oprow';
+      r.innerHTML='<b></b><span class="opclk"></span><span class="opwho"></span><button type="button">不等了</button>';
+      r.querySelector('b').textContent='第 '+(o.i+1)+' 组第 '+o.rep+' 趟还在计时';
+      r.querySelector('button').onclick=()=>{closeOpenRep(o);toast('第 '+(o.i+1)+' 组第 '+o.rep+' 趟不等了，没到边的不计成绩')};
+      r._o=o;op.appendChild(r)});
+    fitSplits();
+  }
+  op.querySelectorAll('.oprow').forEach(r=>{const o=r._o,miss=[];cfg.lanes.forEach((l,L)=>{const a=splitsData[spKey(o.i,o.rep,L)]||[];for(let k=0;k<l.n;k++)if(a[k]==null)miss.push(slotName(L,k))});
+    r.querySelector('.opclk').textContent=fmtTenth(now()-o.t0);r.querySelector('.opwho').textContent='还差 '+miss.join('、')});
   $('spBtns').querySelectorAll('button').forEach(b=>{
     const L=+b.dataset.l,n=+b.dataset.n,arr=splitsData[spKey(c.i,c.rep,L)]||[],t=arr[n-1],left=c.ms/1000-(n-1)*gapEff();
-    b.classList.toggle('got',t!=null);b.classList.toggle('wait',t==null&&left<=0);
-    const sp=b.querySelector('span');sp.textContent=t!=null?fmtSplit(t):left>0?'到边':'未出发';sp.className=t!=null?'':'ph';
-    const sm=b.querySelector('small');const df=t!=null&&it&&it.target>0?t-laneTarget(it,L):null;sm.textContent=df!=null?'比目标'+fmtDiff(df):'';sm.className=df==null?'':df>0?'slow':'fast';
+    const o=t==null?openRepFor(L,n-1):null;
+    b.classList.toggle('got',t!=null);b.classList.toggle('wait',t==null&&left<=0&&!o);b.classList.toggle('carry',!!o);
+    const sp=b.querySelector('span');sp.textContent=o?fmt(Math.max(0,(now()-o.t0)/1000-(n-1)*o.gap)):t!=null?fmtSplit(t):left>0?'到边':'未出发';sp.className=t!=null||o?'':'ph';
+    const sm=b.querySelector('small');const df=t!=null&&it&&it.target>0?t-laneTarget(it,L):null;sm.textContent=o?'第 '+o.rep+' 趟还在游':df!=null?'比目标'+fmtDiff(df):'';sm.className=o?'':df==null?'':df>0?'slow':'fast';
     b.setAttribute('aria-label',slotName(L,n-1)+(t!=null?' 成绩 '+fmtSplit(t):' 到边'));
   });
   $('spUndo').disabled=!spLast.length;
@@ -2500,7 +2552,8 @@ const laneSummary=()=>cfg.lanes.length>1?cfg.lanes.length+' 道（'+cfg.lanes.ma
 $('spTable').onclick=()=>openSpTable();
 const closeSp=()=>{const d=$('spDlg');try{d.close()}catch(e){d.removeAttribute('open')}};
 $('spClose').onclick=closeSp;$('spDone').onclick=closeSp;$('spDlg').addEventListener('click',e=>{if(e.target===$('spDlg'))closeSp()});
-$('spUndo').onclick=()=>{const u=spLast.pop();if(!u)return;const a=splitsData[u.key];if(a)delete a[u.n-1];if(curRec)saveLib();renderSplits(true);toast('已撤销'+(spLast.length?'（还能再撤 '+spLast.length+' 次）':''))};
+$('spUndo').onclick=()=>{const u=spLast.pop();if(!u)return;const a=splitsData[u.key];if(a)delete a[u.n-1];
+  if(u.open&&!openReps.includes(u.open)){openReps.push(u.open);lastSpKey=''}if(curRec)saveLib();renderSplits(true);toast('已撤销'+(spLast.length?'（还能再撤 '+spLast.length+' 次）':''))};
 
 /* ---------- Lineup dialog: lanes, order per lane, roster ---------- */
 let luForce=false; // opened from the toolbox: staggered starts are always on there
@@ -2738,7 +2791,7 @@ function toggle(){
   const st=steps[si];
   if(st.phase==='done'){if(!plan.length){location.hash='#plan';return}curRec=null;running=true;go(0);startRecord();holdWake();return}
   if(running){acc=elapsed();running=false;releaseWake()}
-  else{if(arrOn==='spBtns')arrClose();segStart=now();running=true;holdWake();startRecord();if(acc===0)cue(st.phase);else notify(()=>beep(1100,300),'继续')}
+  else{if(arrOn==='spBtns')arrClose();segStart=now();running=true;holdWake();startRecord();if(acc===0){cue(st.phase);if(st.phase==='swim'||st.phase==='free')repBegin(st,0)}else notify(()=>beep(1100,300),'继续')}
   render(true);saveSession();
 }
 $('start').onclick=toggle;
