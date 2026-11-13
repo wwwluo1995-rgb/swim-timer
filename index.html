@@ -490,6 +490,10 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
 .lanehd{display:flex;align-items:center;gap:10px}
 .lanehd>b{font-size:16px;color:var(--accent);flex:none}
 .lus.mini{grid-template-columns:40px 64px 40px;padding:4px 6px}
+.lus.mini.lanetg{grid-template-columns:auto 36px 64px 36px}
+.lus.mini.lanetg span{font-size:12px;margin:0 2px 0 4px}
+.lus.mini.lanetg output{font-size:16px}
+.lanehd{flex-wrap:wrap}
 .lanerm{margin-left:auto;background:transparent;color:var(--danger);font-size:13px;padding:5px 10px}
 #luAddLane{justify-self:start}
 .laneh{margin:12px 0 4px;font-weight:700;color:var(--accent)}
@@ -874,7 +878,8 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 .fitgrid .splane button.got kbd{color:inherit;border-color:currentColor;background:transparent;opacity:.7}
 .fitgrid .splane button.wait{opacity:.42;border-bottom-color:var(--boardline)}
 .fitgrid .splane button.cur{box-shadow:inset 0 0 0 2px var(--boardfg);border-color:var(--boardfg)}
-.fitgrid .splh{background:var(--boardfg);color:var(--board);border-radius:6px;font-weight:800;font-size:13px;padding:0 2px}
+.fitgrid .splh{background:var(--boardfg);color:var(--board);border-radius:6px;font-weight:800;font-size:13px;padding:0 2px;display:grid;place-content:center;justify-items:center;cursor:pointer}
+.fitgrid .splh small{font-family:var(--f-num);font-size:11px;font-weight:700;opacity:.8;line-height:1}
 .fitgrid.arranging .splane button,.fitgrid.dragok .splane button[data-empty]{border-bottom-width:1px}
 .stu{border-radius:6px;box-shadow:none}
 .toast{border-radius:10px}
@@ -918,6 +923,7 @@ dialog.sheet{border-radius:16px}
               <p class="luoff" id="luGapHint" hidden>0 秒 = 不自动间隔。工具箱「分组平均」里是一批一批出发：每条道的 1 号是第 1 批，这一批到边后再按「出发」放下一批。训练计时页里是同一道的人一起出发。</p>
               
             </div>
+            <p class="luoff" id="luTgHint">每条道的「目标」按每 100 米比计划的目标快几秒或慢几秒算（例：第 2 道慢 5″，8×50 目标 55″ 就变成 57″5）。计时和出发间隔仍按计划的目标，到边成绩按各道自己的目标比。</p>
             <ol class="lanelist" id="luSlots"></ol>
             <button type="button" class="add" id="luAddLane">＋ 增加泳道（几道同时出发）</button>
             <div class="row"><button type="button" id="luRoster">管理学员名单</button><button type="button" id="luFill">按名单顺序填入</button></div>
@@ -1693,7 +1699,7 @@ function render(force){
     $('bar').style.width=plan.length?'100%':'0%';$('rep').innerHTML='';
   }else{
     $('title').textContent=nameOf(it,st.i);
-    const parts=[it.target>0?'目标 '+fmtShort(it.target):'手动计时'];
+    const parts=[it.target>0?(lanesDiffer()?'目标 '+laneTargetsTxt(it):'目标 '+fmtShort(it.target)):'手动计时'];
     if(it.rest>0)parts.push('间歇 '+fmtShort(it.rest));
     if(it.target>0&&it.rest>0)parts.push('每 '+fmt(it.target+it.rest)+' 出发');
     if(it.rEvery>0)parts.push('每 '+fmtShort(it.rEvery)+' 报时');else if(it.rEvery===-1)parts.push('不报时');
@@ -2018,7 +2024,7 @@ const hasSplits=d=>!!d&&Object.keys(d).some(k=>Array.isArray(d[k])&&d[k].some(t=
 function startRecord(){
   if(curRec||!plan.length)return;
   spLast=[];
-  const r={id:uid(),at:Date.now(),name:dstr(Date.now(),true)+' 训练',plan:clone(plan),done:false,splits:{},gap:cfg.gapSec,names:allLaneNames()};
+  const r={id:uid(),at:Date.now(),name:dstr(Date.now(),true)+' 训练',plan:clone(plan),done:false,splits:{},gap:cfg.gapSec,names:allLaneNames(),laneOff:laneOffs()};
   splitsData=r.splits;
   lib.records.unshift(r);lib.records=lib.records.slice(0,300);curRec=r.id;saveLib();
 }
@@ -2059,7 +2065,7 @@ function renderLib(){
     if(libTab==='records')btn('存为常用计划','',()=>{lib.plans.unshift({id:uid(),name:e.name.replace(/ 训练$/,' 计划'),plan:clone(e.plan),created:Date.now()});saveLib();toast('已存到「我的计划」');renderLib()});
     else btn('重命名','',()=>{const inp=document.createElement('input');inp.type='text';inp.className='rn';inp.value=e.name;inp.maxLength=40;inp.setAttribute('aria-label','新名称');h.replaceWith(inp);inp.focus();inp.select();
       const fin=()=>{const v=inp.value.trim();if(v)e.name=v;saveLib();renderLib()};inp.onblur=fin;inp.onkeydown=k=>{if(k.key==='Enter')inp.blur();if(k.key==='Escape'){inp.value=e.name;inp.blur()}}});
-    if(hasSplits(e.splits))btn('复制成绩','',()=>copyText(splitsText(e.plan,e.splits,e.names,'泳鲨训练成绩 · '+dstr(e.at),e.setNames),'成绩已复制，可以直接粘贴到微信'));
+    if(hasSplits(e.splits))btn('复制成绩','',()=>copyText(splitsText(e.plan,e.splits,e.names,'泳鲨训练成绩 · '+dstr(e.at),e.setNames,e.laneOff||[]),'成绩已复制，可以直接粘贴到微信'));
     btn('删除','del',()=>{
       const arr=libTab==='plans'?lib.plans:lib.records,ix=arr.indexOf(e),wasCur=e.id===curRec;
       arr.splice(ix,1);if(wasCur)curRec=null;saveLib();renderLib();
@@ -2070,7 +2076,7 @@ function renderLib(){
       const box=document.createElement('div');box.className='sptable';
       [...new Set(Object.keys(e.splits).map(k=>+k.split('-')[0]))].sort((a,b)=>a-b).forEach(gi=>{
         const t=document.createElement('p');t.style.margin='10px 0 4px';t.style.fontWeight='600';t.textContent='第 '+(gi+1)+' 组 · '+(e.plan[gi]?shortName(e.plan[gi]):'');box.appendChild(t);
-        box.appendChild(laneTables(e.plan[gi],gi,e.splits,(e.setNames&&e.setNames[gi])||e.names));
+        box.appendChild(laneTables(e.plan[gi],gi,e.splits,(e.setNames&&e.setNames[gi])||e.names,e.laneOff||[]));
       });
       d2.appendChild(box);det.after(d2);li.append(h,meta,det,d2,acts);
     }else li.append(h,meta,det,acts);
@@ -2100,7 +2106,7 @@ function copyText(txt,okMsg){
 const CIRC='①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
 // plain-text results, one line per swimmer, ready to paste into a chat
 // setNames (optional): {group index: names per lane} when the lineup changed between groups
-function splitsText(p,data,recNames,title,setNames){
+function splitsText(p,data,recNames,title,setNames,offs){
   const norm=n=>Array.isArray(n)&&Array.isArray(n[0])?n:[n||[]];let perLane=norm(recNames);
   const out=[title];
   [...new Set(Object.keys(data).map(k=>+k.split('-')[0]))].sort((a,b)=>a-b).forEach(gi=>{
@@ -2110,7 +2116,7 @@ function splitsText(p,data,recNames,title,setNames){
     out.push('','第 '+(gi+1)+' 组 · '+(it?shortName(it)+(it.target>0?'（目标 '+fmtShort(it.target)+'）':''):''));
     const used=[...new Set(ks.map(keyLane))].sort((a,b)=>a-b);
     used.forEach(L=>{
-      if(used.length>1||L>0)out.push('【第 '+(L+1)+' 道】');
+      if(used.length>1||L>0)out.push('【第 '+(L+1)+' 道'+(it&&it.target>0&&lanesDiffer(offs)?' · 目标 '+fmtT(laneTarget(it,L,offs)):'')+'】');
       const lk=ks.filter(k=>keyLane(k)===L),cols=Math.max(...lk.map(k=>data[k].length));
       for(let c=0;c<cols;c++){
         const ts=[];lk.forEach(k=>{const t=data[k][c];if(t!=null)ts.push([parseInt(k.split('-')[1]),t])});
@@ -2125,7 +2131,7 @@ function splitsText(p,data,recNames,title,setNames){
 }
 function copyLive(){
   if(!hasSplits(splitsData)){toast('还没有到边成绩');return}
-  const r=recOf();copyText(splitsText(plan,splitsData,allLaneNames(),'泳鲨训练成绩 · '+dstr(r?r.at:Date.now()),r&&r.setNames),'成绩已复制，可以直接粘贴到微信');
+  const r=recOf();copyText(splitsText(plan,splitsData,allLaneNames(),'泳鲨训练成绩 · '+dstr(r?r.at:Date.now()),r&&r.setNames,laneOffs()),'成绩已复制，可以直接粘贴到微信');
 }
 $('spCopy').onclick=copyLive;$('doneCopy').onclick=copyLive;$('doneSp').onclick=()=>openSpTable();
 $('bkExport').onclick=()=>{
@@ -2149,6 +2155,7 @@ $('bkFile').onchange=()=>{
       const clean=e=>{if(e.splits&&typeof e.splits==='object'){Object.keys(e.splits).forEach(k=>{const a=e.splits[k];
           if(!/^\d+-\d+(@\d+)?$/.test(k)||!Array.isArray(a)||!a.every(t=>t==null||typeof t==='number'))delete e.splits[k]})}else delete e.splits;
         const okN=n=>Array.isArray(n)&&n.every(a=>Array.isArray(a)&&a.every(x=>typeof x==='string'));
+        if(Array.isArray(e.laneOff))e.laneOff=e.laneOff.slice(0,8).map(x=>Math.max(-20,Math.min(30,Math.round(+x)||0)));else delete e.laneOff;
         if(e.setNames&&typeof e.setNames==='object'&&!Array.isArray(e.setNames))Object.keys(e.setNames).forEach(k=>{if(!/^\d+$/.test(k)||!okN(e.setNames[k]))delete e.setNames[k]});else delete e.setNames;
         return e};
       let np=0,nr=0,nn=0;
@@ -2195,6 +2202,19 @@ const fmtDiff=d=>(d<=0?'快 ':'慢 ')+fmtSplit(Math.abs(d));
 // Arrival timing shows whenever it is wanted, not only with staggered starts: without a start gap everyone
 // in a lane leaves together on the whistle and each swimmer's time is simply the time to the wall.
 const splitsOn=()=>cfg.stagger||cfg.arrive!==false;
+/* Per-lane targets: each lane can be faster or slower than the plan's target by a number of seconds per 100 m
+   (lane 1 the fast group, lane 2 a slower one...). The clock and the send-offs still follow the plan's target;
+   each lane's arrivals are compared with that lane's own target. offs = list of offsets (a record's saved ones). */
+const laneOffs=()=>cfg.lanes.map(l=>+l.off||0);
+function laneTarget(it,L,offs){
+  if(!it||!(it.target>0))return 0;
+  const o=(offs||laneOffs())[L]||0;
+  return Math.max(1,Math.round((it.target+o*(it.dist||100)/100)*100)/100);
+}
+const lanesDiffer=offs=>(offs||laneOffs()).some(x=>x);
+const fmtT=t=>fmtSplit(t);
+// "1道 55" / 2道 57"5" for the lanes in use
+const laneTargetsTxt=(it,offs)=>cfg.lanes.map((_,L)=>(L+1)+'道 '+fmtT(laneTarget(it,L,offs))).join(' / ');
 const gapEff=()=>cfg.stagger?cfg.gapSec:0;
 function tapSplit(L,n,fromKey,at){
   if(arrLive('spBtns'))return;
@@ -2233,7 +2253,9 @@ function buildLaneGrid(wrap,onTap){
   cfg.lanes.forEach((l,L)=>{
     const sec=document.createElement('div');sec.className='splane spbtns';
     if(multi){const h=document.createElement('div');h.className='splh';h.textContent=(L+1)+'道';h.title='第 '+(L+1)+' 道 · '+l.n+' 人';
-      h.onclick=()=>{if(rmOn===wrap.id)removeLane(wrap.id,L,h)};sec.appendChild(h)}
+      h.onclick=()=>{if(rmOn===wrap.id)removeLane(wrap.id,L,h);else if(wrap.id==='spBtns'&&!arrLive(wrap.id))openLu()};
+      if(wrap.id==='spBtns'){const o=+l.off||0;if(o){const s=document.createElement('small');s.textContent=(o>0?'+':'−')+Math.abs(o);s.title='每 100 米'+(o>0?'慢 ':'快 ')+Math.abs(o)+' 秒';h.appendChild(s)}}
+      sec.appendChild(h)}
     laneNames(L).forEach((nm,k)=>{const b=document.createElement('button');b.type='button';b.dataset.l=L;b.dataset.n=k+1;
       b.innerHTML='<b></b><span></span><small></small>';b.querySelector('b').textContent=multi&&!l.lineup[k]?(k+1)+' 号':nm;
       if(!l.lineup[k])b.dataset.empty='1';
@@ -2328,9 +2350,9 @@ function renderSplits(force){
   box.hidden=!c;if(!c){if(spBig)setBig(false);return}
   $('spHide').hidden=cfg.stagger;
   const it=plan[c.i],multi=cfg.lanes.length>1;
-  const sk=c.i+'-'+c.rep+'|'+JSON.stringify(allLaneNames());
+  const sk=c.i+'-'+c.rep+'|'+JSON.stringify(allLaneNames())+'|'+laneOffs().join(',');
   if(force||sk!==lastSpKey){
-    lastSpKey=sk;$('spRep').textContent='第 '+(c.i+1)+' 组 · 第 '+c.rep+' 趟';
+    lastSpKey=sk;$('spRep').textContent='第 '+(c.i+1)+' 组 · 第 '+c.rep+' 趟'+(it&&it.target>0&&lanesDiffer()?' · 目标 '+laneTargetsTxt(it):'');
     buildLaneGrid($('spBtns'),tapSplit);
     fitSplits();
   }
@@ -2338,7 +2360,7 @@ function renderSplits(force){
     const L=+b.dataset.l,n=+b.dataset.n,arr=splitsData[spKey(c.i,c.rep,L)]||[],t=arr[n-1],left=c.ms/1000-(n-1)*gapEff();
     b.classList.toggle('got',t!=null);b.classList.toggle('wait',t==null&&left<=0);
     const sp=b.querySelector('span');sp.textContent=t!=null?fmtSplit(t):left>0?'到边':'未出发';sp.className=t!=null?'':'ph';
-    const sm=b.querySelector('small');const df=t!=null&&it&&it.target>0?t-it.target:null;sm.textContent=df!=null?'比目标'+fmtDiff(df):'';sm.className=df==null?'':df>0?'slow':'fast';
+    const sm=b.querySelector('small');const df=t!=null&&it&&it.target>0?t-laneTarget(it,L):null;sm.textContent=df!=null?'比目标'+fmtDiff(df):'';sm.className=df==null?'':df>0?'slow':'fast';
     b.setAttribute('aria-label',slotName(L,n-1)+(t!=null?' 成绩 '+fmtSplit(t):' 到边'));
   });
   $('spUndo').disabled=!spLast.length;
@@ -2372,7 +2394,7 @@ function fitGrid(box,wrap){
 try{const ro=new ResizeObserver(()=>{fitSplits();fitGrid($('avgBox'),$('avgBtns'))});ro.observe($('spBtns'));ro.observe($('avgBtns'))}catch(e){}
 window.addEventListener('resize',()=>arrRefreshAll());
 // names: array of strings for one lane
-function splitTable(it,gi,data,names,L=0){
+function splitTable(it,gi,data,names,L=0,offs){
   const ks=Object.keys(data).filter(k=>+k.split('-')[0]===gi&&keyLane(k)===L);
   const reps=it?it.reps:Math.max(1,...ks.map(k=>parseInt(k.split('-')[1])));
   const cols=Math.max(names.length,...ks.map(k=>data[k].length));
@@ -2382,7 +2404,7 @@ function splitTable(it,gi,data,names,L=0){
   const sums=Array(cols).fill(0),cnt=Array(cols).fill(0),best=Array(cols).fill(Infinity);
   for(let r=1;r<=reps;r++){h+='<tr><td>第 '+r+' 趟</td>';const a=data[spKey(gi,r,L)]||[];
     for(let k=0;k<cols;k++){const t=a[k];if(t!=null){sums[k]+=t;cnt[k]++;best[k]=Math.min(best[k],t);
-      const df=it&&it.target>0?t-it.target:null;h+='<td><b>'+fmtSplit(t)+'</b>'+(df!=null?'<small class="'+(df>0?'slow':'fast')+'">'+fmtDiff(df)+'</small>':'')+'</td>'}else h+='<td>—</td>'}
+      const df=it&&it.target>0?t-laneTarget(it,L,offs):null;h+='<td><b>'+fmtSplit(t)+'</b>'+(df!=null?'<small class="'+(df>0?'slow':'fast')+'">'+fmtDiff(df)+'</small>':'')+'</td>'}else h+='<td>—</td>'}
     h+='</tr>'}
   h+='</tbody><tfoot><tr><td>平均</td>';for(let k=0;k<cols;k++)h+='<td>'+(cnt[k]?'<b>'+fmtSplit(Math.round(sums[k]/cnt[k]*100)/100)+'</b>':'—')+'</td>';
   h+='</tr><tr><td>最快</td>';for(let k=0;k<cols;k++)h+='<td>'+(cnt[k]?fmtSplit(best[k]):'—')+'</td>';h+='</tr></tfoot>';
@@ -2390,14 +2412,14 @@ function splitTable(it,gi,data,names,L=0){
   return tb;
 }
 // all lane tables for one group; recNames is a record's saved names (old records: one flat list)
-function laneTables(it,gi,data,recNames){
+function laneTables(it,gi,data,recNames,offs){
   const frag=document.createDocumentFragment();
   const perLane=Array.isArray(recNames)&&Array.isArray(recNames[0])?recNames:[recNames||[]];
   const used=[...new Set(Object.keys(data).filter(k=>+k.split('-')[0]===gi).map(keyLane))].sort((a,b)=>a-b);
   const list=used.length?used:[0];
   list.forEach(L=>{
-    if(list.length>1||L>0){const h=document.createElement('p');h.className='laneh';h.textContent='第 '+(L+1)+' 道';frag.appendChild(h)}
-    frag.appendChild(splitTable(it,gi,data,perLane[L]||[],L));
+    if(list.length>1||L>0){const h=document.createElement('p');h.className='laneh';h.textContent='第 '+(L+1)+' 道'+(it&&it.target>0&&lanesDiffer(offs)?' · 目标 '+fmtT(laneTarget(it,L,offs)):'');frag.appendChild(h)}
+    frag.appendChild(splitTable(it,gi,data,perLane[L]||[],L,offs));
   });
   return frag;
 }
@@ -2411,7 +2433,7 @@ function openSpTable(gi){
   $('spBody').innerHTML='';
   if(plan[gi]){const rr=recOf(),names=(rr&&rr.setNames&&rr.setNames[gi])||allLaneNames();const used=keys.filter(k=>+k.split('-')[0]===gi).map(keyLane);
     const list=[...new Set([...cfg.lanes.map((_,L)=>L),...used])].sort((a,b)=>a-b);
-    list.forEach(L=>{if(list.length>1){const h=document.createElement('p');h.className='laneh';h.textContent='第 '+(L+1)+' 道';$('spBody').appendChild(h)}
+    list.forEach(L=>{if(list.length>1){const h=document.createElement('p');h.className='laneh';h.textContent='第 '+(L+1)+' 道'+(plan[gi].target>0&&lanesDiffer()?' · 目标 '+fmtT(laneTarget(plan[gi],L)):'');$('spBody').appendChild(h)}
       $('spBody').appendChild(splitTable(plan[gi],gi,splitsData,names[L]||[],L))})}
   $('spSub').textContent=gapTxt()+' · '+laneSummary();
   const d=$('spDlg');if(!d.open){try{d.showModal()}catch(e){d.setAttribute('open','')}}
@@ -2426,7 +2448,10 @@ $('spUndo').onclick=()=>{const u=spLast.pop();if(!u)return;const a=splitsData[u.
 /* ---------- Lineup dialog: lanes, order per lane, roster ---------- */
 let luForce=false; // opened from the toolbox: staggered starts are always on there
 function renderLineup(){
-  const on=cfg.stagger||luForce;
+  // lanes (head count, order, targets) matter whenever arrivals are timed, staggered or not
+  const on=cfg.stagger||luForce||cfg.arrive!==false;
+  $('luBody').querySelector('.lusteps').hidden=!(cfg.stagger||luForce);
+  $('luTgHint').hidden=luForce;
   $('luOn').checked=cfg.stagger;$('luArr').checked=cfg.arrive!==false;$('luArr').closest('label').hidden=luForce||cfg.stagger;$('luOn').closest('label').hidden=luForce;$('luBody').hidden=!on;$('luOff').hidden=on;
   $('luGap').textContent=cfg.gapSec+'"';$('luGapHint').hidden=cfg.gapSec>0;
   $('luGapM').disabled=cfg.gapSec<=0;$('luGapP').disabled=cfg.gapSec>=60;
@@ -2441,6 +2466,14 @@ function renderLineup(){
     const [bm,bp]=st.querySelectorAll('button');bm.disabled=l.n<=1;bp.disabled=l.n>=10;
     bm.onclick=()=>{l.n=Math.max(1,l.n-1);lineupChanged()};bp.onclick=()=>{l.n=Math.min(10,l.n+1);lineupChanged()};
     hd.append(t,st);
+    // this lane's target against the plan: seconds per 100 m, negative = faster
+    const tg=document.createElement('div');tg.className='lus mini lanetg';const o=+l.off||0;
+    tg.innerHTML='<span>目标</span><button type="button" aria-label="第 '+(L+1)+' 道目标快 1 秒">−</button><output></output><button type="button" aria-label="第 '+(L+1)+' 道目标慢 1 秒">+</button>';
+    tg.querySelector('output').textContent=o?(o>0?'慢 ':'快 ')+Math.abs(o)+'″':'按计划';
+    tg.title='每 100 米比计划的目标慢（+）或快（−）几秒';
+    const [tm,tp]=tg.querySelectorAll('button');tm.disabled=o<=-20;tp.disabled=o>=30;
+    tm.onclick=()=>{l.off=Math.max(-20,o-1);lineupChanged()};tp.onclick=()=>{l.off=Math.min(30,o+1);lineupChanged()};
+    hd.appendChild(tg);
     if(cfg.lanes.length>1){const rm=document.createElement('button');rm.type='button';rm.className='lanerm';rm.textContent='删除这道';
       rm.onclick=()=>{if(!rm.dataset.armed){rm.dataset.armed='1';rm.textContent='再点一次';setTimeout(()=>{if(rm.isConnected){delete rm.dataset.armed;rm.textContent='删除这道'}},3000);return}
         cfg.lanes.splice(L,1);lineupChanged()};hd.appendChild(rm)}
@@ -2464,7 +2497,7 @@ function renderLineup(){
     card.appendChild(slots);ol.appendChild(card);
   });
 }
-function lineupChanged(){syncSwimmers();saveCfg();lastSpKey='';cfgSummary();renderSplits(true);const r=recOf();if(r&&!r.done){r.names=allLaneNames();saveLib()}tbLanesChanged();arrRefreshAll()}
+function lineupChanged(){syncSwimmers();saveCfg();lastSpKey='';cfgSummary();renderSplits(true);const r=recOf();if(r&&!r.done){r.names=allLaneNames();r.laneOff=laneOffs();saveLib()}tbLanesChanged();arrRefreshAll()}
 $('luOn').onchange=()=>{cfg.stagger=$('luOn').checked;lineupChanged()};
 $('luArr').onchange=()=>{cfg.arrive=$('luArr').checked;saveCfg();lastSpKey='';renderSplits(true)};
 $('luGapM').onclick=()=>{cfg.gapSec=Math.max(0,cfg.gapSec-1);lineupChanged()};
