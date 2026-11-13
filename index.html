@@ -882,6 +882,17 @@ dialog.sheet{border-radius:16px}
 @media (max-width:759px){dialog.sheet{border-radius:16px 16px 0 0}.nav a[aria-current="page"]::before{background:var(--railmark)}}
 /* the lap stopwatch and the toolbox clock share the board's digits */
 .lapclock{color:var(--p-swim)}
+/* enlarged arrival card */
+.shade{position:fixed;inset:0;z-index:44;background:rgba(4,12,18,.55)}
+@media (min-width:760px){
+  #splits.big{position:fixed;z-index:45;top:4vh;bottom:4vh;left:max(16px,calc(50% - 620px));right:max(16px,calc(50% - 620px));height:auto!important;max-height:none!important;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  /* the side column is its own stacking layer (sticky): lift it over the shade and hide its other card meanwhile */
+  body.spbig .side{z-index:46}
+  body.spbig .side>.tabs{visibility:hidden}
+  #splits.big .spt b{font-size:20px}
+  #splits.big .spact button{font-size:14px;padding:7px 14px}
+}
+#spBigBtn{font-weight:700}
 /* touch screens: a field under 16px makes iOS zoom in when it gets the focus (kept last so it wins over the size rules above) */
 @media (hover:none),(pointer:coarse){
   select,input[type=text],textarea,.item select,.item input[type=text],.luslots select,#libSearch,#spGroup,#qeGroup{font-size:16px}
@@ -890,6 +901,7 @@ dialog.sheet{border-radius:16px}
 </head>
 <body>
 <div class="watermark" aria-hidden="true"></div>
+<div class="shade" id="spShade" hidden></div>
 <div class="toast" id="toast" role="status" hidden><span id="toastMsg"></span><button type="button" id="toastAct" hidden></button></div>
 <dialog class="sheet" id="luDlg" aria-labelledby="luTitle">
   <header>
@@ -897,7 +909,8 @@ dialog.sheet{border-radius:16px}
     <button type="button" class="x" id="luClose" aria-label="关闭">✕</button>
   </header>
   <div class="cfgbody lineup">
-    <label class="tg"><input type="checkbox" id="luOn"><span class="sw" aria-hidden="true"></span><span><b>间隔出发</b><small>关掉后只报「出发」，没有到边按钮</small></span></label>
+    <label class="tg"><input type="checkbox" id="luOn"><span class="sw" aria-hidden="true"></span><span><b>间隔出发</b><small>关掉后大家一起出发，只报「出发」</small></span></label>
+    <label class="tg"><input type="checkbox" id="luArr"><span class="sw" aria-hidden="true"></span><span><b>到边计时</b><small>不间隔出发时也显示每个人的到边按钮，按到边记成绩</small></span></label>
           <p class="luoff" id="luOff">打开后，同一道的学生按顺序间隔出发，每人有自己的「到边」按钮，自动算出个人成绩。</p>
           <div id="luBody">
             <div class="lusteps">
@@ -1199,7 +1212,7 @@ dialog.sheet{border-radius:16px}
         <section class="arrive" id="splits" hidden aria-label="到边计时">
           <div class="sphead">
             <div class="spt"><b>到边计时</b><small id="spRep"></small></div>
-            <div class="spact"><button type="button" id="spUndo">撤销</button><button type="button" id="spTable">成绩表</button><button type="button" id="spRm" title="点一下，再点要减掉的人（或左边的「N道」减掉整条道）" hidden>减人</button><button type="button" id="spArr">排人</button><button type="button" id="spOrder">顺序</button></div>
+            <div class="spact"><button type="button" id="spBigBtn" title="把到边计时放大到屏幕中间（Esc 缩回）">放大</button><button type="button" id="spHide" title="这次训练不用到边计时；要再打开，点上方「出发顺序」">收起</button><button type="button" id="spUndo">撤销</button><button type="button" id="spTable">成绩表</button><button type="button" id="spRm" title="点一下，再点要减掉的人（或左边的「N道」减掉整条道）" hidden>减人</button><button type="button" id="spArr">排人</button><button type="button" id="spOrder">顺序</button></div>
           </div>
           <div class="tray" id="spTray" hidden></div>
           <div class="splanes fitgrid" id="spBtns"></div>
@@ -2179,12 +2192,16 @@ function repContext(){
 const fmtSplit=t=>{const cs=Math.round(t*100),m=Math.floor(cs/6000),sec=Math.floor(cs%6000/100),h=String(cs%100).padStart(2,'0');return m?m+':'+String(sec).padStart(2,'0')+'″'+h:sec+'″'+h};
 const fmtDiff=d=>(d<=0?'快 ':'慢 ')+fmtSplit(Math.abs(d));
 // at (optional) = performance time of the finger-down that this tap came from
+// Arrival timing shows whenever it is wanted, not only with staggered starts: without a start gap everyone
+// in a lane leaves together on the whistle and each swimmer's time is simply the time to the wall.
+const splitsOn=()=>cfg.stagger||cfg.arrive!==false;
+const gapEff=()=>cfg.stagger?cfg.gapSec:0;
 function tapSplit(L,n,fromKey,at){
   if(arrLive('spBtns'))return;
-  if(!cfg.stagger||!cfg.lanes[L]||n<1||n>cfg.lanes[L].n)return;
+  if(!splitsOn()||!cfg.lanes[L]||n<1||n>cfg.lanes[L].n)return;
   const c=repContext();if(!c)return;
   const lag=at?Math.max(0,Math.min(2000,now()-at)):0;
-  const t=Math.round(((c.ms-lag)/1000-(n-1)*cfg.gapSec)*100)/100;
+  const t=Math.round(((c.ms-lag)/1000-(n-1)*gapEff())*100)/100;
   if(t<=0){toast(slotName(L,n-1)+' 还没出发');return}
   const key=spKey(c.i,c.rep,L);const arr=splitsData[key]||(splitsData[key]=[]);
   // a time that is in is never replaced by another tap (a second touch, a neighbouring key): undo first
@@ -2307,8 +2324,9 @@ function removeLane(id,L,el){
 $('avgRm').onclick=()=>rmSet(rmOn==='avgBtns'?null:'avgBtns');
 $('spRm').onclick=()=>rmSet(rmOn==='spBtns'?null:'spBtns');
 function renderSplits(force){
-  const box=$('splits');const c=cfg.stagger?repContext():null;
-  box.hidden=!c;if(!c)return;
+  const box=$('splits');const c=splitsOn()?repContext():null;
+  box.hidden=!c;if(!c){if(spBig)setBig(false);return}
+  $('spHide').hidden=cfg.stagger;
   const it=plan[c.i],multi=cfg.lanes.length>1;
   const sk=c.i+'-'+c.rep+'|'+JSON.stringify(allLaneNames());
   if(force||sk!==lastSpKey){
@@ -2317,7 +2335,7 @@ function renderSplits(force){
     fitSplits();
   }
   $('spBtns').querySelectorAll('button').forEach(b=>{
-    const L=+b.dataset.l,n=+b.dataset.n,arr=splitsData[spKey(c.i,c.rep,L)]||[],t=arr[n-1],left=c.ms/1000-(n-1)*cfg.gapSec;
+    const L=+b.dataset.l,n=+b.dataset.n,arr=splitsData[spKey(c.i,c.rep,L)]||[],t=arr[n-1],left=c.ms/1000-(n-1)*gapEff();
     b.classList.toggle('got',t!=null);b.classList.toggle('wait',t==null&&left<=0);
     const sp=b.querySelector('span');sp.textContent=t!=null?fmtSplit(t):left>0?'到边':'未出发';sp.className=t!=null?'':'ph';
     const sm=b.querySelector('small');const df=t!=null&&it&&it.target>0?t-it.target:null;sm.textContent=df!=null?'比目标'+fmtDiff(df):'';sm.className=df==null?'':df>0?'slow':'fast';
@@ -2409,7 +2427,7 @@ $('spUndo').onclick=()=>{const u=spLast.pop();if(!u)return;const a=splitsData[u.
 let luForce=false; // opened from the toolbox: staggered starts are always on there
 function renderLineup(){
   const on=cfg.stagger||luForce;
-  $('luOn').checked=cfg.stagger;$('luOn').closest('label').hidden=luForce;$('luBody').hidden=!on;$('luOff').hidden=on;
+  $('luOn').checked=cfg.stagger;$('luArr').checked=cfg.arrive!==false;$('luArr').closest('label').hidden=luForce||cfg.stagger;$('luOn').closest('label').hidden=luForce;$('luBody').hidden=!on;$('luOff').hidden=on;
   $('luGap').textContent=cfg.gapSec+'"';$('luGapHint').hidden=cfg.gapSec>0;
   $('luGapM').disabled=cfg.gapSec<=0;$('luGapP').disabled=cfg.gapSec>=60;
   $('luAddLane').disabled=cfg.lanes.length>=8;
@@ -2448,6 +2466,7 @@ function renderLineup(){
 }
 function lineupChanged(){syncSwimmers();saveCfg();lastSpKey='';cfgSummary();renderSplits(true);const r=recOf();if(r&&!r.done){r.names=allLaneNames();saveLib()}tbLanesChanged();arrRefreshAll()}
 $('luOn').onchange=()=>{cfg.stagger=$('luOn').checked;lineupChanged()};
+$('luArr').onchange=()=>{cfg.arrive=$('luArr').checked;saveCfg();lastSpKey='';renderSplits(true)};
 $('luGapM').onclick=()=>{cfg.gapSec=Math.max(0,cfg.gapSec-1);lineupChanged()};
 $('luGapP').onclick=()=>{cfg.gapSec=Math.min(60,cfg.gapSec+1);lineupChanged()};
 $('luAddLane').onclick=()=>{if(cfg.lanes.length>=8)return;const last=cfg.lanes[cfg.lanes.length-1];cfg.lanes.push({n:last?last.n:3,lineup:[]});lineupChanged();
@@ -2707,8 +2726,9 @@ document.addEventListener('keydown',e=>{
     if(e.code==='Space'){e.preventDefault();unfocus();toggle()}
     else if(e.key==='ArrowRight'){audio();go(si+1)}
     else if(e.key==='ArrowLeft'){audio();go(si-1)}
-    else if(e.key==='Backspace'&&cfg.stagger){e.preventDefault();$('spUndo').click()}
-    else if(lk&&cfg.stagger&&!arrLive('spBtns')){e.preventDefault();tapSplit(lk[0],lk[1])}
+    else if(e.key==='Escape'&&spBig){setBig(false)}
+    else if(e.key==='Backspace'&&splitsOn()){e.preventDefault();$('spUndo').click()}
+    else if(lk&&splitsOn()&&!arrLive('spBtns')){e.preventDefault();tapSplit(lk[0],lk[1])}
   }else if(location.hash.startsWith('#tools')){
     if(tb.tab==='lap'){
       if(e.code==='Space'){e.preventDefault();unfocus();lapToggle()}
@@ -2826,6 +2846,7 @@ function arrRefresh(id){
 // training page: explicit arrange mode
 function arrOpen(){
   const id='spBtns',box=$(ARR[id].box);
+  if(innerWidth>=760&&!spBig)setBig(true,false);
   arrOn=id;arrSel=null;box.classList.add('arr');$(ARR[id].tray).hidden=false;$(ARR[id].btn).textContent='排好了';
   $(id).classList.add('plus');$('spRm').hidden=false;
   try{
@@ -2838,11 +2859,25 @@ function arrClose(){
   if(!arrOn)return;const id=arrOn,a=ARR[id];arrOn=null;arrSel=null;
   $(a.tray).hidden=true;$(id).classList.remove('arranging','plus');$(a.btn).textContent='排人';
   $('spRm').hidden=true;if(rmOn===id)rmSet(null);
+  if(spBig&&!spBigUser)setBig(false);
   $(a.box).classList.remove('arr');
   $(id).querySelectorAll('.sel,.over').forEach(x=>x.classList.remove('sel','over'));
   fitGrid($(a.box),$(id));
 }
 $('spArr').onclick=()=>arrOn==='spBtns'?arrClose():arrOpen();
+/* Enlarge the arrival card to the middle of the screen (wide screens). It opens enlarged for arranging people and
+   can be enlarged for timing too. The rest of the page is dimmed; a click there or Esc shrinks it back. */
+var spBig=false,spBigUser=false;
+function setBig(on,user){
+  if(!on)spBigUser=false;else if(user!==undefined)spBigUser=!!user;
+  spBig=on&&innerWidth>=760;
+  $('splits').classList.toggle('big',spBig);$('spShade').hidden=!spBig;document.body.classList.toggle('spbig',spBig);
+  $('spBigBtn').textContent=spBig?'缩小':'放大';
+  lastSpKey='';renderSplits(true);if(arrOn==='spBtns')arrRefresh('spBtns');
+}
+$('spBigBtn').onclick=()=>setBig(!spBig,true);
+$('spShade').onclick=()=>{if(arrOn==='spBtns')arrClose();setBig(false,false)};
+$('spHide').onclick=()=>{cfg.arrive=false;saveCfg();if(arrOn==='spBtns')arrClose();renderSplits(true);toast('已收起到边计时。要再打开：上方「出发顺序」里打开「到边计时」')};
 // dragging
 const arrTarget=(x,y,id)=>{
   const el=document.elementFromPoint(x,y);if(!el)return null;
