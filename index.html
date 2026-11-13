@@ -677,7 +677,32 @@ dialog.sheet[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 2
 /* ===== Toolbox ===== */
 .thead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-bottom:14px}
 .thead h1{margin:0;font-size:28px;font-weight:700}
-.tooltabs{grid-template-columns:repeat(2,minmax(0,1fr));min-width:min(100%,360px)}
+.tooltabs{grid-template-columns:repeat(3,minmax(0,1fr));min-width:min(100%,480px)}
+/* CSS (critical swim speed) tool */
+.css{display:grid;gap:14px;max-width:880px}
+.css .tcard{max-width:none}
+.csstbl{overflow-x:auto}
+.csstbl table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.csstbl th,.csstbl td{padding:6px 8px;border-bottom:1px solid var(--line2);text-align:right;white-space:nowrap;vertical-align:middle}
+.csstbl th:first-child,.csstbl td:first-child{text-align:left}
+.csstbl thead th{font-size:12px;color:var(--muted);font-weight:600}
+.csstbl td.nm{font-weight:700}
+.csstbl input{width:92px;text-align:right;font-family:var(--f-num);font-size:18px;font-weight:600;padding:5px 8px;background:var(--sunk)}
+.csstbl input.bad{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 8%,var(--sunk))}
+.csstbl .pace{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:20px}
+.csstbl .pace.new{color:var(--accent)}
+.csstbl small{display:block;color:var(--muted);font-size:11px;font-weight:500}
+.csstbl .err{color:var(--danger);font-size:12px;white-space:normal;text-align:left}
+.csstbl .big{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:22px}
+.csszones{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cssctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.cssctl label{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
+.cssctl select,.cssctl input{font-family:var(--f-num);font-size:18px;font-weight:600}
+.cssctl input{width:70px;text-align:center}
+.cssnote{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
+.csstbl .mlast{display:none}
+@media (max-width:759px){.tooltabs span{font-size:12px;padding:9px 2px}.csstbl input{width:100%;min-width:56px;font-size:17px;padding:5px 6px}.csstbl th,.csstbl td{padding:6px 3px}.csstbl th{white-space:normal}.csstbl td.nm{white-space:normal;min-width:4em}.csstbl .pace{font-size:18px}
+  .csstbl .opt{display:none}.csstbl .mlast{display:block}.csszones span{font-size:12px;padding:9px 1px}.csstbl .big{font-size:20px}}
 .tcard{padding:18px;display:grid;gap:14px;max-width:780px}
 .tcard .tip{margin:0;color:var(--muted);font-size:14px;line-height:1.65}
 .tcard .tip code{font-family:inherit;background:var(--sunk);border:1px solid var(--line2);border-radius:6px;padding:0 5px;color:var(--fg);white-space:nowrap}
@@ -937,6 +962,7 @@ dialog.sheet{border-radius:16px}
       <div class="seg tooltabs" role="tablist" aria-label="选择工具">
         <label><input type="radio" name="tooltab" value="avg" checked><span>依次出发 · 分组平均</span></label>
         <label><input type="radio" name="tooltab" value="lap"><span>分段秒表</span></label>
+        <label><input type="radio" name="tooltab" value="css"><span>CSS 配速</span></label>
       </div>
     </div>
 
@@ -950,6 +976,9 @@ dialog.sheet{border-radius:16px}
         <div class="tsteps" id="avgSteps2"></div>
         <div class="tsub">每条道几个人</div>
         <div class="tlanes" id="avgLaneN"></div>
+        <div class="tsub">比什么</div>
+        <div class="tlane"><div><b>按个人 CSS 配速比</b><small id="avgZoneHint">选一个强度区，每个学生的按钮显示他自己的目标时间，到边后比目标快还是慢；不选就和他上一组的平均比</small></div>
+          <select id="avgZone" aria-label="按哪个强度区的个人配速比"></select></div>
         <div class="tlane"><div><b id="avgLaneSum"></b><small>谁在哪条道、第几个出发：开始后，名字卡片就在到边区上方，直接拖到位置上（也可以先点名字、再点位置）；每道人数在那里也能加减</small></div><button type="button" id="avgRoster">学员名单</button></div>
         <p class="tip">电脑键盘：每条道用一排键记到边——第 1 道 <code>1</code>–<code>0</code>，第 2 道 <code>Q</code>–<code>P</code>，第 3 道 <code>A</code>–<code>;</code>，第 4 道 <code>Z</code>–<code>/</code>；<code>空格</code> 出发，<code>退格</code> 撤销。键名会显示在每个人的名字前面。间隔 0 秒时，一条道的整排键都记正在游的这一批，按到旁边的键也不会记错人。</p>
         <button type="button" class="primary tgo" id="avgStart">开始</button>
@@ -986,6 +1015,33 @@ dialog.sheet{border-radius:16px}
           <details><summary>每一趟的成绩</summary><div class="sptable" id="avgDetail"></div></details>
           <p class="spnote">平均慢于上一组平均的标红。成绩同时存进「计划库 → 训练记录」。</p>
         </div>
+      </div>
+    </div>
+
+    <div id="tool-css" hidden>
+      <div class="css">
+        <section class="card tcard">
+          <h2 class="sh">CSS 测试</h2>
+          <p class="tip">CSS（临界游速）是一个人能长时间维持的最快配速，约等于乳酸阈配速。测法：充分热身后全力游一次长距离并计时，完全恢复（10 分钟以上）后再全力游一次短距离。软件按两次的距离差 ÷ 时间差算出每 100 米配速。</p>
+          <div class="cssctl">
+            <div class="seg" role="radiogroup" aria-label="测试距离" id="cssPair"></div>
+            <label>测试日期 <input type="date" id="cssDate" style="width:auto"></label>
+          </div>
+          <div class="csstbl" id="cssIn"></div>
+          <p class="cssnote">成绩可以填 5:20.5、5:20、320.5 这样的格式。只填了一个距离的人不会保存。重新测试会保留以前的记录，用最新的一次算配速。</p>
+          <div class="row"><button type="button" class="primary" id="cssSave">保存测试结果</button><button type="button" id="cssRoster">学员名单</button></div>
+        </section>
+        <section class="card tcard">
+          <div class="treshead"><h2 class="sh">个人配速表</h2><button type="button" id="cssCopy">复制配速表</button></div>
+          <div class="seg csszones" role="radiogroup" aria-label="强度区" id="cssZones"></div>
+          <div class="cssctl">
+            <label>每趟 <select id="cssDist" aria-label="每趟距离"></select></label>
+            <label>每 100 米比 CSS <input type="number" id="cssOff" step="1" min="-15" max="30" inputmode="numeric" aria-label="每 100 米比 CSS 慢几秒"> 秒</label>
+            <label>每趟休息 <input type="number" id="cssRest" step="5" min="0" max="300" inputmode="numeric" aria-label="每趟休息秒数"> 秒</label>
+          </div>
+          <p class="cssnote" id="cssZoneTip"></p>
+          <div class="csstbl" id="cssOut"></div>
+        </section>
       </div>
     </div>
 
@@ -2000,7 +2056,7 @@ function copyLive(){
 }
 $('spCopy').onclick=copyLive;$('doneCopy').onclick=copyLive;$('doneSp').onclick=()=>openSpTable();
 $('bkExport').onclick=()=>{
-  const data={app:'swim-timer',v:1,at:Date.now(),lib,plan,text:$('bulk').value,cfg:{roster:cfg.roster,lanes:cfg.lanes,gapSec:cfg.gapSec,every:cfg.every,from:cfg.from,last:cfg.last,upFrom:cfg.upFrom,upEach:cfg.upEach,count:cfg.count,sound:cfg.sound}};
+  const data={app:'swim-timer',v:1,at:Date.now(),lib,plan,text:$('bulk').value,css:tb.css,cfg:{roster:cfg.roster,lanes:cfg.lanes,gapSec:cfg.gapSec,every:cfg.every,from:cfg.from,last:cfg.last,upFrom:cfg.upFrom,upEach:cfg.upEach,count:cfg.count,sound:cfg.sound}};
   const d=new Date(),name='swim-timer-backup-'+d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+'.json';
   try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));a.download=name;
     document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
@@ -2027,9 +2083,16 @@ $('bkFile').onchange=()=>{
       d.lib.records.filter(okE).forEach(e=>{if(!lib.records.some(x=>x.id===e.id)){lib.records.push(clean(e));nr++}});
       lib.plans.sort((a,b)=>(b.created||0)-(a.created||0));lib.records.sort((a,b)=>(b.at||0)-(a.at||0));lib.records=lib.records.slice(0,300);
       if(d.cfg&&Array.isArray(d.cfg.roster))d.cfg.roster.forEach(n=>{if(typeof n==='string'&&n.trim()&&!cfg.roster.includes(n.trim())&&cfg.roster.length<60){cfg.roster.push(n.trim());nn++}});
+      // CSS tests: merged per student, duplicates (same time and results) skipped
+      let nc=0;
+      if(d.css&&d.css.res&&typeof d.css.res==='object')Object.keys(d.css.res).forEach(n=>{const arr=d.css.res[n];if(typeof n!=='string'||!Array.isArray(arr))return;
+        arr.forEach(x=>{if(!x||!(x.t1>0&&x.t2>0&&x.d1>x.d2&&x.at>0))return;const mine=tb.css.res[n]||(tb.css.res[n]=[]);
+          if(!mine.some(y=>y.at===x.at&&y.t1===x.t1&&y.t2===x.t2)){mine.push({at:x.at,d1:+x.d1,t1:+x.t1,d2:+x.d2,t2:+x.t2});nc++}});
+        if(tb.css.res[n])tb.css.res[n].sort((a,b)=>a.at-b.at)});
+      if(nc)saveTb();
       if(nn){saveCfg();renderLineup()}
       saveLib();renderLib();
-      toast(np+nr+nn?'已导入 '+np+' 个计划、'+nr+' 条记录'+(nn?'、'+nn+' 个学员':''):'备份里的内容这台设备上都已经有了');
+      toast(np+nr+nn+nc?'已导入 '+np+' 个计划、'+nr+' 条记录'+(nn?'、'+nn+' 个学员':'')+(nc?'、'+nc+' 次 CSS 测试':''):'备份里的内容这台设备上都已经有了');
     }catch(e){toast('这个文件不是泳鲨计时台的备份')}
     $('bkFile').value='';
   };
@@ -2588,7 +2651,7 @@ document.addEventListener('keydown',e=>{
     if(tb.tab==='lap'){
       if(e.code==='Space'){e.preventDefault();unfocus();lapToggle()}
       else if(e.key==='Enter'){e.preventDefault();unfocus();lapMark()}
-    }else if(tb.sess){
+    }else if(tb.tab==='avg'&&tb.sess){
       if(e.code==='Space'){e.preventDefault();unfocus();tbMain()}
       else if(e.key==='Backspace'){e.preventDefault();tbUndo()}
       else if(lk){e.preventDefault();tbTap(lk[0],lk[1],true)}
@@ -2953,7 +3016,8 @@ function tbTick(){
 }
 function tbRender(force){
   const s=tb.sess;
-  $('tool-avg').hidden=tb.tab!=='avg';$('tool-lap').hidden=tb.tab!=='lap';
+  $('tool-avg').hidden=tb.tab!=='avg';$('tool-lap').hidden=tb.tab!=='lap';$('tool-css').hidden=tb.tab!=='css';
+  if(force&&tb.tab==='css'&&typeof cssRender==='function')cssRender();
   $('avgSetup').hidden=!!s;$('avgLive').hidden=!s;
   if(!s){if(force)tbSetupSync();return}
   const e=tbElapsed(),swim=s.phase==='swim',setdone=s.phase==='setdone',has=tbHas(s.set,s.rep),mx=tbMaxN(),waves=tbWaves(),live=rawLineup();
@@ -2985,7 +3049,7 @@ function tbRender(force){
     fitGrid($('avgBox'),$('avgBtns'));
     $('avgSide').className='avgside'+(swim?' t-swim':setdone?' t-set':'');
     $('avgPos').textContent=setdone?'第 '+(s.set+1)+' 组完成':'第 '+(s.set+1)+' 组 · 第 '+s.rep+' 趟';
-    $('avgPos2').textContent='共 '+s.sets+' 组 × '+s.reps+' 趟 · 每趟 '+s.dist+' 米';
+    $('avgPos2').textContent='共 '+s.sets+' 组 × '+s.reps+' 趟 · 每趟 '+s.dist+' 米'+(tb.zone&&CSS_ZONES[tb.zone]?' · 按 '+CSS_ZONES[tb.zone].name+' 个人配速':'');
     $('avgRep').textContent=setdone?'第 '+(s.set+1)+' 组每人平均':'第 '+(s.set+1)+' 组 · 第 '+s.rep+' 趟'+(waves&&swim?' · 第 '+s.wave+' 批':'');
     const last=s.set>=s.sets-1,w1=waves?' 第 1 批':'';
     const nextTxt=s.rep<s.reps?'出发 · 第 '+(s.rep+1)+' 趟'+w1:last?'全部结束 · 算平均':'本组结束 · 算平均';
@@ -3004,7 +3068,9 @@ function tbRender(force){
   }
   $('avgBtns').querySelectorAll('button').forEach(b=>{
     const L=+b.dataset.l,n=+b.dataset.n,k=n-1,sp=b.querySelector('span'),sm=b.querySelector('small'),nm=(live[L]||[])[k]||'';
-    const bar=tbBarOf(setdone?s.set+1:s.set,nm,L,k);
+    // personal CSS target for this repeat (when a zone is chosen and the swimmer has a test); otherwise last set's average
+    const tgt=tb.zone&&nm&&typeof cssTarget==='function'?cssTarget(nm,tb.zone,s.dist):null;
+    const bar=tgt!=null?tgt:tbBarOf(setdone?s.set+1:s.set,nm,L,k),bw=tgt!=null?'目标':'上组';
     let t,main,sub='',wait=false;
     if(setdone){
       // the occupant's average in the set just finished (also right after re-arranging for the next set)
@@ -3016,7 +3082,7 @@ function tbRender(force){
       t=(tbData[spKey(s.set,s.rep,L)]||[])[k];
       const gone=waves?tbWaveT[n]!=null:e/1000-k*cfg.gapSec>0;
       main=t!=null?fmtSplit(t):swim?(gone?'到边':'未出发'):'待出发';
-      sub=bar==null?'':t!=null?'比上组'+fmtDiff(t-bar):'上组 '+fmtSplit(bar);
+      sub=bar==null?'':t!=null?'比'+bw+fmtDiff(t-bar):bw+' '+fmtSplit(bar);
       wait=t==null&&!(swim&&gone);
       const slow=t!=null&&bar!=null&&t>bar;
       b.classList.toggle('slow',slow);sm.className=t!=null&&bar!=null?(slow?'slow':'fast'):'';
@@ -3119,6 +3185,136 @@ function tbSetupSync(){
       if(q.wave==null)q.wave=q.begun?99:1}else tb.sess=null;saveTb()}
 })();
 
+/* ---------- CSS (critical swim speed) ----------
+   CSS = (long distance - short distance) / (long time - short time), in m/s; shown as seconds per 100 m.
+   Zones are offsets from that pace per 100 m (common practice, editable): EN1 aerobic +8, EN2 threshold +2,
+   EN3 VO2max -2, recovery +15. Target for a repeat = (pace + offset) x distance / 100. */
+const CSS_ZONES={EN1:{name:'EN1 有氧',off:8,rest:10,tip:'有氧基础：能说话的强度，长距离、短休息。'},
+  EN2:{name:'EN2 阈值',off:2,rest:15,tip:'乳酸阈：接近 CSS，能坚持 20–40 分钟的速度；例 10×100 休 15 秒。'},
+  EN3:{name:'EN3 最大摄氧',off:-2,rest:0,tip:'最大摄氧：比 CSS 快，休息约等于游的时间（休息填 0 = 休息和游的时间一样长）。'},
+  REC:{name:'恢复',off:15,rest:10,tip:'恢复游：放松、技术为主。'}};
+const CSS_PAIRS=[[400,200],[200,100],[200,50]];
+if(!tb.css||typeof tb.css!=='object')tb.css={};
+const cssS=tb.css;
+if(!cssS.res||typeof cssS.res!=='object')cssS.res={};          // name -> [{at,d1,t1,d2,t2}], oldest first
+if(!Array.isArray(cssS.pair))cssS.pair=[400,200];
+if(!CSS_ZONES[cssS.zone])cssS.zone='EN2';
+if(!cssS.off||typeof cssS.off!=='object')cssS.off={};
+if(!cssS.rest||typeof cssS.rest!=='object')cssS.rest={};
+if(!cssS.dist)cssS.dist=100;
+const cssOff=z=>cssS.off[z]!=null?cssS.off[z]:CSS_ZONES[z].off;
+const cssRestOf=z=>cssS.rest[z]!=null?cssS.rest[z]:CSS_ZONES[z].rest;
+// swim times: 5:20.5, 5:20, 5'20"5, 5分20秒5, 320.5 (seconds)
+function parseSwim(v){
+  v=String(v).trim().replace(/\s+/g,'').replace(/[″”"秒]/g,'.').replace(/[′’'分]/g,':').replace(/：/g,':').replace(/\.$/,'');
+  if(!v)return null;
+  let m=v.match(/^(\d+):(\d{1,2})(?:\.(\d{1,2}))?$/);
+  if(m){if(+m[2]>59)return NaN;return +m[1]*60+ +m[2]+(m[3]?+('0.'+m[3]):0)}
+  m=v.match(/^(\d+)(?:\.(\d{1,2}))?$/);
+  return m?+m[1]+(m[2]?+('0.'+m[2]):0):NaN;
+}
+function cssCalc(d1,t1,d2,t2){
+  if(!(t1>0&&t2>0&&d1>d2))return{err:'两个成绩都要填'};
+  if(t1<=t2)return{err:'长距离的成绩应该比短距离慢'};
+  const v=(d1-d2)/(t1-t2),pace=100/v;
+  if(pace<45||pace>240)return{err:'算出来每 100 米 '+fmtSplit(pace)+'，不太可能，检查一下成绩'};
+  // the short swim should be faster per metre than the long one
+  if(t2/d2>=t1/d1)return{err:'短距离的速度应该比长距离快，检查一下成绩'};
+  return{pace:Math.round(pace*100)/100};
+}
+const cssLatest=name=>{const a=cssS.res[name];return a&&a.length?a[a.length-1]:null};
+function cssPaceOf(name){const r=cssLatest(name);if(!r)return null;const c=cssCalc(r.d1,r.t1,r.d2,r.t2);return c.pace||null}
+// personal target for one repeat in a zone
+function cssTarget(name,zone,dist){const p=cssPaceOf(name);if(p==null||!CSS_ZONES[zone])return null;return Math.round((p+cssOff(zone))*dist)/100}
+function cssSendOff(target,zone){const r=cssRestOf(zone),s=target+(r>0?r:target);return Math.ceil(s/5)*5}
+function saveCss(){saveTb()}
+let cssDraft={};
+function cssRender(){
+  if($('view-tools').hidden||tb.tab!=='css')return;
+  const [d1,d2]=cssS.pair;
+  // test distance choice
+  const pr=$('cssPair');pr.innerHTML='';pr.style.gridTemplateColumns='repeat('+CSS_PAIRS.length+',minmax(0,1fr))';
+  CSS_PAIRS.forEach(([a,b])=>{const l=document.createElement('label'),i=document.createElement('input'),sp=document.createElement('span');
+    i.type='radio';i.name='csspair';i.checked=a===d1&&b===d2;i.onchange=()=>{cssS.pair=[a,b];cssDraft={};saveCss();cssRender()};
+    sp.textContent=a+' + '+b;l.append(i,sp);pr.appendChild(l)});
+  if(!$('cssDate').value){const d=new Date();$('cssDate').value=d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())}
+  // test entry table
+  const box=$('cssIn');box.innerHTML='';
+  if(!cfg.roster.length){box.innerHTML='<p class="cssnote">还没有学员。先点下面的「学员名单」把名字加进来。</p>'}
+  else{
+    const t=document.createElement('table');t.innerHTML='<thead><tr><th>学生</th><th>'+d1+' 米</th><th>'+d2+' 米</th><th>CSS 每 100 米</th><th class="opt">上次</th></tr></thead>';
+    const tb_=t.createTBody();
+    cfg.roster.forEach(n=>{
+      const r=tb_.insertRow(),dr=cssDraft[n]||(cssDraft[n]={a:'',b:''}),last=cssLatest(n);
+      const c0=r.insertCell();c0.className='nm';c0.textContent=n;
+      if(last){const s=document.createElement('small');s.className='mlast';s.textContent='上次 '+fmtSplit(cssPaceOf(n));s.title=dstr(last.at);c0.appendChild(s)}
+      const mk=(k,lab)=>{const c=r.insertCell(),i=document.createElement('input');i.type='text';i.inputMode='decimal';i.autocomplete='off';i.value=dr[k];i.placeholder='—';i.setAttribute('aria-label',n+' '+lab+' 成绩');
+        i.oninput=()=>{dr[k]=i.value;upd()};i.onkeydown=e=>{if(e.key==='Enter'){const all=[...box.querySelectorAll('input')],j=all.indexOf(i);if(all[j+1])all[j+1].focus();else $('cssSave').focus()}};c.appendChild(i);return i};
+      const ia=mk('a',d1+' 米'),ib=mk('b',d2+' 米');
+      const cp=r.insertCell(),cl=r.insertCell();cl.className='opt';
+      if(last){const p=cssPaceOf(n);cl.innerHTML='';const b=document.createElement('span');b.className='pace';b.textContent=p!=null?fmtSplit(p):'—';const s=document.createElement('small');s.textContent=dstr(last.at)+' · '+last.d1+'+'+last.d2;cl.append(b,s)}
+      else cl.textContent='—';
+      const upd=()=>{
+        const a=parseSwim(dr.a),b=parseSwim(dr.b);ia.classList.toggle('bad',Number.isNaN(a));ib.classList.toggle('bad',Number.isNaN(b));
+        cp.innerHTML='';
+        if(a==null&&b==null)return;
+        if(Number.isNaN(a)||Number.isNaN(b)){cp.innerHTML='<span class="err">时间格式不对</span>';return}
+        if(a==null||b==null){cp.innerHTML='<span class="err">还差一个成绩</span>';return}
+        const c=cssCalc(d1,a,d2,b);
+        if(c.err){const e=document.createElement('span');e.className='err';e.textContent=c.err;cp.appendChild(e);return}
+        const sp=document.createElement('span');sp.className='pace new';sp.textContent=fmtSplit(c.pace);cp.appendChild(sp);
+      };
+      upd();
+    });
+    box.appendChild(t);
+  }
+  // zones and pace table
+  const zs=$('cssZones');zs.innerHTML='';
+  Object.keys(CSS_ZONES).forEach(z=>{const l=document.createElement('label'),i=document.createElement('input'),sp=document.createElement('span');
+    i.type='radio';i.name='csszone';i.checked=cssS.zone===z;i.onchange=()=>{cssS.zone=z;saveCss();cssRender()};sp.textContent=CSS_ZONES[z].name;l.append(i,sp);zs.appendChild(l)});
+  const z=cssS.zone,ds=$('cssDist');
+  if(!ds.options.length)[25,50,75,100,150,200,300,400,800].forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d+' 米';ds.appendChild(o)});
+  ds.value=cssS.dist;$('cssOff').value=cssOff(z);$('cssRest').value=cssRestOf(z);
+  const off=cssOff(z);
+  $('cssZoneTip').textContent=CSS_ZONES[z].tip+' 现在：每 100 米 '+(off>0?'比 CSS 慢 '+off+' 秒':off<0?'比 CSS 快 '+(-off)+' 秒':'等于 CSS')+'。';
+  const out=$('cssOut');out.innerHTML='';
+  const rows=cfg.roster.filter(n=>cssPaceOf(n)!=null);
+  if(!rows.length){out.innerHTML='<p class="cssnote">还没有测试结果。在上面填好成绩、点「保存测试结果」，这里就会列出每个人的目标时间。</p>';return}
+  const t=document.createElement('table');t.innerHTML='<thead><tr><th>学生</th><th class="opt">CSS 每 100 米</th><th class="opt">每 100 米目标</th><th>每趟 '+cssS.dist+' 米目标</th><th>出发间隔</th></tr></thead>';
+  const b=t.createTBody();
+  rows.forEach(n=>{const p=cssPaceOf(n),tg=cssTarget(n,z,cssS.dist),r=b.insertRow();
+    r.insertCell().textContent=n;r.cells[0].className='nm';
+    const o1=r.insertCell();o1.className='opt';o1.textContent=fmtSplit(p);
+    const o2=r.insertCell();o2.className='opt';o2.textContent=fmtSplit(p+off);
+    const c=r.insertCell();c.className='big';c.textContent=fmtSplit(tg);
+    r.insertCell().textContent=fmtShort(cssSendOff(tg,z))});
+  out.appendChild(t);
+}
+$('cssSave').onclick=()=>{
+  const [d1,d2]=cssS.pair,dv=$('cssDate').value,at=dv?new Date(dv+'T12:00:00').getTime():Date.now();
+  let ok=0,bad=0;
+  Object.keys(cssDraft).forEach(n=>{const dr=cssDraft[n],a=parseSwim(dr.a),b=parseSwim(dr.b);
+    if(a==null&&b==null)return;
+    const c=(a>0&&b>0)?cssCalc(d1,a,d2,b):{err:1};
+    if(c.err){bad++;return}
+    (cssS.res[n]||(cssS.res[n]=[])).push({at,d1,t1:a,d2,t2:b});ok++;delete cssDraft[n]});
+  saveCss();cssRender();tbRender(true);
+  toast(ok?'已保存 '+ok+' 人的测试结果'+(bad?'；'+bad+' 人的成绩有问题，没有保存':''):bad?bad+' 人的成绩有问题，看表里的红字':'还没有填成绩');
+};
+$('cssRoster').onclick=()=>$('luRoster').onclick();
+$('cssDist').onchange=()=>{cssS.dist=+$('cssDist').value;saveCss();cssRender()};
+$('cssOff').onchange=()=>{const v=Math.round(+$('cssOff').value);if($('cssOff').value===''||!(v>=-15&&v<=30)){$('cssOff').value=cssOff(cssS.zone);return}cssS.off[cssS.zone]=v;saveCss();cssRender();tbRender(true)};
+$('cssRest').onchange=()=>{const v=Math.round(+$('cssRest').value);if($('cssRest').value===''||!(v>=0&&v<=300)){$('cssRest').value=cssRestOf(cssS.zone);return}cssS.rest[cssS.zone]=v;saveCss();cssRender()};
+$('cssCopy').onclick=()=>{
+  const z=cssS.zone,rows=cfg.roster.filter(n=>cssPaceOf(n)!=null);
+  if(!rows.length){toast('还没有测试结果');return}
+  copyText(['个人配速表 · '+CSS_ZONES[z].name+' · 每趟 '+cssS.dist+' 米',...rows.map(n=>{const tg=cssTarget(n,z,cssS.dist);return n+'：目标 '+fmtSplit(tg)+'，'+fmtShort(cssSendOff(tg,z))+' 出发（CSS '+fmtSplit(cssPaceOf(n))+'/100 米）'})].join('\n'),'配速表已复制');
+};
+// set-average tool: which zone's personal target the pads compare against
+(function(){
+  const s=$('avgZone');[['','不用，和上一组平均比'],...Object.keys(CSS_ZONES).map(z=>[z,CSS_ZONES[z].name+' 个人配速'])].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;s.appendChild(o)});
+  s.value=tb.zone||'';s.onchange=()=>{tb.zone=s.value||null;saveTb();tbRender(true)};
+})();
 /* Split (lap) stopwatch: keeps running across a reload (wall-clock based) */
 const lap=tb.lap;let lapSeg=now(),lapRAF=0;
 if(lap.run){lap.acc=Math.max(0,Date.now()-lap.wall);lapSeg=now()}
