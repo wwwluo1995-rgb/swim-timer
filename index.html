@@ -538,6 +538,7 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
 .line{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
 .line select:nth-of-type(4){grid-column:auto}
 .fields label{font-size:12px;letter-spacing:0}
+.fields select.grk{font-size:12px!important;padding:2px 22px 2px 6px;border:0;background-color:transparent;color:var(--muted);font-weight:600;width:auto!important;background-position:calc(100% - 10px) 52%,calc(100% - 6px) 52%}
 .fields input{font-family:var(--f-num);font-size:20px;font-weight:600;padding:6px 10px;font-variant-numeric:tabular-nums}
 .fields input::placeholder{font-family:var(--f-body);font-size:14px;font-weight:500}
 .fhint{margin:-4px 0 0;color:var(--muted);font-size:12px}
@@ -1362,7 +1363,11 @@ function cleanNote(n){
 }
 function linkBlock(block){const n=block.items.length;if(n>1){const p=block.items[n-2];if(!p.groupRest)p.groupRest=120}}
 // rest after the group: "组间2分", "组间休息 2分", "组后休息30秒", "组后30"
-const GR='(?:组间|组后)\\s*(?:休息|间歇)?\\s*[:：]?\\s*';
+// Two different rests between groups, kept apart:
+//   组后休息 / 组后间歇 (grKind 'after')   a plain rest after this group, then the next group goes;
+//   组间休息 / 组间间歇 (grKind 'between') the set break, with the heart-rate count.
+const GR='(组间|组后)\\s*(?:休息|间歇)?\\s*[:：]?\\s*';
+const grKindOf=w=>w==='组后'?'after':'between';
 function parsePlan(text){
   const items=[],skipped=[];let block=null,last=null;
   text.split(/\r?\n/).forEach(raw=>{
@@ -1387,17 +1392,18 @@ function parsePlan(text){
     if(m){reps=+m[1];dist=+m[2];rest_=s.slice(0,m.index)+s.slice(m.index+m[0].length)}
     else if((m=s.match(/^(\d{2,4})\s*(?:米|m)?/))){reps=block?block.reps:1;dist=+m[1];rest_=s.slice(m[0].length)}
     if(!dist||dist<25||dist>1500||reps<1||reps>50){
-      if(gm&&last&&!dist){last.groupRest=toSec(gm[1]);return}
+      if(gm&&last&&!dist){last.groupRest=toSec(gm[2]);last.grKind=grKindOf(gm[1]);return}
       // note-only line: attach to the current block, or to the last group
       const tgt=block&&block.items.length?block.items:(last?[last]:[]);
       if(tgt.length){tgt.forEach(it=>it.note=it.note?it.note+' · '+s:s);return}
       skipped.push(raw.trim());return;
     }
     const main=s.split(/[，,；;。]|要求/)[0];
-    let tail=rest_, target=0, rest=0, groupRest=0;
+    let tail=rest_, target=0, rest=0, groupRest=0, grKind='between';
     const cut=re=>{const r=tail.match(re);if(r){tail=tail.slice(0,r.index)+tail.slice(r.index+r[0].length);return toSec(r[1])}return null};
     let v;
-    if((v=cut(new RegExp(GR+TIME+'\\s*(?:秒|s)?')))!==null)groupRest=v;
+    const gr=tail.match(new RegExp(GR+TIME+'\\s*(?:秒|s)?'));
+    if(gr){tail=tail.slice(0,gr.index)+tail.slice(gr.index+gr[0].length);groupRest=toSec(gr[2]);grKind=grKindOf(gr[1])}
     if((v=cut(new RegExp(TIME+'\\s*(?:秒|s)?\\s*(?:标准?|目标)')))!==null)target=v;
     else if((v=cut(new RegExp('(?:目标|标准|标)\\s*[:：]?\\s*'+TIME+'\\s*(?:秒|s)?\\s*(?:以?内)?')))!==null)target=v;
     if((v=cut(new RegExp(TIME+'\\s*(?:秒|s)?\\s*(?:间歇|休息|间隔)')))!==null)rest=v;
@@ -1405,7 +1411,9 @@ function parsePlan(text){
     // "(1分30)" after a target = the send-off cycle: for repeats with no rest written, rest = cycle - target
     if(reps>1&&target>0&&!rest){const so=tail.match(new RegExp('[（(]\\s*'+TIME+'\\s*(?:秒|s)?\\s*(?:出发)?\\s*[)）]'));
       if(so){const c=toSec(so[1]);if(c>target){rest=c-target;tail=tail.slice(0,so.index)+tail.slice(so.index+so[0].length)}}}
-    const it={reps,dist,stroke:stroke(main),kind:kind(main),target,rest,groupRest,note:cleanNote(tail)};
+    // a single swim has no "between repeats": a rest written on it is the rest after it
+    if(reps===1&&rest>0&&!groupRest){groupRest=rest;rest=0;grKind='after'}
+    const it={reps,dist,stroke:stroke(main),kind:kind(main),target,rest,groupRest,grKind,note:cleanNote(tail)};
     items.push(it);last=it;if(block){block.items.push(it);linkBlock(block)}
   });
   return {items,skipped};
@@ -1439,12 +1447,15 @@ const nameOf=(it,i)=>'第 '+(i+1)+' 组 · '+shortName(it);
 
 const tailSec=()=>cfg.stagger&&cfg.gapSec>0&&cfg.swimmers>1?(cfg.swimmers-1)*cfg.gapSec:0;
 let tailKey='';
+// rest after group it (seconds) and its kind; plans saved before the split read a rest on a single swim as "after"
+function grOf(it){return it?(it.groupRest>0?it.groupRest:(it.reps===1&&it.rest>0?it.rest:0)):0}
+function grKindIt(it){return it&&it.groupRest>0?(it.grKind==='after'?'after':'between'):'after'}
 function build(){
   tailKey=tailSec()+'';
   steps=[];
   plan.forEach((it,i)=>{
     const prev=plan[i-1];
-    if(it.target>0&&!(prev&&prev.groupRest>0))steps.push({i,rep:1,phase:'ready',dur:10});
+    if(it.target>0&&!(prev&&grOf(prev)>0))steps.push({i,rep:1,phase:'ready',dur:10});
     for(let r=1;r<=it.reps;r++){
       steps.push(it.target>0?{i,rep:r,phase:'swim',dur:it.target}:{i,rep:r,phase:'free'});
       // staggered starts: the last swimmer leaves (n-1) gaps after the first, so the group is not over when the
@@ -1452,7 +1463,7 @@ function build(){
       // (or everyone has touched), before the group rest or the next group.
       if(r===it.reps&&it.target>0&&tailSec()>0)steps.push({i,rep:r,phase:'tail',dur:tailSec()});
       if(r<it.reps){if(it.rest>0)steps.push({i,rep:r,phase:'rest',dur:it.rest})}
-      else if(it.groupRest>0&&i<plan.length-1)steps.push({i,rep:r,phase:'group',dur:it.groupRest});
+      else if(grOf(it)>0&&i<plan.length-1)steps.push({i,rep:r,phase:'group',dur:grOf(it),kind:grKindIt(it)});
     }
   });
   steps.push({i:-1,phase:'done'});
@@ -1628,7 +1639,7 @@ function cue(phase){
   const st=steps[si],it=plan[st.i];
   if(phase==='swim'||phase==='free')notify(()=>beep(1320,600),cfg.stagger&&cfg.gapSec>0?'1 号出发':'出发');
   else if(phase==='rest')notify(()=>beep(900,140,2,80),'间歇'+secText(st.dur));
-  else if(phase==='group')notify(()=>beep(900,140,2,80),'组间休息，测心率');
+  else if(phase==='group')notify(()=>beep(900,140,2,80),st.kind==='after'?'间歇'+secText(st.dur):'组间休息，测心率');
   else if(phase==='done')notify(()=>beep(990,200,3,100),'训练完成');
   else if(phase==='tail')return;
   else notify(()=>beep(1100,300),'准备');
@@ -1715,7 +1726,7 @@ function describe(st){
     case'swim':return '第 '+st.rep+' 趟出发 · 目标 '+fmtShort(st.dur);
     case'free':return st.rep===1?'第 '+(st.i+1)+' 组 '+shortName(it):'第 '+st.rep+' 趟 · '+shortName(it);
     case'rest':return '间歇 '+fmtShort(st.dur);
-    case'group':return '组间休息 '+fmt(st.dur)+' · 测心率';
+    case'group':return st.kind==='after'?'组后休息 '+fmtShort(st.dur):'组间休息 '+fmt(st.dur)+' · 测心率';
     case'tail':return '等后面出发的人到边（最多 '+fmtShort(st.dur)+'）';
     case'done':return '全部完成';
   }
@@ -1724,7 +1735,7 @@ let lastKey='';
 function render(force){
   const st=steps[si],it=plan[st.i],e=elapsed();
   $('panel').className='board ph-'+st.phase+(running?' running':'');
-  $('chip').textContent=CHIP[st.phase];
+  $('chip').textContent=st.phase==='group'&&st.kind==='after'?'组后休息':CHIP[st.phase];
   $('start').textContent=st.phase==='done'?(plan.length?'从头再来':'先制定计划'):running?'暂停':(acc>0?'继续':'开始');
   $('prev').disabled=si===0;$('skip').disabled=st.phase==='done';
   if(st.phase==='done'){
@@ -1762,7 +1773,7 @@ function render(force){
     }
     $('next').textContent=describe(steps[si+1])||'—';
     $('hint').textContent=st.phase==='free'?'学生到边时点「到边」':st.phase==='tail'?'全部到边或时间到，自动进入下一步':st.dur?'到点自动切换':'';
-    $('hr').hidden=st.phase!=='group';
+    $('hr').hidden=!(st.phase==='group'&&st.kind!=='after');
     $('adj').hidden=!(st.dur&&(st.phase==='rest'||st.phase==='group'||st.phase==='ready'));
     const fin=st.phase==='done';$('nextBox').hidden=fin;$('doneActs').hidden=!(fin&&plan.length);
     if(fin)$('doneSp').hidden=$('doneCopy').hidden=!hasSplits(splitsData);
@@ -1834,7 +1845,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
 /* ---------- Summaries ---------- */
 function totalDist(){return plan.reduce((s,it)=>s+it.reps*it.dist,0)}
-function timedSeconds(){return plan.reduce((s,it,i)=>s+(it.target>0?it.reps*it.target+(it.reps-1)*it.rest:0)+(i<plan.length-1?it.groupRest:0),0)}
+function timedSeconds(){return plan.reduce((s,it,i)=>s+(it.target>0?it.reps*it.target+(it.reps>1?(it.reps-1)*it.rest:0):0)+(i<plan.length-1?grOf(it):0),0)}
 function renderMeta(){
   const t=plan.length+' 组 · 总量 '+totalDist()+' 米 · 计时部分约 '+Math.round(timedSeconds()/60)+' 分钟';
   $('planmeta').textContent=t;
@@ -1851,7 +1862,7 @@ function renderProg(){
     const li=document.createElement('li'),b=document.createElement('button');b.type='button';
     const top=document.createElement('span');top.innerHTML='<b></b>';top.querySelector('b').textContent='第 '+(i+1)+' 组';top.append(shortName(it));
     const sub=document.createElement('small');
-    sub.textContent=[it.target>0?'目标 '+fmtShort(it.target):'手动',it.rest>0?'间歇 '+fmtShort(it.rest):'',it.groupRest>0&&i<plan.length-1?'组后 '+fmtShort(it.groupRest):'',it.note].filter(Boolean).join(' · ');
+    sub.textContent=[it.target>0?'目标 '+fmtShort(it.target):'手动',it.rest>0?'间歇 '+fmtShort(it.rest):'',grOf(it)>0&&i<plan.length-1?(grKindIt(it)==='after'?'组后 ':'组间 ')+fmtShort(grOf(it)):'',it.note].filter(Boolean).join(' · ');
     b.append(top,sub);
     b.onclick=()=>{
       const from={si,acc:elapsed(),n:steps.length},to=steps.findIndex(s=>s.i===i);
@@ -1934,8 +1945,8 @@ function fillSummary(li,it,i){
   const c=li.querySelector('.chips');c.innerHTML='';
   const chip=(t,cls)=>{const e=document.createElement('i');if(cls)e.className=cls;e.textContent=t;c.appendChild(e)};
   chip(it.target>0?'目标 '+fmtShort(it.target):'手动计时',it.target>0?'t':'');
-  if(it.rest>0)chip('间歇 '+fmtShort(it.rest),'r');
-  if(it.groupRest>0&&i<plan.length-1)chip('组后休息 '+fmtShort(it.groupRest),'g');
+  if(it.rest>0&&it.reps>1)chip('每趟间歇 '+fmtShort(it.rest),'r');
+  if(grOf(it)>0&&i<plan.length-1)chip((grKindIt(it)==='after'?'组后休息 ':'组间休息 ')+fmtShort(grOf(it))+(grKindIt(it)==='after'?'':' · 测心率'),'g');
   if(it.rEvery>0)chip('每 '+fmtShort(it.rEvery)+' 报时');else if(it.rEvery===-1)chip('不报时');
   if(eachTxt(it))chip(eachTxt(it));
   if(it.note){const n=document.createElement('span');n.className='nt';n.textContent=it.note;c.appendChild(n)}
@@ -1984,15 +1995,24 @@ function renderCards(){
 
     let rupd=()=>{};
     const f=document.createElement('div');f.className='fields';
+    // an old plan's single swim with a rest: show it where it now belongs (rest after the group)
+    if(it.reps===1&&it.rest>0&&!it.groupRest){it.groupRest=it.rest;it.rest=0;it.grKind='after'}
     [['target','目标时间','手动计时'],['rest','每趟间歇','无'],['groupRest','组后休息','无']].forEach(([k,l,ph])=>{
       const lab=document.createElement('label');lab.textContent=l;
+      if(k==='rest'&&it.reps===1)lab.title='只有 1 趟时没有「每趟间歇」，休息写在「组后 / 组间休息」';
+      if(k==='groupRest'){
+        // which kind of rest follows the group
+        lab.textContent='';const ks=document.createElement('select');ks.setAttribute('aria-label','这组之后的休息类型');ks.className='grk';
+        [['after','组后休息'],['between','组间休息 · 测心率']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;ks.appendChild(o)});
+        ks.value=it.grKind==='after'?'after':'between';ks.onchange=()=>{it.grKind=ks.value;changed(true)};lab.appendChild(ks);
+      }
       const inp=document.createElement('input');inp.type='text';inp.inputMode='numeric';inp.autocomplete='off';inp.id='f'+i+k;inp.value=tval(it[k]);inp.placeholder=ph;
       inp.onfocus=()=>inp.select();
       inp.onchange=()=>{const v=parseTime(inp.value);if(!(v>=0&&v<=900)){inp.value=tval(it[k]);toast('时间填秒数（如 55）或 分:秒（如 1:30），最长 15 分钟');return}it[k]=v;inp.value=tval(v);rupd();changed(true)};
       lab.appendChild(inp);f.appendChild(lab);
     });
     body.appendChild(f);
-    const fh=document.createElement('p');fh.className='fhint';fh.textContent='填秒数，或 1:30 这样的 分:秒。目标留空 = 手动计时（到边自己点）。';body.appendChild(fh);
+    const fh=document.createElement('p');fh.className='fhint';fh.textContent='填秒数，或 1:30 这样的 分:秒。目标留空 = 手动计时（到边自己点）。每趟间歇 = 同一组里趟和趟之间；组后休息 = 这组游完，休息后直接下一组；组间休息 = 大组之间，会提示测心率。';body.appendChild(fh);
     rupd=remindFields(body,it,'c'+i,()=>changed(true));
     const note=document.createElement('input');note.type='text';note.placeholder='备注（如：顶 8 字板、戴呼吸管）';note.value=it.note||'';note.id='n'+i;note.setAttribute('aria-label','备注');
     note.onchange=()=>{it.note=note.value.trim();changed(true)};
@@ -2610,7 +2630,7 @@ function renderQE(){
   if(it.custom)customFields(b,it,'q'+qeI,soft=>applyQE(soft));
   else{line.append(mk(REPS,'reps','趟数',x=>x+' 趟'),mk(DISTS,'dist','距离',x=>x+' 米'),mk(STROKES,'stroke','泳姿'),mk(KINDS,'kind','类型'));
   b.appendChild(line);}
-  [['target','目标时间','填 0 = 手动计时',[-5,-1,1,5]],['rest','每趟间歇','0 = 不休息直接下一趟',[-5,-1,1,5]],['groupRest','组后休息','含测心率提示',[-30,-10,10,30]]].forEach(([k,l,hint,ds])=>{
+  [['target','目标时间','填 0 = 手动计时',[-5,-1,1,5]],['rest','每趟间歇','0 = 不休息直接下一趟',[-5,-1,1,5]],['groupRest',grKindIt(it)==='after'?'组后休息':'组间休息','这组游完后的休息'+(grKindIt(it)==='after'?'':'（提示测心率）'),[-30,-10,10,30]]].forEach(([k,l,hint,ds])=>{
     if(k==='groupRest'&&qeI===plan.length-1)return;
     const row=document.createElement('div');row.className='stp';
     row.innerHTML='<div class="stl"><b></b><small></small></div><div class="stc"></div>';
@@ -2794,7 +2814,7 @@ $('clearPlan').onclick=()=>{
 // repeat the whole plan: copies of every group appended in order (undoable)
 let repN=2;
 function repSync(){const g=plan.length,m=totalDist();$('repN').textContent=repN;$('repM').disabled=repN<=2;$('repP').disabled=repN>=10;
-  $('repNow').textContent='现在 '+g+' 组 · '+m+' 米';$('repAfter').textContent='重复后：'+g*repN+' 组 · '+m*repN+' 米'+(plan.length&&!(plan[plan.length-1].groupRest>0)?'。每遍之间没有休息；要休息，先给最后一组设「组后休息」。':'。每遍之间按最后一组的「组后休息」休息。')}
+  $('repNow').textContent='现在 '+g+' 组 · '+m+' 米';$('repAfter').textContent='重复后：'+g*repN+' 组 · '+m*repN+' 米'+(plan.length&&!(grOf(plan[plan.length-1])>0)?'。每遍之间没有休息；要休息，先给最后一组设「组后休息」。':'。每遍之间按最后一组的「组后休息」休息。')}
 $('repeatPlan').onclick=()=>{if(!plan.length){toast('计划是空的');return}repN=2;repSync();const d=$('repDlg');try{d.showModal()}catch(e){d.setAttribute('open','')}};
 $('repM').onclick=()=>{repN=Math.max(2,repN-1);repSync()};$('repP').onclick=()=>{repN=Math.min(10,repN+1);repSync()};
 const closeRep=()=>{const d=$('repDlg');try{d.close()}catch(e){d.removeAttribute('open')}};
