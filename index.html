@@ -493,6 +493,19 @@ dialog.sheet.wide{max-width:min(860px,calc(100vw - 24px))}
 .lus.mini.lanetg{grid-template-columns:auto 36px 64px 36px}
 .lus.mini.lanetg span{font-size:12px;margin:0 2px 0 4px}
 .lus.mini.lanetg output{font-size:16px}
+/* each lane on its own send-off: one line per lane under the big clock */
+.lanest{display:grid;gap:6px}
+.lanest .lr{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:4px 12px;background:var(--boardtint);border:1px solid var(--boardline);border-radius:12px;padding:6px 12px;font-variant-numeric:tabular-nums}
+.lanest .lr b{font-family:var(--f-num);font-size:18px;font-weight:800;background:var(--boardfg);color:var(--board);border-radius:6px;padding:0 7px;line-height:1.35}
+.lanest .lt{color:var(--boardmuted);font-size:13px}
+.lanest .ls{font-size:14px;color:var(--boardfg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lanest .lc{font-family:var(--f-num);font-size:26px;font-weight:800;line-height:1;color:var(--p-swim)}
+.lanest .lr.rest .lc{color:var(--p-rest)}
+.lanest .lr.fin{opacity:.6}.lanest .lr.fin .lc{color:var(--p-group)}
+.lanest .lr.soon{border-color:var(--p-rest);background:color-mix(in srgb,var(--p-rest) 14%,transparent)}
+.lanest .lr.soon .lc{animation:blink .5s steps(2) infinite}
+.ph-lag{--ph:var(--p-swim)}
+@media (max-width:759px){.lanest .lr{padding:5px 10px;gap:2px 8px}.lanest .lc{font-size:22px}.lanest .lt{display:none}}
 .lanehd{flex-wrap:wrap}
 .lanerm{margin-left:auto;background:transparent;color:var(--danger);font-size:13px;padding:5px 10px}
 #luAddLane{justify-self:start}
@@ -933,7 +946,8 @@ dialog.sheet{border-radius:16px}
               <p class="luoff" id="luGapHint" hidden>0 秒 = 不自动间隔。工具箱「分组平均」里是一批一批出发：每条道的 1 号是第 1 批，这一批到边后再按「出发」放下一批。训练计时页里是同一道的人一起出发。</p>
               
             </div>
-            <p class="luoff" id="luTgHint">每条道的「目标」按每 100 米比计划的目标快几秒或慢几秒算（例：第 2 道慢 5″，8×50 目标 55″ 就变成 57″5）。计时和出发间隔仍按计划的目标，到边成绩按各道自己的目标比。</p>
+            <p class="luoff" id="luTgHint">每条道的「目标」按每 100 米比计划的目标快几秒或慢几秒算（例：第 2 道慢 5″，8×50 目标 55″ 就变成 57″5），到边成绩按各道自己的目标比。</p>
+            <label class="tg" id="luSendRow"><input type="checkbox" id="luSend"><span class="sw" aria-hidden="true"></span><span><b>各道按自己的目标出发</b><small>间歇一样，目标不一样：快的道先出发，慢的道每趟晚出发几秒（例：1 道 30″、2 道 35″，间歇都是 15″ → 1 道每 45″ 出发，2 道每 50″ 出发）。关掉 = 各道一起按计划的目标出发。</small></span></label>
             <ol class="lanelist" id="luSlots"></ol>
             <button type="button" class="add" id="luAddLane">＋ 增加泳道（几道同时出发）</button>
             <div class="row"><button type="button" id="luRoster">管理学员名单</button><button type="button" id="luFill">按名单顺序填入</button></div>
@@ -1214,6 +1228,7 @@ dialog.sheet{border-radius:16px}
           </div>
           <div class="clockwrap"><div class="clock" id="clock">0:00</div></div>
           <div class="meter"><div class="bar"><span id="bar"></span></div><div class="dots" id="dots"></div></div>
+          <div class="lanest" id="lanest" hidden aria-live="off"></div>
           <div class="adj" id="adj" hidden><button type="button" id="adjM" aria-label="这一次少休息 10 秒">−10″</button><span>只调这一次</span><button type="button" id="adjP" aria-label="这一次多休息 10 秒">+10″</button></div>
           <div class="hr" id="hr" hidden>
             <div><strong>测心率</strong><div class="msg">10 秒脉搏需在 30 次以下才能出发</div></div>
@@ -1458,13 +1473,17 @@ const nameOf=(it,i)=>'第 '+(i+1)+' 组 · '+shortName(it);
 // rest after group it (seconds) and its kind; plans saved before the split read a rest on a single swim as "after"
 function grOf(it){return it?(it.groupRest>0?it.groupRest:(it.reps===1&&it.rest>0?it.rest:0)):0}
 function grKindIt(it){return it&&it.groupRest>0?(it.grKind==='after'?'after':'between'):'after'}
+let builtSig='';
 function build(){
-  steps=[];
+  steps=[];builtSig=schedSig();
   plan.forEach((it,i)=>{
-    const prev=plan[i-1];
+    const prev=plan[i-1],own=sched(i);
     if(it.target>0&&!(prev&&grOf(prev)>0))steps.push({i,rep:1,phase:'ready',dur:10});
     for(let r=1;r<=it.reps;r++){
-      steps.push(it.target>0?{i,rep:r,phase:'swim',dur:it.target}:{i,rep:r,phase:'free'});
+      // lanes on their own send-offs: the clock runs the fastest lane
+      steps.push(it.target>0?{i,rep:r,phase:'swim',dur:own?laneBase(it):it.target}:{i,rep:r,phase:'free'});
+      // the slower lanes are n×Δ behind after the last rep: wait for them, so their rest after the group is as long too
+      if(own&&r===it.reps){const lag=Math.round(it.reps*laneLagMax(it)*100)/100;if(lag>0)steps.push({i,rep:r,phase:'lag',dur:lag})}
       if(r<it.reps){if(it.rest>0)steps.push({i,rep:r,phase:'rest',dur:it.rest})}
       else if(grOf(it)>0&&i<plan.length-1)steps.push({i,rep:r,phase:'group',dur:grOf(it),kind:grKindIt(it)});
     }
@@ -1644,6 +1663,7 @@ function cue(phase){
   else if(phase==='rest')notify(()=>beep(900,140,2,80),'间歇'+secText(st.dur));
   else if(phase==='group')notify(()=>beep(900,140,2,80),st.kind==='after'?'间歇'+secText(st.dur):'组间休息，测心率');
   else if(phase==='done')notify(()=>beep(990,200,3,100),'训练完成');
+  else if(phase==='lag')return;   // the fast lane touches; the slower lanes are still swimming
   else notify(()=>beep(1100,300),'准备');
 }
 const DIGITS=['','一','二','三','四','五'];
@@ -1696,7 +1716,8 @@ function repMissing(o){let m=0;cfg.lanes.forEach((l,L)=>{const a=splitsData[spKe
 function repBegin(st,overflow){
   const nr={i:st.i,rep:st.rep,t0:now()-(overflow||0),gap:gapEff()};
   // only a rep that was being timed (someone already touched) stays open; an untimed rep is simply passed
-  if(liveRep&&!(liveRep.i===nr.i&&liveRep.rep===nr.rep)&&splitsOn()&&curRec&&repMissing(liveRep)>0&&repTimed(liveRep)){
+  // (lanes on their own send-offs keep every rep of the group on the group clock instead)
+  if(liveRep&&!(liveRep.i===nr.i&&liveRep.rep===nr.rep)&&!sched(liveRep.i)&&splitsOn()&&curRec&&repMissing(liveRep)>0&&repTimed(liveRep)){
     openReps.push(liveRep);if(openReps.length>4)openReps.shift();
   }
   liveRep=nr;
@@ -1706,6 +1727,8 @@ function closeOpenRep(o){openReps=openReps.filter(x=>x!==o);lastSpKey='';renderS
 function go(idx,{auto=false,overflow=0}={}){
   const prev=steps[si];
   if(prev&&(prev.phase==='swim'||prev.phase==='free'))lastSwimMs=auto&&prev.dur?prev.dur*1000:elapsed();
+  if(prev)prev.used=auto&&prev.dur?prev.dur*1000:elapsed();   // how long the step really ran (the group clock adds these up)
+  if(!auto)schedG=null;   // moved by hand: no burst of start calls for what was skipped
   si=Math.max(0,Math.min(steps.length-1,idx));
   acc=auto?overflow:0;segStart=now();lastCue=null;
   const st=steps[si];
@@ -1723,8 +1746,13 @@ function tick(){
     if(running){
       const sec=st.dur?Math.ceil((st.dur*1000-e)/1000):Math.floor(e/1000);
       if(sec!==lastCue){lastCue=sec;if(st.dur?sec<st.dur:sec>0)markCue(sec,!!st.dur,(st.phase==='swim'||st.phase==='free')?plan[st.i]:null,st.dur||0)}
+      if(sched(st.i)&&/^(swim|rest|lag|group)$/.test(st.phase)){
+        laneCues();
+        // waiting for the slower lanes: over as soon as everyone has touched on the last rep
+        if(st.phase==='lag'&&lastRepAllIn(st.i))go(si+1,{auto:true});
+      }
       // later swimmers are called off even once the first swimmer's target has run out
-      if(cfg.stagger&&cfg.gapSec>0&&/^(swim|free|rest)$/.test(st.phase)){
+      else if(cfg.stagger&&cfg.gapSec>0&&/^(swim|free|rest)$/.test(st.phase)){
         const c=repContext(),k=c?Math.floor(c.ms/1000/cfg.gapSec):0;
         if(c&&k>=stagDone&&k<cfg.swimmers){stagDone=k+1;staggerCue(k+1)}
       }
@@ -1735,12 +1763,13 @@ function tick(){
   render(false);
   if(running&&++tickN%20===0)saveSession();
 }
-const CHIP={ready:'准备',swim:'游进',rest:'间歇',group:'组间休息',free:'游进 · 手动',done:'训练完成'};
+const CHIP={ready:'准备',swim:'游进',rest:'间歇',group:'组间休息',free:'游进 · 手动',lag:'等慢道',done:'训练完成'};
 function describe(st){
   if(!st)return'';const it=plan[st.i];
   switch(st.phase){
     case'ready':return '准备 10" · '+shortName(it);
-    case'swim':return '第 '+st.rep+' 趟出发 · 目标 '+fmtShort(st.dur);
+    case'swim':return '第 '+st.rep+' 趟出发 · 目标 '+(sched(st.i)?laneTargetsTxt(it):fmtShort(st.dur));
+    case'lag':return '等 '+slowLanesTxt(it)+' 游完最后一趟';
     case'free':return st.rep===1?'第 '+(st.i+1)+' 组 '+shortName(it):'第 '+st.rep+' 趟 · '+shortName(it);
     case'rest':return '间歇 '+fmtShort(st.dur);
     case'group':return st.kind==='after'?'组后休息 '+fmtShort(st.dur):'组间休息 '+fmt(st.dur)+' · 测心率';
@@ -1765,7 +1794,7 @@ function render(force){
     $('title').textContent=nameOf(it,st.i);
     const parts=[it.target>0?(lanesDiffer()?'目标 '+laneTargetsTxt(it):'目标 '+fmtShort(it.target)):'手动计时'];
     if(it.rest>0)parts.push('间歇 '+fmtShort(it.rest));
-    if(it.target>0&&it.rest>0)parts.push('每 '+fmt(it.target+it.rest)+' 出发');
+    if(it.target>0&&it.rest>0)parts.push(sched(st.i)?'出发间隔 '+cfg.lanes.map((_,L)=>(L+1)+'道 '+fmt(laneTarget(it,L)+it.rest)).join(' / '):'每 '+fmt(it.target+it.rest)+' 出发');
     if(it.rEvery>0)parts.push('每 '+fmtShort(it.rEvery)+' 报时');else if(it.rEvery===-1)parts.push('不报时');
     if(eachTxt(it))parts.push(eachTxt(it));
     if(it.note)parts.push(it.note);
@@ -1776,26 +1805,27 @@ function render(force){
       $('clock').classList.toggle('warn',running&&rem<=5.05&&rem>0);
       $('bar').style.width=Math.min(100,e/(st.dur*10))+'%';
     }else{$('clock').textContent=fmt(Math.floor(e/1000));$('clock').classList.remove('warn');$('bar').style.width='0%'}
-    $('rep').innerHTML=it.reps>1?'第 '+st.rep+' <small>/ '+it.reps+' 趟</small>':'';
+    $('rep').innerHTML=(it.reps>1?'第 '+st.rep+' <small>/ '+it.reps+' 趟</small>':'')+(sched(st.i)&&cfg.lanes.length>1&&st.phase!=='lag'?' <small>· '+fastLanesTxt(it)+'</small>':'');
   }
+  renderLaneStrip();
   const key=si+'|'+steps.length;
   if(force||key!==lastKey){
     lastKey=key;
     const dots=$('dots');dots.innerHTML='';
     if(it&&it.reps>1)for(let r=1;r<=it.reps;r++){
       const b=document.createElement('b');
-      if(r<st.rep||(r===st.rep&&/^(rest|group)$/.test(st.phase)))b.className='on';else if(r===st.rep)b.className='cur';
+      if(r<st.rep||(r===st.rep&&/^(rest|group|lag)$/.test(st.phase)))b.className='on';else if(r===st.rep)b.className='cur';
       dots.appendChild(b);
     }
     $('next').textContent=describe(steps[si+1])||'—';
-    $('hint').textContent=st.phase==='free'?'学生到边时点「到边」':st.dur?'到点自动切换':'';
+    $('hint').textContent=st.phase==='free'?'学生到边时点「到边」':st.phase==='lag'?'都到边就自动结束':st.dur?'到点自动切换':'';
     $('hr').hidden=!(st.phase==='group'&&st.kind!=='after');
     $('adj').hidden=!(st.dur&&(st.phase==='rest'||st.phase==='group'||st.phase==='ready'));
     const fin=st.phase==='done';$('nextBox').hidden=fin;$('doneActs').hidden=!(fin&&plan.length);
     if(fin)$('doneSp').hidden=$('doneCopy').hidden=!hasSplits(splitsData);
     $('skipTxt').textContent=st.phase==='free'?'到边':'下一步';$('skip').setAttribute('aria-label',st.phase==='free'?'到边，进入下一步':'下一步');
     $('skip').classList.toggle('hot',st.phase==='free'&&running);
-    const doneReps=it?(st.rep-1+(/^(rest|group)$/.test(st.phase)?1:0)):0;
+    const doneReps=it?(st.rep-1+(/^(rest|group|lag)$/.test(st.phase)?1:0)):0;
     document.querySelectorAll('#proglist li').forEach((el,k)=>{
       el.classList.toggle('active',k===st.i);
       el.classList.toggle('past',st.phase==='done'||k<st.i);
@@ -2265,7 +2295,7 @@ const keyLane=k=>{const m=k.match(/@(\d+)$/);return m?+m[1]:0};
 function repContext(){
   const st=steps[si];if(!st||st.i<0)return null;
   if(st.phase==='swim'||st.phase==='free')return{i:st.i,rep:st.rep,ms:elapsed()};
-  if(st.phase==='rest'||st.phase==='group')return{i:st.i,rep:st.rep,ms:lastSwimMs+elapsed()};
+  if(st.phase==='rest'||st.phase==='group'||st.phase==='lag')return{i:st.i,rep:st.rep,ms:lastSwimMs+elapsed()};
   return null;
 }
 // swim-time format with hundredths: 29″60, 1:35″33
@@ -2289,6 +2319,76 @@ const fmtT=t=>fmtSplit(t);
 // "1道 55" / 2道 57"5" for the lanes in use
 const laneTargetsTxt=(it,offs)=>cfg.lanes.map((_,L)=>(L+1)+'道 '+fmtT(laneTarget(it,L,offs))).join(' / ');
 const gapEff=()=>cfg.stagger?cfg.gapSec:0;
+/* Each lane on its own send-off ("各道按自己的目标出发"): every lane has the same rest but its own target, so the
+   faster lane leaves first and a slower lane leaves Δ = (its target − the fastest target) later on every rep:
+   rep r of lane L leaves at  (start of rep r of the fastest lane) + (r−1)·Δ_L,  each later swimmer gap seconds after.
+   The scoreboard runs the fastest lane; after its last rep a "等慢道" step waits n·Δ for the slowest lane, so that
+   lane's rest after the group is as long as everyone else's. All times come from one pause-aware group clock. */
+const laneSendOn=()=>cfg.laneSend!==false&&splitsOn()&&lanesDiffer();
+function sched(i){const it=plan[i];return !!(it&&it.target>0&&laneSendOn())}
+function laneBase(it){return Math.min(...cfg.lanes.map((_,L)=>laneTarget(it,L)))}
+const laneDelta=(it,L)=>Math.round((laneTarget(it,L)-laneBase(it))*100)/100;
+const laneLagMax=it=>Math.max(0,...cfg.lanes.map((_,L)=>laneDelta(it,L)));
+const schedSig=()=>laneSendOn()?laneOffs().join(','):'';
+const lanesWhere=(it,f)=>cfg.lanes.map((_,L)=>L).filter(L=>f(laneDelta(it,L))).map(L=>(L+1)+'道').join('、');
+const fastLanesTxt=it=>lanesWhere(it,d=>d===0);
+const slowLanesTxt=it=>lanesWhere(it,d=>d>0&&d===laneLagMax(it));
+var schedG=null,schedI=-1;
+// {i, g = ms since the group's first send-off, dep[r] = when the fastest lane leaves on rep r} for the group under way
+function laneClock(){
+  const st=steps[si];if(!st||st.i<0||st.phase==='ready'||!sched(st.i))return null;
+  let f=si;while(f>0&&steps[f-1].i===st.i&&steps[f-1].phase!=='ready')f--;
+  let t=0,g=0;const dep=[];
+  for(let j=f;j<steps.length&&steps[j].i===st.i;j++){const s=steps[j];
+    if(j===si)g=t+elapsed();
+    if(s.phase==='swim')dep[s.rep]=t;
+    t+=j<si&&s.used!=null?s.used:(s.dur||0)*1000;   // what already ran as it ran, what is ahead as planned
+  }
+  return dep[1]==null?null:{i:st.i,g,dep};
+}
+const laneDep=(lc,L,k,r)=>lc.dep[r]+(r-1)*laneDelta(plan[lc.i],L)*1000+k*gapEff()*1000;
+// the rep swimmer k of lane L is on at group time g (r 0 = not off yet) and when that rep left
+function laneRepAt(lc,L,k,g){
+  const n=plan[lc.i].reps;let r=0;
+  for(let q=1;q<=n&&lc.dep[q]!=null;q++){if(laneDep(lc,L,k,q)<=g)r=q;else break}
+  return{r,t0:laneDep(lc,L,k,Math.max(1,r))};
+}
+// start calls for the lanes that do not leave on the scoreboard's own whistle
+function laneCues(){
+  const lc=laneClock();if(!lc){schedG=null;return}
+  if(schedI!==lc.i){schedI=lc.i;schedG=null}
+  const g=lc.g,from=schedG;schedG=g;if(from==null||g<=from)return;
+  const it=plan[lc.i],hit=[];
+  cfg.lanes.forEach((l,L)=>{for(let r=1;r<=it.reps&&lc.dep[r]!=null;r++)for(let k=0;k<l.n;k++){const t=laneDep(lc,L,k,r);if(t>from&&t<=g)hit.push({k,t})}});
+  const own=x=>lc.dep.some(b=>b!=null&&Math.abs(x.t-b)<60);   // the fastest lane's 1 号 leaves on the step's whistle
+  const calls=hit.filter(x=>!own(x));if(!calls.length)return;
+  // different numbers leaving together (lane 1's 2 号 and lane 2's 1 号): just "出发"
+  const ks=[...new Set(calls.map(x=>x.k))],k=ks.length===1?ks[0]:-1;
+  notify(()=>beep(1320,k>0?350:600),gapEff()>0&&k>=0?(k+1)+' 号出发':'出发');
+}
+function lastRepAllIn(i){
+  const it=plan[i];if(!it||!curRec)return false;
+  return cfg.lanes.every((l,L)=>{const a=splitsData[spKey(i,it.reps,L)]||[];for(let k=0;k<l.n;k++)if(a[k]==null)return false;return true});
+}
+// under the big clock: where every lane is (swimming / resting until its next send-off / done)
+let laneStripKey='';
+function renderLaneStrip(){
+  const box=$('lanest'),lc=cfg.lanes.length>1?laneClock():null;
+  box.hidden=!lc;if(!lc){laneStripKey='';return}
+  const it=plan[lc.i],key=lc.i+'|'+cfg.lanes.length+'|'+laneOffs().join(',');
+  if(key!==laneStripKey){laneStripKey=key;box.innerHTML='';
+    cfg.lanes.forEach((_,L)=>{const r=document.createElement('div');r.className='lr';
+      r.innerHTML='<b></b><span class="lt"></span><span class="ls"></span><span class="lc"></span>';
+      r.querySelector('b').textContent=(L+1)+'道';r.querySelector('.lt').textContent='目标 '+fmtT(laneTarget(it,L));box.appendChild(r)})}
+  box.querySelectorAll('.lr').forEach((row,L)=>{
+    const p=laneRepAt(lc,L,0,lc.g),T=laneTarget(it,L)*1000,e=lc.g-p.t0;let cls='',ls,lc_;
+    if(!p.r){ls='准备出发';lc_=fmt(Math.ceil((laneDep(lc,L,0,1)-lc.g)/1000))}
+    else if(e<T){ls='第 '+p.r+' 趟 · 游进';lc_=fmt(Math.ceil((T-e)/1000-1e-6))}
+    else if(p.r<it.reps&&lc.dep[p.r+1]!=null){const w=(laneDep(lc,L,0,p.r+1)-lc.g)/1000;cls=w<=5?'rest soon':'rest';ls=w<=5?'第 '+(p.r+1)+' 趟准备出发':'第 '+p.r+' 趟 · 间歇';lc_=fmt(Math.ceil(w-1e-6))}
+    else{cls='fin';ls='这一组游完了';lc_='✓'}
+    row.className='lr '+cls;row.querySelector('.ls').textContent=ls;row.querySelector('.lc').textContent=lc_;
+  });
+}
 function tapSplit(L,n,fromKey,at){
   if(arrLive('spBtns'))return;
   if(!splitsOn()||!cfg.lanes[L]||n<1||n>cfg.lanes[L].n)return;
@@ -2302,6 +2402,23 @@ function tapSplit(L,n,fromKey,at){
     if(curRec)saveLib();try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}
     toast(slotName(L,n-1)+'：记到第 '+(o.i+1)+' 组第 '+o.rep+' 趟 '+fmtSplit(ot));
     lastSpKey='';renderSplits(true);return;
+  }
+  const lc=laneClock();
+  if(lc&&lc.i===c.i){
+    // own send-offs: the time counts from this swimmer's own start on the rep they are on
+    const it=plan[lc.i],g=lc.g-lag,p=laneRepAt(lc,L,n-1,g),has=q=>(splitsData[spKey(lc.i,q,L)]||[])[n-1]!=null;
+    if(!p.r){toast(slotName(L,n-1)+' 还没出发');return}
+    let r=p.r,t0=p.t0;
+    // just sent off again but the rep before has no time: a touch this early still belongs to the rep before
+    if(r>1&&!has(r)&&!has(r-1)&&g-t0<laneTarget(it,L)*500){r--;t0=laneDep(lc,L,n-1,r)}
+    const t=Math.round((g-t0)/10)/100,key=spKey(lc.i,r,L),arr=splitsData[key]||(splitsData[key]=[]);
+    if(arr[n-1]!=null){toast(slotName(L,n-1)+' 第 '+r+' 趟已经记了 '+fmtSplit(arr[n-1])+'，要改先点「撤销」');return}
+    spLast.push({key,n});if(spLast.length>40)spLast.shift();arr[n-1]=t;
+    const rr=recOf();if(rr)(rr.setNames||(rr.setNames={}))[lc.i]=allLaneNames();
+    if(curRec)saveLib();
+    try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}
+    if(r!==p.r)toast(slotName(L,n-1)+'：记到第 '+r+' 趟 '+fmtSplit(t));
+    renderSplits(true);return;
   }
   const t=Math.round(((c.ms-lag)/1000-(n-1)*gapEff())*100)/100;
   if(t<=0){toast(slotName(L,n-1)+' 还没出发');return}
@@ -2432,12 +2549,16 @@ function renderSplits(force){
   box.hidden=!c;if(!c){if(spBig)setBig(false);return}
   $('spHide').hidden=cfg.stagger;
   const it=plan[c.i],multi=cfg.lanes.length>1;
-  const sk=c.i+'-'+c.rep+'|'+JSON.stringify(allLaneNames())+'|'+laneOffs().join(',');
+  const lc=laneClock(),own=lc&&lc.i===c.i?lc:null;
+  // own send-offs: each lane is on its own rep, so the grid is kept for the whole group
+  const sk=c.i+'-'+(own?'s':c.rep)+'|'+JSON.stringify(allLaneNames())+'|'+laneOffs().join(',');
   if(force||sk!==lastSpKey){
-    lastSpKey=sk;$('spRep').textContent='第 '+(c.i+1)+' 组 · 第 '+c.rep+' 趟'+(it&&it.target>0&&lanesDiffer()?' · 目标 '+laneTargetsTxt(it):'');
+    lastSpKey=sk;if(!own)$('spRep').textContent='第 '+(c.i+1)+' 组 · 第 '+c.rep+' 趟'+(it&&it.target>0&&lanesDiffer()?' · 目标 '+laneTargetsTxt(it):'');
     buildLaneGrid($('spBtns'),tapSplit);
     fitSplits();
   }
+  if(own){const t='第 '+(c.i+1)+' 组 · '+cfg.lanes.map((_,L)=>(multi?(L+1)+'道':'')+'第 '+Math.max(1,laneRepAt(own,L,0,own.g).r)+' 趟').join(' · ');
+    if($('spRep').textContent!==t)$('spRep').textContent=t}
   // earlier reps still waiting: one line each with its own running clock
   openReps=openReps.filter(o=>now()-o.t0<15*60e3&&repMissing(o)>0);
   const op=$('spOpen'),opk=openReps.map(o=>o.i+'-'+o.rep).join(',');
@@ -2453,7 +2574,17 @@ function renderSplits(force){
   op.querySelectorAll('.oprow').forEach(r=>{const o=r._o,miss=[];cfg.lanes.forEach((l,L)=>{const a=splitsData[spKey(o.i,o.rep,L)]||[];for(let k=0;k<l.n;k++)if(a[k]==null)miss.push(slotName(L,k))});
     r.querySelector('.opclk').textContent=fmtTenth(now()-o.t0);r.querySelector('.opwho').textContent='还差 '+miss.join('、')});
   $('spBtns').querySelectorAll('button').forEach(b=>{
-    const L=+b.dataset.l,n=+b.dataset.n,arr=splitsData[spKey(c.i,c.rep,L)]||[],t=arr[n-1],left=c.ms/1000-(n-1)*gapEff();
+    const L=+b.dataset.l,n=+b.dataset.n;
+    if(own){
+      const p=laneRepAt(own,L,n-1,own.g),t=p.r?(splitsData[spKey(c.i,p.r,L)]||[])[n-1]:null;
+      b.classList.toggle('got',t!=null);b.classList.toggle('wait',!p.r);b.classList.remove('carry');
+      const sp=b.querySelector('span');sp.textContent=t!=null?fmtSplit(t):p.r?'到边':'未出发';sp.className=t!=null?'':'ph';
+      const sm=b.querySelector('small'),df=t!=null?t-laneTarget(it,L):null;
+      sm.textContent=df!=null?'比目标'+fmtDiff(df):p.r?'第 '+p.r+' 趟':'';sm.className=df==null?'':df>0?'slow':'fast';
+      b.setAttribute('aria-label',slotName(L,n-1)+' 第 '+Math.max(1,p.r)+' 趟'+(t!=null?' 成绩 '+fmtSplit(t):' 到边'));
+      return;
+    }
+    const arr=splitsData[spKey(c.i,c.rep,L)]||[],t=arr[n-1],left=c.ms/1000-(n-1)*gapEff();
     const o=t==null?openRepFor(L,n-1):null;
     b.classList.toggle('got',t!=null);b.classList.toggle('wait',t==null&&left<=0&&!o);b.classList.toggle('carry',!!o);
     const sp=b.querySelector('span');sp.textContent=o?fmt(Math.max(0,(now()-o.t0)/1000-(n-1)*o.gap)):t!=null?fmtSplit(t):left>0?'到边':'未出发';sp.className=t!=null||o?'':'ph';
@@ -2550,6 +2681,7 @@ function renderLineup(){
   const on=cfg.stagger||luForce||cfg.arrive!==false;
   $('luBody').querySelector('.lusteps').hidden=!(cfg.stagger||luForce);
   $('luTgHint').hidden=luForce;
+  $('luSendRow').hidden=luForce||!lanesDiffer();$('luSend').checked=cfg.laneSend!==false;
   $('luOn').checked=cfg.stagger;$('luArr').checked=cfg.arrive!==false;$('luArr').closest('label').hidden=luForce||cfg.stagger;$('luOn').closest('label').hidden=luForce;$('luBody').hidden=!on;$('luOff').hidden=on;
   $('luGap').textContent=cfg.gapSec+'"';$('luGapHint').hidden=cfg.gapSec>0;
   $('luGapM').disabled=cfg.gapSec<=0;$('luGapP').disabled=cfg.gapSec>=60;
@@ -2595,9 +2727,13 @@ function renderLineup(){
     card.appendChild(slots);ol.appendChild(card);
   });
 }
-function lineupChanged(){syncSwimmers();saveCfg();lastSpKey='';cfgSummary();renderSplits(true);const r=recOf();if(r&&!r.done){r.names=allLaneNames();r.laneOff=laneOffs();saveLib()}tbLanesChanged();arrRefreshAll()}
+// lane targets / own send-offs changed: rebuild the steps, staying on the same step
+const schedSync=()=>{if(steps.length&&schedSig()!==builtSig){laneStripKey='';changed(true)}};
+function lineupChanged(){syncSwimmers();saveCfg();lastSpKey='';cfgSummary();schedSync();renderSplits(true);const r=recOf();if(r&&!r.done){r.names=allLaneNames();r.laneOff=laneOffs();saveLib()}tbLanesChanged();arrRefreshAll()}
 $('luOn').onchange=()=>{cfg.stagger=$('luOn').checked;lineupChanged()};
-$('luArr').onchange=()=>{cfg.arrive=$('luArr').checked;saveCfg();lastSpKey='';renderSplits(true)};
+$('luArr').onchange=()=>{cfg.arrive=$('luArr').checked;saveCfg();lastSpKey='';schedSync();renderSplits(true)};
+$('luSend').onchange=()=>{cfg.laneSend=$('luSend').checked;saveCfg();lastSpKey='';schedSync();renderSplits(true);
+  toast(cfg.laneSend?'各道按自己的目标出发：快的道先走，慢的道每趟晚几秒':'各道一起按计划的目标出发')};
 $('luGapM').onclick=()=>{cfg.gapSec=Math.max(0,cfg.gapSec-1);lineupChanged()};
 $('luGapP').onclick=()=>{cfg.gapSec=Math.min(60,cfg.gapSec+1);lineupChanged()};
 $('luAddLane').onclick=()=>{if(cfg.lanes.length>=8)return;const last=cfg.lanes[cfg.lanes.length-1];cfg.lanes.push({n:last?last.n:3,lineup:[]});lineupChanged();
@@ -2786,13 +2922,15 @@ $('start').onclick=toggle;
 // how many swimmers of the current rep have no arrival time yet (0 when arrival timing is off)
 function missingArrivals(){
   const c=splitsOn()?repContext():null;if(!c)return 0;let m=0;
+  const lc=laneClock();
+  if(lc&&lc.i===c.i){cfg.lanes.forEach((l,L)=>{for(let k=0;k<l.n;k++){const p=laneRepAt(lc,L,k,lc.g);if(p.r&&(splitsData[spKey(c.i,p.r,L)]||[])[k]==null)m++}});return m}
   cfg.lanes.forEach((l,L)=>{const a=splitsData[spKey(c.i,c.rep,L)]||[];for(let k=0;k<l.n;k++)if(a[k]==null)m++});
   return m;
 }
 // leaving a swim by hand while people are still out (staggered starts) asks first
 function nextStep(){
   audio();const st=steps[si];
-  if(cfg.stagger&&/^(swim|free)$/.test(st.phase)&&running){const m=missingArrivals();
+  if((cfg.stagger&&/^(swim|free)$/.test(st.phase)||st.phase==='lag')&&running){const m=missingArrivals();
     if(m){toast('还有 '+m+' 人没到边',{label:'仍然下一步',fn:()=>go(si+1)});return}}
   go(si+1);
 }
